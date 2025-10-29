@@ -7,7 +7,7 @@ import sk.ainet.lang.tensor.VoidOpsTensor
 import sk.ainet.lang.tensor.data.DenseTensorDataFactory
 import sk.ainet.lang.types.DType
 
-public class VoidTensorOps<V> : TensorOps<V> {
+public class VoidTensorOps : TensorOps {
     
     private val dataFactory = DenseTensorDataFactory()
     
@@ -74,28 +74,28 @@ public class VoidTensorOps<V> : TensorOps<V> {
         return Shape(resultDims)
     }
     
-    override fun <T : DType> add(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> add(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
         validateElementWiseShapes(a.shape, b.shape, "addition")
         val resultShape = calculateBroadcastShape(a.shape, b.shape)
         val resultData = dataFactory.zeros<T, V>(resultShape, a.dtype)
         return VoidOpsTensor(resultData, a.dtype)
     }
 
-    override fun <T : DType> subtract(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> subtract(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
         validateElementWiseShapes(a.shape, b.shape, "subtraction")
         val resultShape = calculateBroadcastShape(a.shape, b.shape)
         val resultData = dataFactory.zeros<T, V>(resultShape, a.dtype)
         return VoidOpsTensor(resultData, a.dtype)
     }
 
-    override fun <T : DType> multiply(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> multiply(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
         validateElementWiseShapes(a.shape, b.shape, "multiplication")
         val resultShape = calculateBroadcastShape(a.shape, b.shape)
         val resultData = dataFactory.zeros<T, V>(resultShape, a.dtype)
         return VoidOpsTensor(resultData, a.dtype)
     }
 
-    override fun <T : DType> divide(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> divide(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
         validateElementWiseShapes(a.shape, b.shape, "division")
         val resultShape = calculateBroadcastShape(a.shape, b.shape)
         val resultData = dataFactory.zeros<T, V>(resultShape, a.dtype)
@@ -103,7 +103,7 @@ public class VoidTensorOps<V> : TensorOps<V> {
     }
 
     @InProgress("Metal", owner="ops-team", issue="GH-1234")
-    override fun <T : DType> matmul(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> matmul(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
         validateMatmulShapes(a.shape, b.shape)
         val resultShape = calculateMatmulShape(a.shape, b.shape)
         val resultData = dataFactory.zeros<T, V>(resultShape, a.dtype)
@@ -111,13 +111,13 @@ public class VoidTensorOps<V> : TensorOps<V> {
     }
 
     @InProgress("Metal", owner="ops-team", issue="GH-1234")
-    override fun <T : DType> transpose(tensor: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> transpose(tensor: Tensor<T, V>): Tensor<T, V> {
         val resultShape = calculateTransposeShape(tensor.shape)
         val resultData = dataFactory.zeros<T, V>(resultShape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <T : DType> conv2d(
+    override fun <T : DType, V> conv2d(
         input: Tensor<T, V>,
         weight: Tensor<T, V>,
         bias: Tensor<T, V>?,
@@ -131,7 +131,7 @@ public class VoidTensorOps<V> : TensorOps<V> {
         return VoidOpsTensor(resultData, input.dtype)
     }
 
-    override fun <T : DType> maxPool2d(
+    override fun <T : DType, V> maxPool2d(
         input: Tensor<T, V>,
         kernelSize: Pair<Int, Int>,
         stride: Pair<Int, Int>,
@@ -142,50 +142,76 @@ public class VoidTensorOps<V> : TensorOps<V> {
         return VoidOpsTensor(resultData, input.dtype)
     }
 
-    override fun <T : DType> reshape(tensor: Tensor<T, V>, newShape: Shape): Tensor<T, V> {
-        validateReshape(tensor.shape, newShape)
-        val resultData = dataFactory.zeros<T, V>(newShape, tensor.dtype)
+    override fun <T : DType, V> reshape(tensor: Tensor<T, V>, newShape: Shape): Tensor<T, V> {
+        val resultShape = calculateReshapeTargetShape(tensor.shape, newShape)
+        val resultData = dataFactory.zeros<T, V>(resultShape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <T : DType> flatten(tensor: Tensor<T, V>, startDim: Int, endDim: Int): Tensor<T, V> {
+    override fun <T : DType, V> flatten(tensor: Tensor<T, V>, startDim: Int, endDim: Int): Tensor<T, V> {
         val resultShape = calculateFlattenShape(tensor.shape, startDim, endDim)
         val resultData = dataFactory.zeros<T, V>(resultShape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <T : DType> relu(tensor: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> concat(tensors: List<Tensor<T, V>>, dim: Int): Tensor<T, V> {
+        val resultShape = calculateConcatShape(tensors.map { it.shape }, dim)
+        val resultData = dataFactory.zeros<T, V>(resultShape, tensors.first().dtype)
+        return VoidOpsTensor(resultData, tensors.first().dtype)
+    }
+
+    override fun <T : DType, V> split(tensor: Tensor<T, V>, splitSize: Int, dim: Int): List<Tensor<T, V>> {
+        val resultShapes = calculateSplitShapes(tensor.shape, splitSize, dim)
+        return resultShapes.map { shape ->
+            val resultData = dataFactory.zeros<T, V>(shape, tensor.dtype)
+            VoidOpsTensor(resultData, tensor.dtype)
+        }
+    }
+
+    override fun <T : DType, V> squeeze(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> {
+        val resultShape = calculateSqueezeShape(tensor.shape, dim)
+        val resultData = dataFactory.zeros<T, V>(resultShape, tensor.dtype)
+        return VoidOpsTensor(resultData, tensor.dtype)
+    }
+
+    override fun <T : DType, V> unsqueeze(tensor: Tensor<T, V>, dim: Int): Tensor<T, V> {
+        val resultShape = calculateUnsqueezeShape(tensor.shape, dim)
+        val resultData = dataFactory.zeros<T, V>(resultShape, tensor.dtype)
+        return VoidOpsTensor(resultData, tensor.dtype)
+    }
+
+    override fun <T : DType, V> relu(tensor: Tensor<T, V>): Tensor<T, V> {
         // Activation functions preserve shape
         val resultData = dataFactory.zeros<T, V>(tensor.shape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <T : DType> softmax(tensor: Tensor<T, V>, dim: Int): Tensor<T, V> {
+    override fun <T : DType, V> softmax(tensor: Tensor<T, V>, dim: Int): Tensor<T, V> {
         validateSoftmaxDim(tensor.shape, dim)
         // Softmax preserves shape
         val resultData = dataFactory.zeros<T, V>(tensor.shape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <T : DType> sigmoid(tensor: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> sigmoid(tensor: Tensor<T, V>): Tensor<T, V> {
         // Activation functions preserve shape
         val resultData = dataFactory.zeros<T, V>(tensor.shape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <T : DType> sum(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> {
+    override fun <T : DType, V> sum(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> {
         val resultShape = calculateReductionShape(tensor.shape, dim, "sum")
         val resultData = dataFactory.zeros<T, V>(resultShape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <T : DType> mean(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> {
+    override fun <T : DType, V> mean(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> {
         val resultShape = calculateReductionShape(tensor.shape, dim, "mean")
         val resultData = dataFactory.zeros<T, V>(resultShape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <TFrom : DType, TTo : DType> convert(
+    override fun <TFrom : DType, TTo : DType, V> convert(
         tensor: Tensor<TFrom, V>,
         targetType: TTo
     ): Tensor<TTo, V> {
@@ -196,25 +222,25 @@ public class VoidTensorOps<V> : TensorOps<V> {
         return VoidOpsTensor(resultData, targetClass)
     }
 
-    override fun <T : DType> silu(tensor: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> silu(tensor: Tensor<T, V>): Tensor<T, V> {
         // SiLU (Swish) activation function preserves shape
         val resultData = dataFactory.zeros<T, V>(tensor.shape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <T : DType> gelu(tensor: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> gelu(tensor: Tensor<T, V>): Tensor<T, V> {
         // GELU activation function preserves shape
         val resultData = dataFactory.zeros<T, V>(tensor.shape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <T : DType> variance(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> {
+    override fun <T : DType, V> variance(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> {
         val resultShape = calculateReductionShape(tensor.shape, dim, "variance")
         val resultData = dataFactory.zeros<T, V>(resultShape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
-    override fun <T : DType> sqrt(tensor: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> sqrt(tensor: Tensor<T, V>): Tensor<T, V> {
         // Square root function preserves shape
         val resultData = dataFactory.zeros<T, V>(tensor.shape, tensor.dtype)
         return VoidOpsTensor(resultData, tensor.dtype)
@@ -226,31 +252,46 @@ public class VoidTensorOps<V> : TensorOps<V> {
      * For higher dimensions: batch dimensions must match, inner dimensions must be compatible
      */
     private fun validateMatmulShapes(a: Shape, b: Shape) {
-        if (a.rank < 2 || b.rank < 2) {
-            throw IllegalArgumentException("Matrix multiplication requires tensors with at least 2 dimensions")
+        // Support PyTorch-like matmul rank rules, including 1D operands via virtual unsqueeze
+        if (a.rank == 0 || b.rank == 0) {
+            throw IllegalArgumentException("Matrix multiplication requires tensors with at least 1 dimension per operand")
         }
-        
-        val aLastDim = a.dimensions[a.rank - 1]
-        val bSecondLastDim = b.dimensions[b.rank - 2]
-        
-        if (aLastDim != bSecondLastDim) {
+
+        // Build effective shapes by virtually unsqueezing 1D operands:
+        // - If a is 1D with dim n, treat as (1, n)
+        // - If b is 1D with dim n, treat as (n, 1)
+        val aEffDims = when (a.rank) {
+            1 -> intArrayOf(1, a.dimensions[0])
+            else -> a.dimensions
+        }
+        val bEffDims = when (b.rank) {
+            1 -> intArrayOf(b.dimensions[0], 1)
+            else -> b.dimensions
+        }
+
+        val aEffRank = aEffDims.size
+        val bEffRank = bEffDims.size
+
+        // Inner dimension (k) must match: a[..., k] with b[k, ...]
+        val aK = aEffDims[aEffRank - 1]
+        val bK = bEffDims[bEffRank - 2]
+        if (aK != bK) {
             throw IllegalArgumentException(
-                "Matrix multiplication shape mismatch: inner dimensions must match " +
-                "($aLastDim vs $bSecondLastDim)"
+                "Matrix multiplication shape mismatch: inner dimensions must match ($aK vs $bK)"
             )
         }
-        
-        // For tensors with more than 2 dimensions, batch dimensions must be compatible
-        if (a.rank > 2 || b.rank > 2) {
-            val maxRank = maxOf(a.rank, b.rank)
-            for (i in 0 until maxRank - 2) {
-                val aDim = if (i < a.rank - 2) a.dimensions[i] else 1
-                val bDim = if (i < b.rank - 2) b.dimensions[i] else 1
-                if (aDim != bDim && aDim != 1 && bDim != 1) {
-                    throw IllegalArgumentException(
-                        "Matrix multiplication batch dimension mismatch at position $i: $aDim vs $bDim"
-                    )
-                }
+
+        // Validate broadcastability of leading batch dims (all but the last 2 dims)
+        val aBatchRank = aEffRank - 2
+        val bBatchRank = bEffRank - 2
+        val maxBatchRank = maxOf(aBatchRank, bBatchRank)
+        for (i in 0 until maxBatchRank) {
+            val aDim = if (i < aBatchRank) aEffDims[i] else 1
+            val bDim = if (i < bBatchRank) bEffDims[i] else 1
+            if (aDim != bDim && aDim != 1 && bDim != 1) {
+                throw IllegalArgumentException(
+                    "Matrix multiplication batch dimension mismatch at position $i: $aDim vs $bDim"
+                )
             }
         }
     }
@@ -259,21 +300,58 @@ public class VoidTensorOps<V> : TensorOps<V> {
      * Calculates the result shape for matrix multiplication
      */
     private fun calculateMatmulShape(a: Shape, b: Shape): Shape {
-        val maxRank = maxOf(a.rank, b.rank)
-        val resultDims = IntArray(maxRank)
-        
-        // Handle batch dimensions
-        for (i in 0 until maxRank - 2) {
-            val aDim = if (i < a.rank - 2) a.dimensions[i] else 1
-            val bDim = if (i < b.rank - 2) b.dimensions[i] else 1
-            resultDims[i] = maxOf(aDim, bDim)
+        // Construct effective shapes by virtually unsqueezing 1D operands
+        val aEff = when (a.rank) {
+            1 -> intArrayOf(1, a.dimensions[0])
+            else -> a.dimensions
         }
-        
-        // Handle matrix dimensions: (m, k) × (k, n) -> (m, n)
-        resultDims[maxRank - 2] = a.dimensions[a.rank - 2]
-        resultDims[maxRank - 1] = b.dimensions[b.rank - 1]
-        
-        return Shape(resultDims)
+        val bEff = when (b.rank) {
+            1 -> intArrayOf(b.dimensions[0], 1)
+            else -> b.dimensions
+        }
+        val aEffRank = aEff.size
+        val bEffRank = bEff.size
+
+        // Compute broadcasted batch dims
+        val batchRank = maxOf(aEffRank, bEffRank) - 2
+        val outBatch = IntArray(batchRank) { i ->
+            val aDim = if (i < aEffRank - 2) aEff[i] else 1
+            val bDim = if (i < bEffRank - 2) bEff[i] else 1
+            maxOf(aDim, bDim)
+        }
+
+        val m = aEff[aEffRank - 2]
+        val n = bEff[bEffRank - 1]
+
+        // Build full result then squeeze depending on original ranks
+        return when {
+            a.rank == 1 && b.rank == 1 -> {
+                // Dot product -> scalar
+                Shape(intArrayOf())
+            }
+            a.rank == 1 -> {
+                // (k,) @ (..., k, n) -> (..., n)
+                val result = IntArray(outBatch.size + 1)
+                for (i in outBatch.indices) result[i] = outBatch[i]
+                result[result.size - 1] = n
+                Shape(result)
+            }
+            b.rank == 1 -> {
+                // (..., m, k) @ (k,) -> (..., m)
+                val result = IntArray(outBatch.size + 1)
+                for (i in outBatch.indices) result[i] = outBatch[i]
+                result[result.size - 1] = m
+                Shape(result)
+            }
+            else -> {
+                // Regular case: (..., m, k) @ (..., k, n) -> (..., m, n)
+                val result = IntArray(outBatch.size + 2)
+                for (i in outBatch.indices) result[i] = outBatch[i]
+                result[result.size - 2] = m
+                result[result.size - 1] = n
+                Shape(result)
+            }
+        }
     }
 
     /**
@@ -299,14 +377,53 @@ public class VoidTensorOps<V> : TensorOps<V> {
     }
 
     /**
-     * Validates reshape operation - total volume must remain the same
+     * Calculates target shape for reshape, supporting a single -1 dimension for inference.
+     * Validates that total volume remains the same and no illegal dimensions are provided.
      */
-    private fun validateReshape(originalShape: Shape, newShape: Shape) {
-        if (originalShape.volume != newShape.volume) {
-            throw IllegalArgumentException(
-                "Reshape volume mismatch: original volume ${originalShape.volume} != " +
-                "new volume ${newShape.volume}"
-            )
+    private fun calculateReshapeTargetShape(originalShape: Shape, target: Shape): Shape {
+        val total = originalShape.volume
+        val dims = target.dimensions
+        var inferIndex = -1
+        var product = 1
+        for ((i, d) in dims.withIndex()) {
+            when {
+                d == -1 -> {
+                    if (inferIndex != -1) {
+                        throw IllegalArgumentException("Only one dimension can be -1 in reshape, found at $inferIndex and $i")
+                    }
+                    inferIndex = i
+                }
+                d < -1 -> {
+                    throw IllegalArgumentException("Reshape dimensions must be non-negative or -1 for inference, got $d at index $i")
+                }
+                else -> {
+                    product *= d
+                }
+            }
+        }
+        return if (inferIndex >= 0) {
+            if (product == 0) {
+                // If any explicit dim is 0, the only consistent inference for zero total is 0
+                if (total != 0) {
+                    throw IllegalArgumentException("Reshape volume mismatch: original volume $total != new volume $product")
+                }
+                val out = dims.copyOf()
+                out[inferIndex] = 0
+                Shape(out)
+            } else {
+                if (total % product != 0) {
+                    throw IllegalArgumentException("Cannot infer reshape dimension: original volume $total is not divisible by specified product $product")
+                }
+                val inferred = total / product
+                val out = dims.copyOf()
+                out[inferIndex] = inferred
+                Shape(out)
+            }
+        } else {
+            if (product != total) {
+                throw IllegalArgumentException("Reshape volume mismatch: original volume $total != new volume $product")
+            }
+            Shape(dims.copyOf())
         }
     }
 
@@ -447,5 +564,131 @@ public class VoidTensorOps<V> : TensorOps<V> {
         val outputWidth = ((inputWidth + 2 * padW - kernelW) / strideW) + 1
         
         return Shape(batch, channels, outputHeight, outputWidth)
+    }
+
+    /**
+     * Calculates the result shape for concat operation
+     */
+    private fun calculateConcatShape(shapes: List<Shape>, dim: Int): Shape {
+        if (shapes.isEmpty()) {
+            throw IllegalArgumentException("Cannot concatenate empty list of tensors")
+        }
+        
+        val firstShape = shapes.first()
+        val actualDim = if (dim < 0) firstShape.rank + dim else dim
+        
+        if (actualDim < 0 || actualDim >= firstShape.rank) {
+            throw IllegalArgumentException("Concatenation dimension $dim is out of bounds for tensor with ${firstShape.rank} dimensions")
+        }
+        // Validate all shapes are compatible (same except in concat dimension)
+        for (shape in shapes.drop(1)) {
+            if (shape.rank != firstShape.rank) {
+                throw IllegalArgumentException("All tensors must have the same number of dimensions for concatenation")
+            }
+            for (i in shape.dimensions.indices) {
+                if (i != actualDim && shape.dimensions[i] != firstShape.dimensions[i]) {
+                    throw IllegalArgumentException(
+                        "All tensors must have the same shape except in the concatenation dimension. " +
+                        "Dimension $i: ${firstShape.dimensions[i]} vs ${shape.dimensions[i]}"
+                    )
+                }
+            }
+        }
+        
+        // Calculate result shape
+        val resultDims = firstShape.dimensions.copyOf()
+        resultDims[actualDim] = shapes.sumOf { it.dimensions[actualDim] }
+        
+        return Shape(resultDims)
+    }
+
+    /**
+     * Calculates the result shapes for split operation
+     */
+    private fun calculateSplitShapes(shape: Shape, splitSize: Int, dim: Int): List<Shape> {
+        val actualDim = if (dim < 0) shape.rank + dim else dim
+        
+        if (actualDim < 0 || actualDim >= shape.rank) {
+            throw IllegalArgumentException("Split dimension $dim is out of bounds for tensor with ${shape.rank} dimensions")
+        }
+        
+        if (splitSize <= 0) {
+            throw IllegalArgumentException("Split size must be positive, got $splitSize")
+        }
+        
+        val dimSize = shape.dimensions[actualDim]
+        require(splitSize > 0) { "Split size must be positive, got $splitSize" }
+        val remainder = dimSize % splitSize
+        if (remainder != 0) {
+            throw IllegalArgumentException("Dimension $actualDim size $dimSize is not divisible by split size $splitSize")
+        }
+        val fullSplits = dimSize / splitSize
+        val result = MutableList(fullSplits) {
+            val dims = shape.dimensions.copyOf()
+            dims[actualDim] = splitSize
+            Shape(dims)
+        }
+        return result
+    }
+
+    /**
+     * Calculates the result shape for squeeze operation
+     */
+    private fun calculateSqueezeShape(shape: Shape, dim: Int?): Shape {
+        return if (dim == null) {
+            // Remove all dimensions of size 1
+            val resultDims = shape.dimensions.filter { it != 1 }.toIntArray()
+            if (resultDims.isEmpty()) {
+                Shape(1) // If all dimensions were 1, result is scalar
+            } else {
+                Shape(resultDims)
+            }
+        } else {
+            val actualDim = if (dim < 0) shape.rank + dim else dim
+            
+            if (actualDim < 0 || actualDim >= shape.rank) {
+                throw IllegalArgumentException("Squeeze dimension $dim is out of bounds for tensor with ${shape.rank} dimensions")
+            }
+            
+            if (shape.dimensions[actualDim] != 1) {
+                throw IllegalArgumentException(
+                    "Cannot squeeze dimension $actualDim with size ${shape.dimensions[actualDim]}. Only dimensions of size 1 can be squeezed."
+                )
+            }
+            
+            // Remove the specified dimension
+            val resultDims = shape.dimensions.filterIndexed { index, _ -> index != actualDim }.toIntArray()
+            if (resultDims.isEmpty()) {
+                Shape(1) // Result is scalar if all dimensions are removed
+            } else {
+                Shape(resultDims)
+            }
+        }
+    }
+
+    /**
+     * Calculates the result shape for unsqueeze operation
+     */
+    private fun calculateUnsqueezeShape(shape: Shape, dim: Int): Shape {
+        val newRank = shape.rank + 1
+        val actualDim = if (dim < 0) newRank + dim else dim
+        
+        if (actualDim < 0 || actualDim >= newRank) {
+            throw IllegalArgumentException("Unsqueeze dimension $dim is out of bounds for new tensor with $newRank dimensions")
+        }
+        
+        val resultDims = IntArray(newRank)
+        var originalIndex = 0
+        
+        for (i in 0 until newRank) {
+            if (i == actualDim) {
+                resultDims[i] = 1
+            } else {
+                resultDims[i] = shape.dimensions[originalIndex]
+                originalIndex++
+            }
+        }
+        
+        return Shape(resultDims)
     }
 }

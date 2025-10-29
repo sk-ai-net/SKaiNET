@@ -8,25 +8,18 @@ import sk.ainet.lang.types.Int32
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertTrue
 
 class VoidTensorOpsTest {
     
     private val dataFactory = DenseTensorDataFactory()
-    private val ops = VoidTensorOps<Float>()
+    private val ops = VoidTensorOps()
     
     // Helper function to create test tensors
     private fun createTensor(shape: Shape): VoidOpsTensor<FP32, Float> {
         val data = dataFactory.zeros<FP32, Float>(shape, FP32::class)
         return VoidOpsTensor(data, FP32::class)
     }
-    
-    private fun createIntTensor(shape: Shape): VoidOpsTensor<Int32, Int> {
-        val intOps = VoidTensorOps<Int>()
-        val data = DenseTensorDataFactory().zeros<Int32, Int>(shape, Int32::class)
-        return VoidOpsTensor(data, Int32::class)
-    }
-    
+
     @Test
     fun testAdd_SameShape_Success() {
         val a = createTensor(Shape(2, 3))
@@ -46,7 +39,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.add(a, b)
         }
-        assertTrue(exception.message?.contains("Shape mismatch for addition") == true)
+        assertEquals(exception.message?.contains("Shape mismatch for addition"), true)
     }
     
     @Test
@@ -79,7 +72,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.divide(a, b)
         }
-        assertTrue(exception.message?.contains("Shape mismatch for division") == true)
+        assertEquals(exception.message?.contains("Shape mismatch for division"), true)
     }
     
     @Test
@@ -112,18 +105,49 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.matmul(a, b)
         }
-        assertTrue(exception.message?.contains("inner dimensions must match") == true)
+        assertEquals(exception.message?.contains("inner dimensions must match"), true)
     }
     
     @Test
-    fun testMatmul_1DTensor_ThrowsException() {
-        val a = createTensor(Shape(4))
-        val b = createTensor(Shape(4))
-        
-        val exception = assertFailsWith<IllegalArgumentException> {
-            ops.matmul(a, b)
-        }
-        assertTrue(exception.message?.contains("at least 2 dimensions") == true)
+    fun testMatmul_1D_1D_DotProduct() {
+        val a = createTensor(Shape(4))  // (k,)
+        val b = createTensor(Shape(4))  // (k,)
+        val result = ops.matmul(a, b)
+        // Result is scalar (0-D)
+        assertEquals(0, result.rank)
+        assertEquals(Shape(), result.shape)
+    }
+
+    // Additional comprehensive matmul tests covering all specification cases
+    
+    @Test
+    fun testMatmul_VectorTimesBatchedMatrices_Broadcast() {
+        // (k,) @ (b, k, n) -> (b, n)
+        val a = createTensor(Shape(4))        // k=4
+        val b = createTensor(Shape(3, 4, 2))  // b=3, k=4, n=2
+        val result = ops.matmul(a, b)
+        assertEquals(Shape(3, 2), result.shape)
+        assertEquals(FP32::class, result.dtype)
+    }
+    
+    @Test
+    fun testMatmul_1D_2D_RowVectorTimesMatrix() {
+        // (k,) @ (k, n) -> (n)
+        val a = createTensor(Shape(4))      // (k,)
+        val b = createTensor(Shape(4, 2))   // (k, n)
+        val result = ops.matmul(a, b)
+        assertEquals(Shape(2), result.shape)
+        assertEquals(FP32::class, result.dtype)
+    }
+    
+    @Test
+    fun testMatmul_2D_1D_MatrixTimesColumnVector() {
+        // (..., m, k) @ (k,) -> (..., m)
+        val a = createTensor(Shape(3, 4))   // (m, k)
+        val b = createTensor(Shape(4))      // (k,)
+        val result = ops.matmul(a, b)
+        assertEquals(Shape(3), result.shape)
+        assertEquals(FP32::class, result.dtype)
     }
     
     @Test
@@ -153,7 +177,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.transpose(tensor)
         }
-        assertTrue(exception.message?.contains("at least 2 dimensions") == true)
+        assertEquals(exception.message?.contains("at least 2 dimensions"), true)
     }
     
     @Test
@@ -175,7 +199,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.reshape(tensor, newShape)
         }
-        assertTrue(exception.message?.contains("volume mismatch") == true)
+        assertEquals(exception.message?.contains("volume mismatch"), true)
     }
     
     @Test
@@ -205,7 +229,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.flatten(tensor, 5, 6)  // Out of bounds
         }
-        assertTrue(exception.message?.contains("out of bounds") == true)
+        assertEquals(exception.message?.contains("out of bounds"), true)
     }
     
     @Test
@@ -215,7 +239,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.flatten(tensor, 2, 1)  // start > end
         }
-        assertTrue(exception.message?.contains("must be <=") == true)
+        assertEquals(exception.message?.contains("must be <="), true)
     }
     
     @Test
@@ -264,7 +288,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.softmax(tensor, 5)  // Out of bounds
         }
-        assertTrue(exception.message?.contains("out of bounds") == true)
+        assertEquals(exception.message?.contains("out of bounds"), true)
     }
     
     @Test
@@ -324,7 +348,7 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.sum(tensor, 5)  // Out of bounds
         }
-        assertTrue(exception.message?.contains("out of bounds") == true)
+        assertEquals(exception.message?.contains("out of bounds"), true)
     }
     
     @Test
@@ -419,7 +443,123 @@ class VoidTensorOpsTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.matmul(a, b)
         }
-        assertTrue(exception.message?.contains("batch dimension mismatch") == true)
+        assertEquals(exception.message?.contains("batch dimension mismatch"), true)
+    }
+
+    @Test
+    fun testMatmul_ComplexBroadcasting_MultipleBatchDimensions() {
+        val a = createTensor(Shape(2, 1, 3, 4))  // Batch=(2, 1), 3×4 matrices
+        val b = createTensor(Shape(1, 5, 4, 6))  // Batch=(1, 5), 4×6 matrices
+        
+        val result = ops.matmul(a, b)
+        
+        // Batch dimensions broadcast: (2, 1) × (1, 5) -> (2, 5)
+        // Matrix dimensions: 3×4 × 4×6 -> 3×6
+        assertEquals(Shape(2, 5, 3, 6), result.shape)
+        assertEquals(FP32::class, result.dtype)
+    }
+
+    @Test
+    fun testMatmul_SingleBatchDimensionBroadcasting() {
+        val a = createTensor(Shape(2, 3))    // No batch, 2×3 matrix
+        val b = createTensor(Shape(5, 3, 4)) // Batch=5, 3×4 matrices
+        
+        val result = ops.matmul(a, b)
+        
+        // Should broadcast to (5, 2, 4)
+        assertEquals(Shape(5, 2, 4), result.shape)
+        assertEquals(FP32::class, result.dtype)
+    }
+
+    @Test
+    fun testMatmul_BatchedMatricesTimesVector_Broadcast() {
+        // (b, m, k) @ (k,) -> (b, m)
+        val a = createTensor(Shape(3, 2, 4))  // b=3, m=2, k=4
+        val b = createTensor(Shape(4))        // k=4
+        val result = ops.matmul(a, b)
+        assertEquals(Shape(3, 2), result.shape)
+        assertEquals(FP32::class, result.dtype)
+    }
+
+    @Test
+    fun testMatmul_HighDimensionalBroadcasting() {
+        val a = createTensor(Shape(2, 1, 1, 3, 4))  // Complex batch dimensions
+        val b = createTensor(Shape(1, 3, 5, 4, 2))  // Different batch dimensions
+        
+        val result = ops.matmul(a, b)
+        
+        // Batch broadcast: (2, 1, 1) × (1, 3, 5) -> (2, 3, 5)
+        // Matrix: 3×4 × 4×2 -> 3×2
+        assertEquals(Shape(2, 3, 5, 3, 2), result.shape)
+    }
+
+    @Test
+    fun testMatmul_EdgeCase_MinimumMatrixSize() {
+        val a = createTensor(Shape(1, 1))  // 1×1 matrix
+        val b = createTensor(Shape(1, 1))  // 1×1 matrix
+        
+        val result = ops.matmul(a, b)
+        
+        assertEquals(Shape(1, 1), result.shape)  // 1×1 result
+        assertEquals(FP32::class, result.dtype)
+    }
+
+    @Test
+    fun testMatmul_EdgeCase_VeryLargeInnerDimension() {
+        val a = createTensor(Shape(2, 1000))  // 2×1000
+        val b = createTensor(Shape(1000, 3))  // 1000×3
+        
+        val result = ops.matmul(a, b)
+        
+        assertEquals(Shape(2, 3), result.shape)  // 2×3 result
+        assertEquals(FP32::class, result.dtype)
+    }
+
+    @Test
+    fun testMatmul_ShapeValidation_ZeroDimension() {
+        val a = createTensor(Shape(0, 4))  // Empty matrix
+        val b = createTensor(Shape(4, 3))
+        
+        val result = ops.matmul(a, b)
+        
+        assertEquals(Shape(0, 3), result.shape)  // Empty result
+        assertEquals(FP32::class, result.dtype)
+    }
+
+    @Test
+    fun testMatmul_ShapeValidation_InnerDimensionMismatch_DetailedError() {
+        val a = createTensor(Shape(3, 7))  // 3×7
+        val b = createTensor(Shape(5, 2))  // 5×2 (7 != 5)
+        
+        val exception = assertFailsWith<IllegalArgumentException> {
+            ops.matmul(a, b)
+        }
+        assertEquals(exception.message?.contains("7 vs 5"), true)
+        assertEquals(exception.message?.contains("inner dimensions must match"), true)
+    }
+
+    @Test
+    fun testMatmul_BatchedMatrices_DifferentRanks() {
+        val a = createTensor(Shape(1, 3, 4))     // 3D tensor with batch=1
+        val b = createTensor(Shape(2, 4, 5))     // 3D tensor with batch=2
+        
+        val result = ops.matmul(a, b)
+        
+        // Batch dimensions should broadcast: 1 × 2 -> 2
+        // Matrix dimensions: 3×4 × 4×5 -> 3×5
+        assertEquals(Shape(2, 3, 5), result.shape)
+    }
+
+    @Test
+    fun testMatmul_BatchedMatrices_IncompatibleBatchBroadcast() {
+        val a = createTensor(Shape(3, 2, 4))  // Batch=3
+        val b = createTensor(Shape(5, 4, 6))  // Batch=5 (can't broadcast 3 and 5)
+        
+        val exception = assertFailsWith<IllegalArgumentException> {
+            ops.matmul(a, b)
+        }
+        assertEquals(exception.message?.contains("batch dimension mismatch"), true)
+        assertEquals(exception.message?.contains("3 vs 5"), true)
     }
     
     @Test
@@ -432,5 +572,233 @@ class VoidTensorOpsTest {
         
         val reshapeResult = ops.reshape(largeTensor, Shape(20, 1000))
         assertEquals(Shape(20, 1000), reshapeResult.shape)
+    }
+
+    // Tests for new YOLO shape operations
+    
+    @Test
+    fun testConcat_SameDimensions_Success() {
+        val tensor1 = createTensor(Shape(2, 3, 4))
+        val tensor2 = createTensor(Shape(2, 3, 4))
+        val tensors = listOf(tensor1, tensor2)
+        
+        val result = ops.concat(tensors, 0)  // Concatenate along dimension 0
+        
+        assertEquals(Shape(4, 3, 4), result.shape)  // First dimension doubled
+        assertEquals(FP32::class, result.dtype)
+    }
+    
+    @Test
+    fun testConcat_DifferentSizesInConcatDim_Success() {
+        val tensor1 = createTensor(Shape(2, 3, 4))
+        val tensor2 = createTensor(Shape(2, 5, 4))  // Different size in dim 1
+        val tensors = listOf(tensor1, tensor2)
+        
+        val result = ops.concat(tensors, 1)  // Concatenate along dimension 1
+        
+        assertEquals(Shape(2, 8, 4), result.shape)  // 3 + 5 = 8 in dimension 1
+        assertEquals(FP32::class, result.dtype)
+    }
+    
+    @Test
+    fun testConcat_NegativeDimension_Success() {
+        val tensor1 = createTensor(Shape(2, 3))
+        val tensor2 = createTensor(Shape(2, 3))
+        val tensors = listOf(tensor1, tensor2)
+        
+        val result = ops.concat(tensors, -1)  // Concatenate along last dimension
+        
+        assertEquals(Shape(2, 6), result.shape)  // Last dimension doubled
+    }
+    
+    @Test
+    fun testConcat_EmptyList_ThrowsException() {
+        val exception = assertFailsWith<IllegalArgumentException> {
+            ops.concat(emptyList<VoidOpsTensor<FP32, Float>>(), 0)
+        }
+        assertEquals(exception.message?.contains("empty list"), true)
+    }
+    
+    @Test
+    fun testConcat_IncompatibleShapes_ThrowsException() {
+        val tensor1 = createTensor(Shape(2, 3, 4))
+        val tensor2 = createTensor(Shape(2, 5, 6))  // Different in non-concat dimension
+        val tensors = listOf(tensor1, tensor2)
+        
+        val exception = assertFailsWith<IllegalArgumentException> {
+            ops.concat(tensors, 0)  // Try to concat along dim 0
+        }
+        assertEquals(exception.message?.contains("same shape except in the concatenation dimension"), true)
+    }
+    
+    @Test
+    fun testConcat_OutOfBounds_ThrowsException() {
+        val tensor = createTensor(Shape(2, 3))
+        val tensors = listOf(tensor)
+        
+        val exception = assertFailsWith<IllegalArgumentException> {
+            ops.concat(tensors, 5)  // Out of bounds dimension
+        }
+        assertEquals(exception.message?.contains("out of bounds"), true)
+    }
+    
+    @Test
+    fun testSplit_EvenSplit_Success() {
+        val tensor = createTensor(Shape(4, 6, 8))
+        
+        val result = ops.split(tensor, 2, 1)  // Split dimension 1 into chunks of size 2
+        
+        assertEquals(3, result.size)  // 6 / 2 = 3 chunks
+        result.forEach { chunk ->
+            assertEquals(Shape(4, 2, 8), chunk.shape)
+            assertEquals(FP32::class, chunk.dtype)
+        }
+    }
+    
+    @Test
+    fun testSplit_LastDimension_Success() {
+        val tensor = createTensor(Shape(2, 3, 12))
+        
+        val result = ops.split(tensor, 3, -1)  // Split last dimension
+        
+        assertEquals(4, result.size)  // 12 / 3 = 4 chunks
+        result.forEach { chunk ->
+            assertEquals(Shape(2, 3, 3), chunk.shape)
+        }
+    }
+    
+    @Test
+    fun testSplit_NotDivisible_ThrowsException() {
+        val tensor = createTensor(Shape(2, 5, 4))
+        
+        val exception = assertFailsWith<IllegalArgumentException> {
+            ops.split(tensor, 3, 1)  // 5 is not divisible by 3
+        }
+        assertEquals(exception.message?.contains("not divisible"), true)
+    }
+    
+    @Test
+    fun testSplit_InvalidSplitSize_ThrowsException() {
+        val tensor = createTensor(Shape(2, 4, 6))
+        
+        val exception = assertFailsWith<IllegalArgumentException> {
+            ops.split(tensor, 0, 1)  // Split size must be positive
+        }
+        assertEquals(exception.message?.contains("must be positive"), true)
+    }
+    
+    @Test
+    fun testSplit_OutOfBounds_ThrowsException() {
+        val tensor = createTensor(Shape(2, 3))
+        
+        val exception = assertFailsWith<IllegalArgumentException> {
+            ops.split(tensor, 1, 5)  // Out of bounds dimension
+        }
+        assertEquals(exception.message?.contains("out of bounds"), true)
+    }
+    
+    @Test
+    fun testSqueeze_AllOnes_Success() {
+        val tensor = createTensor(Shape(2, 1, 3, 1, 4))
+        
+        val result = ops.squeeze(tensor, null)  // Remove all dimensions of size 1
+        
+        assertEquals(Shape(2, 3, 4), result.shape)  // Only dimensions > 1 remain
+        assertEquals(FP32::class, result.dtype)
+    }
+    
+    @Test
+    fun testSqueeze_SpecificDimension_Success() {
+        val tensor = createTensor(Shape(2, 1, 3, 4))
+        
+        val result = ops.squeeze(tensor, 1)  // Remove dimension 1 (size 1)
+        
+        assertEquals(Shape(2, 3, 4), result.shape)  // Dimension 1 removed
+        assertEquals(FP32::class, result.dtype)
+    }
+    
+    @Test
+    fun testSqueeze_NegativeDimension_Success() {
+        val tensor = createTensor(Shape(2, 3, 1))
+        
+        val result = ops.squeeze(tensor, -1)  // Remove last dimension (size 1)
+        
+        assertEquals(Shape(2, 3), result.shape)
+    }
+    
+    @Test
+    fun testSqueeze_AllOnesScalar_Success() {
+        val tensor = createTensor(Shape(1, 1, 1))
+        
+        val result = ops.squeeze(tensor, null)  // Remove all dimensions
+        
+        assertEquals(Shape(1), result.shape)  // Becomes scalar
+    }
+    
+    @Test
+    fun testSqueeze_NonOneDimension_ThrowsException() {
+        val tensor = createTensor(Shape(2, 3, 4))
+        
+        val exception = assertFailsWith<IllegalArgumentException> {
+            ops.squeeze(tensor, 1)  // Dimension 1 has size 3, not 1
+        }
+        assertEquals(exception.message?.contains("Only dimensions of size 1 can be squeezed"), true)
+    }
+    
+    @Test
+    fun testSqueeze_OutOfBounds_ThrowsException() {
+        val tensor = createTensor(Shape(2, 1, 3))
+        
+        val exception = assertFailsWith<IllegalArgumentException> {
+            ops.squeeze(tensor, 5)  // Out of bounds dimension
+        }
+        assertEquals(exception.message?.contains("out of bounds"), true)
+    }
+    
+    @Test
+    fun testUnsqueeze_PositiveDimension_Success() {
+        val tensor = createTensor(Shape(2, 3, 4))
+        
+        val result = ops.unsqueeze(tensor, 1)  // Add dimension at position 1
+        
+        assertEquals(Shape(2, 1, 3, 4), result.shape)  // New dimension of size 1 at position 1
+        assertEquals(FP32::class, result.dtype)
+    }
+    
+    @Test
+    fun testUnsqueeze_NegativeDimension_Success() {
+        val tensor = createTensor(Shape(2, 3))
+        
+        val result = ops.unsqueeze(tensor, -1)  // Add dimension at end
+        
+        assertEquals(Shape(2, 3, 1), result.shape)  // New dimension added at end
+    }
+    
+    @Test
+    fun testUnsqueeze_AtBeginning_Success() {
+        val tensor = createTensor(Shape(3, 4))
+        
+        val result = ops.unsqueeze(tensor, 0)  // Add dimension at beginning
+        
+        assertEquals(Shape(1, 3, 4), result.shape)
+    }
+    
+    @Test
+    fun testUnsqueeze_Scalar_Success() {
+        val tensor = createTensor(Shape(1))  // Scalar tensor
+        
+        val result = ops.unsqueeze(tensor, 0)  // Add dimension at beginning
+        
+        assertEquals(Shape(1, 1), result.shape)
+    }
+    
+    @Test
+    fun testUnsqueeze_OutOfBounds_ThrowsException() {
+        val tensor = createTensor(Shape(2, 3))
+        
+        val exception = assertFailsWith<IllegalArgumentException> {
+            ops.unsqueeze(tensor, 5)  // Out of bounds for new rank (3)
+        }
+        assertEquals(exception.message?.contains("out of bounds"), true)
     }
 }

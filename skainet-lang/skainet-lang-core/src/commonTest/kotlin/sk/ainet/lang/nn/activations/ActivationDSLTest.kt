@@ -1,7 +1,7 @@
 package sk.ainet.lang.nn.activations
 
-import sk.ainet.lang.nn.dsl.context
-import sk.ainet.lang.nn.dsl.network
+import sk.ainet.lang.nn.definition
+import sk.ainet.lang.nn.network
 import sk.ainet.lang.tensor.gelu
 import sk.ainet.lang.tensor.sigmoid
 import sk.ainet.lang.tensor.silu
@@ -14,7 +14,7 @@ class ActivationDSLTest {
 
     @Test
     fun testSiLU_DSLIntegration() {
-        val model = context<FP32, Float> {
+        val model = definition<FP32, Float> {
             network {
                 input(10)
                 dense(5) {
@@ -29,7 +29,7 @@ class ActivationDSLTest {
 
     @Test
     fun testGELU_DSLIntegration() {
-        val model = context<FP32, Float> {
+        val model = definition<FP32, Float> {
             network {
                 input(10)
                 dense(5) {
@@ -44,7 +44,7 @@ class ActivationDSLTest {
 
     @Test
     fun testSigmoid_DSLIntegration() {
-        val model = context<FP32, Float> {
+        val model = definition<FP32, Float> {
             network {
                 input(10)
                 dense(5) {
@@ -59,7 +59,7 @@ class ActivationDSLTest {
 
     @Test
     fun testMultipleNewActivations_DSLIntegration() {
-        val model = context<FP32, Float> {
+        val model = definition<FP32, Float> {
             network {
                 input(20)
                 
@@ -87,7 +87,7 @@ class ActivationDSLTest {
     @Test
     fun testYOLO8StyleActivationChain() {
         // Simulate YOLO8-style network using SiLU as primary activation
-        val yoloModel = context<FP32, Float> {
+        val yoloModel = definition<FP32, Float> {
             network {
                 input(512)
                 

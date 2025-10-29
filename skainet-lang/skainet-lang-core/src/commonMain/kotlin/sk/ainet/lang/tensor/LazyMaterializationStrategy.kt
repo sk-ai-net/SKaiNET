@@ -87,7 +87,7 @@ public class LazyMaterializationStrategy<T : DType, V> : MaterializationStrategy
     private class LazyMaterializedTensor<T : DType, V>(
         private val originalView: TensorView<T, V>,
         override val dtype: KClass<T>,
-        override val ops: TensorOps<V>
+        override val ops: TensorOps
     ) : Tensor<T, V> {
 
         override val data: TensorData<T, V> = LazyMaterializedTensorData(originalView)

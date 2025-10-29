@@ -97,7 +97,7 @@ public class SlicedTensorView<T : DType, V>(
      * value type. Operations will see the view's shape and delegate data
      * access through the view's data wrapper.
      */
-    override val ops: TensorOps<V> = parentTensor.ops
+    override val ops: TensorOps = parentTensor.ops
     
     /**
      * Inherit data type from parent tensor.

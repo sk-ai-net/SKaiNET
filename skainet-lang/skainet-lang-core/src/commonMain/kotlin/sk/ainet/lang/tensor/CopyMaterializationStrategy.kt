@@ -210,7 +210,7 @@ public class CopyMaterializationStrategy<T : DType, V> : MaterializationStrategy
      */
     private class MaterializedTensor<T : DType, V>(
         override val data: TensorData<T, V>,
-        override val ops: TensorOps<V>,
+        override val ops: TensorOps,
         override val dtype: KClass<T>
     ) : Tensor<T, V>
 }

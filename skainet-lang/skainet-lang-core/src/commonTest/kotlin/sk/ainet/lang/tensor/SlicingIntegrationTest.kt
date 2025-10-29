@@ -1,5 +1,6 @@
 package sk.ainet.lang.tensor
 
+import sk.ainet.context.data
 import sk.ainet.lang.tensor.dsl.*
 import sk.ainet.lang.types.FP32
 import kotlin.random.Random
@@ -20,46 +21,48 @@ class SlicingIntegrationTest {
     fun testCompatibilityWithExistingTensorOperations() {
         println("[DEBUG_LOG] Testing compatibility with existing tensor operations")
 
-        with(testFactory) {
-            // Create base tensor
-            val tensor = tensor(4, 3, 2) { shape ->
-                init { indices ->
-                    var flatIndex = 0
-                    var stride = 1
-                    for (i in indices.indices.reversed()) {
-                        flatIndex += indices[i] * stride
-                        stride *= shape[i]
+        data {
+            tensor<FP32, Float> {
+                // Create base tensor
+                val tensor = shape(4, 3, 2) { shape ->
+                    init { indices ->
+                        var flatIndex = 0
+                        var stride = 1
+                        for (i in indices.indices.reversed()) {
+                            flatIndex += indices[i] * stride
+                            stride *= shape[i]
+                        }
+                        flatIndex.toFloat()
                     }
-                    flatIndex.toFloat()
                 }
+
+                // Test slicing with different tensor creation methods
+                val zerosView = tensor.sliceView {
+                    segment { range(0, 2) }
+                    segment { all() }
+                    segment { all() }
+                }
+
+                val onesView = tensor.sliceView {
+                    segment { range(2, 4) }
+                    segment { all() }
+                    segment { all() }
+                }
+
+                // Verify compatibility
+                assertEquals(Shape(2, 3, 2), zerosView.shape)
+                assertEquals(Shape(2, 3, 2), onesView.shape)
+
+                // Test that views maintain tensor interface compatibility
+                assertNotNull(zerosView.data)
+                assertNotNull(onesView.data)
+
+                assertTrue(zerosView is TensorView<FP32, Float>)
+                assertTrue(onesView is TensorView<FP32, Float>)
+
+                println("[DEBUG_LOG] Compatibility with existing tensor operations verified")
+                onesView
             }
-
-            // Test slicing with different tensor creation methods
-            val zerosView = tensor.sliceView {
-                segment { range(0, 2) }
-                segment { all() }
-                segment { all() }
-            }
-
-            val onesView = tensor.sliceView {
-                segment { range(2, 4) }
-                segment { all() }
-                segment { all() }
-            }
-
-            // Verify compatibility
-            assertEquals(Shape(2, 3, 2), zerosView.shape)
-            assertEquals(Shape(2, 3, 2), onesView.shape)
-
-            // Test that views maintain tensor interface compatibility
-            assertNotNull(zerosView.data)
-            assertNotNull(onesView.data)
-
-            assertTrue(zerosView is TensorView<FP32, Float>)
-            assertTrue(onesView is TensorView<FP32, Float>)
-
-            println("[DEBUG_LOG] Compatibility with existing tensor operations verified")
-            onesView
         }
     }
 
@@ -68,40 +71,44 @@ class SlicingIntegrationTest {
     fun testSliceViewVsSliceCopyBehavioralDifferences() {
         println("[DEBUG_LOG] Testing sliceView() vs sliceCopy() behavioral differences")
 
-        with(testFactory) {
-            val tensor = tensor(4, 3, 2) { shape ->
-                init { indices ->
-                    var flatIndex = 0
-                    var stride = 1
-                    for (i in indices.indices.reversed()) {
-                        flatIndex += indices[i] * stride
-                        stride *= shape[i]
+        data {
+
+
+            tensor<FP32, Float> {
+                val tensor = shape(4, 3, 2) { shape ->
+                    init { indices ->
+                        var flatIndex = 0
+                        var stride = 1
+                        for (i in indices.indices.reversed()) {
+                            flatIndex += indices[i] * stride
+                            stride *= shape[i]
+                        }
+                        flatIndex.toFloat()
                     }
-                    flatIndex.toFloat()
                 }
-            }
 
-            // Test sliceView - should create zero-copy view
-            val view = tensor.sliceView {
-                segment { range(1, 3) }
-                segment { all() }
-                segment { all() }
-            }
-
-            assertEquals(Shape(2, 3, 2), view.shape)
-            assertTrue(view is TensorView<FP32, Float>)
-
-            // Test sliceCopy - should throw NotImplementedError for now
-            assertFailsWith<NotImplementedError> {
-                tensor.sliceCopy {
+                // Test sliceView - should create zero-copy view
+                val view = tensor.sliceView {
                     segment { range(1, 3) }
                     segment { all() }
                     segment { all() }
                 }
-            }
 
-            println("[DEBUG_LOG] sliceView() vs sliceCopy() behavioral differences validated")
-            view
+                assertEquals(Shape(2, 3, 2), view.shape)
+                assertTrue(view is TensorView<FP32, Float>)
+
+                // Test sliceCopy - should throw NotImplementedError for now
+                assertFailsWith<NotImplementedError> {
+                    tensor.sliceCopy {
+                        segment { range(1, 3) }
+                        segment { all() }
+                        segment { all() }
+                    }
+                }
+
+                println("[DEBUG_LOG] sliceView() vs sliceCopy() behavioral differences validated")
+                view
+            }
         }
     }
 
@@ -110,57 +117,60 @@ class SlicingIntegrationTest {
     fun testErrorHandlingAndValidationInDSL() {
         println("[DEBUG_LOG] Testing error handling and validation in DSL")
 
-        with<FP32, Float>(testFactory) {
-            val tensor = tensor(4, 3, 2) { shape ->
-                zeros()
-            }
+        data {
 
-            // Test various error conditions
-
-            // Invalid range bounds
-            assertFailsWith<IllegalArgumentException> {
-                tensor.sliceView {
-                    segment { range(3, 1) }  // End < start
-                    segment { all() }
-                    segment { all() }
+            tensor<FP32, Float> {
+                val tensor = shape(4, 3, 2) { shape ->
+                    zeros()
                 }
-            }
 
-            // Out of bounds index
-            try {
-                tensor.sliceView {
-                    segment { at(10) }  // Index > dimension size
-                    segment { all() }
-                    segment { all() }
+                // Test various error conditions
+
+                // Invalid range bounds
+                assertFailsWith<IllegalArgumentException> {
+                    tensor.sliceView {
+                        segment { range(3, 1) }  // End < start
+                        segment { all() }
+                        segment { all() }
+                    }
                 }
-                println("[DEBUG_LOG] Out-of-bounds index allowed (implementation specific)")
-            } catch (e: Exception) {
-                println("[DEBUG_LOG] Out-of-bounds index properly rejected: ${e.message}")
-            }
 
-            // Invalid step size
-            assertFailsWith<IllegalArgumentException> {
-                tensor.sliceView {
-                    segment { step(0, 4, 0) }  // Step = 0
-                    segment { all() }
-                    segment { all() }
+                // Out of bounds index
+                try {
+                    tensor.sliceView {
+                        segment { at(10) }  // Index > dimension size
+                        segment { all() }
+                        segment { all() }
+                    }
+                    println("[DEBUG_LOG] Out-of-bounds index allowed (implementation specific)")
+                } catch (e: Exception) {
+                    println("[DEBUG_LOG] Out-of-bounds index properly rejected: ${e.message}")
                 }
-            }
 
-            // Negative step (if not supported)
-            try {
-                tensor.sliceView {
-                    segment { step(3, 0, -1) }  // Negative step
-                    segment { all() }
-                    segment { all() }
+                // Invalid step size
+                assertFailsWith<IllegalArgumentException> {
+                    tensor.sliceView {
+                        segment { step(0, 4, 0) }  // Step = 0
+                        segment { all() }
+                        segment { all() }
+                    }
                 }
-                println("[DEBUG_LOG] Negative step allowed (implementation specific)")
-            } catch (e: Exception) {
-                println("[DEBUG_LOG] Negative step properly rejected: ${e.message}")
-            }
 
-            println("[DEBUG_LOG] Error handling and validation tests completed")
-            tensor
+                // Negative step (if not supported)
+                try {
+                    tensor.sliceView {
+                        segment { step(3, 0, -1) }  // Negative step
+                        segment { all() }
+                        segment { all() }
+                    }
+                    println("[DEBUG_LOG] Negative step allowed (implementation specific)")
+                } catch (e: Exception) {
+                    println("[DEBUG_LOG] Negative step properly rejected: ${e.message}")
+                }
+
+                println("[DEBUG_LOG] Error handling and validation tests completed")
+                tensor
+            }
         }
     }
 
@@ -169,39 +179,42 @@ class SlicingIntegrationTest {
     fun testBackwardCompatibilityWithExistingTensorCreationPatterns() {
         println("[DEBUG_LOG] Testing backward compatibility with existing tensor creation patterns")
 
-        with<FP32, Float>(testFactory) {
-            // Test with various tensor creation patterns
-            val testCases = listOf(
-                "zeros" to { shape: Shape -> tensor(shape) { zeros() } },
-                "ones" to { shape: Shape -> tensor(shape) { ones() } },
-                "full" to { shape: Shape -> tensor(shape) { full(5.0f) } },
-                "uniform" to { shape: Shape -> tensor(shape) { uniform(0.0f, 1.0f, Random(42)) } }
-            )
+        data { executionContext ->
 
-            for ((name, factory) in testCases) {
-                val tensorData = factory(Shape(4, 3, 2))
-                val tensor = tensor(4, 3, 2) {
-                    // Create tensor using the factory data
-                    init { indices ->
-                        tensorData.data.get(*indices)
+            tensor<FP32, Float> {
+                // Test with various tensor creation patterns
+                val testCases = listOf(
+                    "zeros" to { shape: Shape -> shape(shape) { zeros() } },
+                    "ones" to { shape: Shape -> shape(shape) { ones() } },
+                    "full" to { shape: Shape -> shape(shape) { full(5.0f) } },
+                    "uniform" to { shape: Shape -> shape(shape) { uniform(0.0f, 1.0f, Random(42)) } }
+                )
+
+                for ((name, factory) in testCases) {
+                    val tensorData = factory(Shape(4, 3, 2))
+                    val tensor = shape(4, 3, 2) {
+                        // Create tensor using the factory data
+                        init { indices ->
+                            tensorData.data.get(*indices)
+                        }
                     }
+
+                    // Test slicing works with all creation patterns
+                    val view = tensor.sliceView {
+                        segment { range(1, 3) }
+                        segment { all() }
+                        segment { at(0) }
+                    }
+
+                    assertEquals(Shape(2, 3), view.shape)
+                    println("[DEBUG_LOG] Backward compatibility verified for: $name")
+
                 }
 
-                // Test slicing works with all creation patterns
-                val view = tensor.sliceView {
-                    segment { range(1, 3) }
-                    segment { all() }
-                    segment { at(0) }
-                }
-
-                assertEquals(Shape(2, 3), view.shape)
-                println("[DEBUG_LOG] Backward compatibility verified for: $name")
-
+                println("[DEBUG_LOG] Backward compatibility tests completed")
+                val (name, factory) = testCases[0]
+                factory(Shape(4, 3, 2))
             }
-
-            println("[DEBUG_LOG] Backward compatibility tests completed")
-            val (name, factory) = testCases[0]
-            factory(Shape(4, 3, 2))
         }
     }
 
@@ -209,42 +222,44 @@ class SlicingIntegrationTest {
     @Test
     fun testBatchProcessingScenarios() {
         println("[DEBUG_LOG] Testing batch processing scenarios")
+        data {
 
-        with(testFactory) {
-            // Create dataset tensor: (batch_size=32, features=128)
-            val dataset = tensor(32, 128) {
-                init { indices ->
-                    // Create synthetic data with batch index as primary component
-                    indices[0].toFloat() * 1000 + indices[1].toFloat()
-                }
-            }
-
-            // Test mini-batch extraction
-            val batchSize = 8
-            val batches = mutableListOf<TensorView<FP32, Float>>()
-
-            for (i in 0 until 4) {
-                val startIdx = i * batchSize
-                val endIdx = (i + 1) * batchSize
-
-                val batch = dataset.sliceView {
-                    segment { range(startIdx, endIdx) }
-                    segment { all() }
+            tensor<FP32, Float> {
+                // Create dataset tensor: (batch_size=32, features=128)
+                val dataset = shape(32, 128) {
+                    init { indices ->
+                        // Create synthetic data with batch index as primary component
+                        indices[0].toFloat() * 1000 + indices[1].toFloat()
+                    }
                 }
 
-                assertEquals(Shape(batchSize, 128), batch.shape)
-                batches.add(batch)
+                // Test mini-batch extraction
+                val batchSize = 8
+                val batches = mutableListOf<TensorView<FP32, Float>>()
 
-                // Verify batch data integrity
-                val firstSample = batch.data[0, 0]
-                val expectedFirstSample = startIdx.toFloat() * 1000 + 0.0f
-                assertEquals(expectedFirstSample, firstSample)
-            }
+                for (i in 0 until 4) {
+                    val startIdx = i * batchSize
+                    val endIdx = (i + 1) * batchSize
 
-            assertEquals(4, batches.size)
-            println("[DEBUG_LOG] Mini-batch extraction verified with ${batches.size} batches of size $batchSize")
-            tensor(4, 3, 2) {
-                zeros()
+                    val batch = dataset.sliceView {
+                        segment { range(startIdx, endIdx) }
+                        segment { all() }
+                    }
+
+                    assertEquals(Shape(batchSize, 128), batch.shape)
+                    batches.add(batch)
+
+                    // Verify batch data integrity
+                    val firstSample = batch.data[0, 0]
+                    val expectedFirstSample = startIdx.toFloat() * 1000 + 0.0f
+                    assertEquals(expectedFirstSample, firstSample)
+                }
+
+                assertEquals(4, batches.size)
+                println("[DEBUG_LOG] Mini-batch extraction verified with ${batches.size} batches of size $batchSize")
+                shape(4, 3, 2) {
+                    zeros()
+                }
             }
         }
     }
@@ -253,17 +268,18 @@ class SlicingIntegrationTest {
     @Test
     fun testFeatureExtractionUseCases() {
         println("[DEBUG_LOG] Testing feature extraction use cases")
-
-        with(testFactory) {
-            // Create NCHW image tensor: (batch=4, channels=3, height=32, width=32)
-            val images = tensor(4, 3, 32, 32) { shape ->
-                init { indices ->
-                    // Create synthetic image data
-                    val batch = indices[0]
-                    val channel = indices[1]
-                    val height = indices[2]
-                    val width = indices[3]
-                    (batch * 10000 + channel * 1000 + height * 10 + width).toFloat()
+        data {
+            val images = tensor<FP32, Float> {
+                // Create NCHW image tensor: (batch=4, channels=3, height=32, width=32)
+                shape(4, 3, 32, 32) { shape ->
+                    init { indices ->
+                        // Create synthetic image data
+                        val batch = indices[0]
+                        val channel = indices[1]
+                        val height = indices[2]
+                        val width = indices[3]
+                        (batch * 10000 + channel * 1000 + height * 10 + width).toFloat()
+                    }
                 }
             }
 
@@ -303,7 +319,6 @@ class SlicingIntegrationTest {
             assertEquals(Shape(4, 3, 8, 8), topLeft.shape)
 
             println("[DEBUG_LOG] Feature extraction use cases verified")
-            topLeft
         }
     }
 
@@ -311,16 +326,17 @@ class SlicingIntegrationTest {
     @Test
     fun testSequenceProcessingWithSlidingWindows() {
         println("[DEBUG_LOG] Testing sequence processing with sliding windows")
-
-        with(testFactory) {
-            // Create sequence tensor: (batch=2, sequence_length=100, features=64)
-            val sequences = tensor(2, 100, 64) { shape ->
-                init { indices ->
-                    // Create synthetic sequence data
-                    val batch = indices[0]
-                    val time = indices[1]
-                    val feature = indices[2]
-                    (batch * 10000 + time * 100 + feature).toFloat()
+        data {
+            val sequences = tensor<FP32, Float> {
+                // Create sequence tensor: (batch=2, sequence_length=100, features=64)
+                shape(2, 100, 64) { shape ->
+                    init { indices ->
+                        // Create synthetic sequence data
+                        val batch = indices[0]
+                        val time = indices[1]
+                        val feature = indices[2]
+                        (batch * 10000 + time * 100 + feature).toFloat()
+                    }
                 }
             }
 
@@ -353,7 +369,6 @@ class SlicingIntegrationTest {
 
             assertTrue(windows.size >= 20, "Should generate multiple overlapping windows")
             println("[DEBUG_LOG] Sliding window processing verified with ${windows.size} windows")
-            sequences
         }
     }
 
@@ -362,16 +377,19 @@ class SlicingIntegrationTest {
     fun testMultiHeadAttentionAndModelLayerOutputPatterns() {
         println("[DEBUG_LOG] Testing multi-head attention and model layer output patterns")
 
-        with(testFactory) {
-            // Create attention tensor: (batch=4, heads=8, seq_length=64, head_dim=32)
-            val attention = tensor(4, 8, 64, 32) { shape ->
-                init { indices ->
-                    // Create synthetic attention data
-                    val batch = indices[0]
-                    val head = indices[1]
-                    val seq = indices[2]
-                    val dim = indices[3]
-                    (batch * 100000 + head * 10000 + seq * 100 + dim).toFloat()
+        data {
+
+            val attention = tensor<FP32, Float> {
+                // Create attention tensor: (batch=4, heads=8, seq_length=64, head_dim=32)
+                shape(4, 8, 64, 32) { shape ->
+                    init { indices ->
+                        // Create synthetic attention data
+                        val batch = indices[0]
+                        val head = indices[1]
+                        val seq = indices[2]
+                        val dim = indices[3]
+                        (batch * 100000 + head * 10000 + seq * 100 + dim).toFloat()
+                    }
                 }
             }
 
@@ -412,7 +430,6 @@ class SlicingIntegrationTest {
             assertEquals(Shape(4, 8, 32), flattenedOutput.shape)
 
             println("[DEBUG_LOG] Multi-head attention and model layer patterns verified")
-            attention
         }
     }
 }

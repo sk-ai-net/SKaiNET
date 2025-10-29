@@ -2,13 +2,32 @@ package sk.ainet.lang.tensor.data
 
 import sk.ainet.lang.types.DType
 
+private fun <T : DType, V> TensorData<T, V>.printMatrix(): String {
+    val rows = this.shape[0]
+    val cols = this.shape[1]
+    val sb = StringBuilder()
+    sb.append("[")
+    for (i in 0 until rows) {
+        if (i > 0) sb.append("\n ") // newline + space for readability
+        sb.append("[ ")
+        for (j in 0 until cols) {
+            if (j > 0) sb.append(", ")
+            sb.append(this[i, j].toString())
+        }
+        sb.append(" ]")
+        if (i == rows - 1) sb.append("]")
+    }
+    return sb.toString()
+}
 
-public fun <T: DType,V> TensorData<T,V>.pprint(): String {
+
+public fun <T : DType, V> TensorData<T, V>.pprint(): String {
     return when (this.shape.rank) {
         0 -> {
             // Scalar - single value
             this.toString()
         }
+
         1 -> {
             // Vector - horizontal representation with parentheses
             val sb = StringBuilder()
@@ -20,41 +39,11 @@ public fun <T: DType,V> TensorData<T,V>.pprint(): String {
             sb.append(" ]")
             sb.toString()
         }
+
         2 -> {
-            // Matrix - vertical representation with Unicode brackets
-            val sb = StringBuilder()
-            val rows = this.shape[0]
-            val cols = this.shape[1]
-
-            for (i in 0 until rows) {
-                // Left bracket
-                val leftBracket = when {
-                    rows == 1 -> "( "
-                    i == 0 -> "⎛ "
-                    i == rows - 1 -> "⎝ "
-                    else -> "⎜ "
-                }
-                sb.append(leftBracket)
-
-                // Matrix elements
-                for (j in 0 until cols) {
-                    if (j > 0) sb.append(", ")
-                    sb.append(this[i, j].toString())
-                }
-
-                // Right bracket
-                val rightBracket = when {
-                    rows == 1 -> " )"
-                    i == 0 -> " ⎞"
-                    i == rows - 1 -> " ⎠"
-                    else -> " ⎟"
-                }
-                sb.append(rightBracket)
-
-                if (i < rows - 1) sb.append("\n")
-            }
-            sb.toString()
+            printMatrix()
         }
+
         else -> {
             // Higher rank tensors - use toString
             this.toString()

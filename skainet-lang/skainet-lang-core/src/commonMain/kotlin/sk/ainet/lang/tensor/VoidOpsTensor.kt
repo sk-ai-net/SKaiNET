@@ -13,6 +13,6 @@ public class VoidOpsTensor<T : DType, V>(
     override val data: TensorData<T, V>,
     override val dtype: KClass<T>
 ) : Tensor<T, V> {
-    override val ops: TensorOps<V>
+    override val ops: TensorOps
         get() = VoidTensorOps()
 }

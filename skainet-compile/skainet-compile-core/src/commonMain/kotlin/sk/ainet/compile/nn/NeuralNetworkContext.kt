@@ -1,13 +1,12 @@
 package sk.ainet.compile.nn
 
-import sk.ainet.compile.nn.DefaultNetworkContext
+import sk.ainet.lang.nn.DefaultNeuralNetworkExecutionContext
 import sk.ainet.lang.nn.dsl.NeuralNetworkDsl
-import sk.ainet.lang.nn.dsl.network
+import sk.ainet.lang.nn.dsl.sequential
 
 
 import sk.ainet.lang.nn.Module
-import sk.ainet.lang.tensor.data.DenseTensorDataFactory
-import sk.ainet.lang.tensor.data.TensorDataFactory
+import sk.ainet.lang.nn.NeuralNetworkExecutionContext
 import sk.ainet.lang.types.DType
 
 
@@ -20,9 +19,9 @@ import sk.ainet.lang.types.DType
  *
  * @param T The default data type.
  */
-public interface NeuralNetworkContext<T: DType, V> {
+public interface NeuralNetworkContext<T : DType, V> {
 
-    public val tensorDataFactory: TensorDataFactory
+    public val executionContext: NeuralNetworkExecutionContext
 
 }
 
@@ -33,7 +32,7 @@ public interface NeuralNetworkContext<T: DType, V> {
  * @param init The configuration function.
  * @return The configured context.
  */
-public fun <T: DType, V> context(init: NeuralNetworkContext<T, V>.(NeuralNetworkContext<T, V>) -> Module<T, V>): Module<T, V> {
+public fun <T : DType, V> definition(init: NeuralNetworkContext<T, V>.(NeuralNetworkContext<T, V>) -> Module<T, V>): Module<T, V> {
     val instance = DefaultNetworkContext<T, V>()
     return instance.init(instance)
 }
@@ -42,11 +41,11 @@ public fun <T: DType, V> context(init: NeuralNetworkContext<T, V>.(NeuralNetwork
  * Extension function to create a network within a NetworkContext.
  * This bridges the context wrapper with the network DSL using the context's tensor factory.
  */
-public inline fun <reified T: DType, V> NeuralNetworkContext<T, V>.network(
+public inline fun <reified T : DType, V> NeuralNetworkContext<T, V>.network(
     content: NeuralNetworkDsl<T, V>.() -> Unit
-): Module<T, V> = network(tensorDataFactory, content)
+): Module<T, V> = sequential(executionContext, content)
 
 public class DefaultNetworkContext<T : DType, V> : NeuralNetworkContext<T, V> {
-    override val tensorDataFactory: TensorDataFactory
-        get() = DenseTensorDataFactory()
+    override val executionContext: NeuralNetworkExecutionContext
+        get() = DefaultNeuralNetworkExecutionContext()
 }

@@ -8,7 +8,7 @@ public data class Shape(val dimensions: IntArray) {
     }
 
     val volume: Int
-        get() = dimensions.fold(if (dimensions.isNotEmpty()) 1 else 0) { a, x -> a * x }
+        get() = dimensions.fold(1) { a, x -> a * x }
 
     val rank: Int
         get() = dimensions.size

@@ -214,7 +214,7 @@ public class DenseTensorDataFactory: TensorDataFactory {
                 createIntTensorData(Shape(1), data) as TensorData<T, V>
             }
 
-            else -> throw IllegalArgumentException("Unsupported value type: ${value!!::class}")
+            else -> throw IllegalArgumentException("Unsupported value type: ${value!!}")
         }
     }
 
@@ -364,9 +364,13 @@ public class DenseTensorDataFactory: TensorDataFactory {
     override fun <T : DType, V> zeros(shape: Shape, dtype: KClass<T>): TensorData<T, V> {
         @Suppress("UNCHECKED_CAST")
         return when (dtype) {
-            FP32::class, FP16::class -> {
+            FP32::class -> {
                 val data = FloatArray(shape.volume) { 0.0f }
                 createFloatTensorData(shape, data, FP32 as T) as TensorData<T, V>
+            }
+            FP16::class -> {
+                val data = FloatArray(shape.volume) { 0.0f }
+                createFloatTensorData(shape, data, FP16 as T) as TensorData<T, V>
             }
             Int32::class -> {
                 val data = IntArray(shape.volume) { 0 }
@@ -383,9 +387,13 @@ public class DenseTensorDataFactory: TensorDataFactory {
     override fun <T : DType, V> ones(shape: Shape, dtype: KClass<T>): TensorData<T, V> {
         @Suppress("UNCHECKED_CAST")
         return when (dtype) {
-            FP32::class, FP16::class -> {
+            FP32::class -> {
                 val data = FloatArray(shape.volume) { 1.0f }
                 createFloatTensorData(shape, data, FP32 as T) as TensorData<T, V>
+            }
+            FP16::class -> {
+                val data = FloatArray(shape.volume) { 1.0f }
+                createFloatTensorData(shape, data, FP16 as T) as TensorData<T, V>
             }
             Int32::class -> {
                 val data = IntArray(shape.volume) { 1 }
@@ -402,10 +410,15 @@ public class DenseTensorDataFactory: TensorDataFactory {
     override fun <T : DType, V> full(shape: Shape, dtype: KClass<T>, value: Number): TensorData<T, V> {
         @Suppress("UNCHECKED_CAST")
         return when (dtype) {
-            FP32::class, FP16::class -> {
+            FP32::class -> {
                 val floatValue = value.toFloat()
                 val data = FloatArray(shape.volume) { floatValue }
                 createFloatTensorData(shape, data, FP32 as T) as TensorData<T, V>
+            }
+            FP16::class -> {
+                val floatValue = value.toFloat()
+                val data = FloatArray(shape.volume) { floatValue }
+                createFloatTensorData(shape, data, FP16 as T) as TensorData<T, V>
             }
             Int32::class -> {
                 val intValue = value.toInt()
@@ -430,7 +443,7 @@ public class DenseTensorDataFactory: TensorDataFactory {
     ): TensorData<T, V> {
         @Suppress("UNCHECKED_CAST")
         return when (dtype) {
-            FP32::class, FP16::class -> {
+            FP32::class -> {
                 val data = FloatArray(shape.volume)
                 var hasSpare = false
                 var spare = 0.0f
@@ -454,6 +467,30 @@ public class DenseTensorDataFactory: TensorDataFactory {
                 }
                 createFloatTensorData(shape, data, FP32 as T) as TensorData<T, V>
             }
+            FP16::class -> {
+                val data = FloatArray(shape.volume)
+                var hasSpare = false
+                var spare = 0.0f
+
+                for (i in data.indices) {
+                    if (hasSpare) {
+                        data[i] = spare * std + mean
+                        hasSpare = false
+                    } else {
+                        val u1 = random.nextFloat()
+                        val u2 = random.nextFloat()
+                        val z0 = sqrt(-2.0 * ln(u1.toDouble())).toFloat() *
+                                cos(2.0 * PI * u2.toDouble()).toFloat()
+                        val z1 = sqrt(-2.0 * ln(u1.toDouble())).toFloat() *
+                                kotlin.math.sin(2.0 * PI * u2.toDouble()).toFloat()
+
+                        data[i] = z0 * std + mean
+                        spare = z1
+                        hasSpare = true
+                    }
+                }
+                createFloatTensorData(shape, data, FP16 as T) as TensorData<T, V>
+            }
             else -> throw IllegalArgumentException("randn only supports floating point types: $dtype")
         }
     }
@@ -467,10 +504,15 @@ public class DenseTensorDataFactory: TensorDataFactory {
     ): TensorData<T, V> {
         @Suppress("UNCHECKED_CAST")
         return when (dtype) {
-            FP32::class, FP16::class -> {
+            FP32::class -> {
                 val range = max - min
                 val data = FloatArray(shape.volume) { random.nextFloat() * range + min }
                 createFloatTensorData(shape, data, FP32 as T) as TensorData<T, V>
+            }
+            FP16::class -> {
+                val range = max - min
+                val data = FloatArray(shape.volume) { random.nextFloat() * range + min }
+                createFloatTensorData(shape, data, FP16 as T) as TensorData<T, V>
             }
             Int32::class -> {
                 val intMin = min.toInt()
@@ -496,7 +538,7 @@ public class DenseTensorDataFactory: TensorDataFactory {
 
         @Suppress("UNCHECKED_CAST")
         return when (dtype) {
-            FP32::class, FP16::class -> {
+            FP32::class -> {
                 val data = FloatArray(shape.volume) { flatIndex ->
                     val indices = IntArray(shape.dimensions.size)
                     var remaining = flatIndex
@@ -507,6 +549,18 @@ public class DenseTensorDataFactory: TensorDataFactory {
                     (generator(indices) as Float)
                 }
                 createFloatTensorData(shape, data, FP32 as T) as TensorData<T, V>
+            }
+            FP16::class -> {
+                val data = FloatArray(shape.volume) { flatIndex ->
+                    val indices = IntArray(shape.dimensions.size)
+                    var remaining = flatIndex
+                    for (i in indices.indices) {
+                        indices[i] = remaining / strides[i]
+                        remaining %= strides[i]
+                    }
+                    (generator(indices) as Float)
+                }
+                createFloatTensorData(shape, data, FP16 as T) as TensorData<T, V>
             }
             Int32::class -> {
                 val data = IntArray(shape.volume) { flatIndex ->
@@ -520,7 +574,20 @@ public class DenseTensorDataFactory: TensorDataFactory {
                 }
                 createIntTensorData(shape, data) as TensorData<T, V>
             }
-            else -> throw IllegalArgumentException("init supports floating point and Int32 types: $dtype")
+            Int8::class -> {
+                // Store Int8 tensors with Int-backed storage for arithmetic operations
+                val data = IntArray(shape.volume) { flatIndex ->
+                    val indices = IntArray(shape.dimensions.size)
+                    var remaining = flatIndex
+                    for (i in indices.indices) {
+                        indices[i] = remaining / strides[i]
+                        remaining %= strides[i]
+                    }
+                    (generator(indices) as Int)
+                }
+                createIntTensorData(shape, data) as TensorData<T, V>
+            }
+            else -> throw IllegalArgumentException("init supports floating point, Int32, and Int8 types: $dtype")
         }
     }
 
@@ -532,9 +599,13 @@ public class DenseTensorDataFactory: TensorDataFactory {
     ): TensorData<T, V> {
         @Suppress("UNCHECKED_CAST")
         return when (dtype) {
-            FP32::class, FP16::class -> {
+            FP32::class -> {
                 val data = FloatArray(shape.volume) { (generator(random) as Float) }
                 createFloatTensorData(shape, data, FP32 as T) as TensorData<T, V>
+            }
+            FP16::class -> {
+                val data = FloatArray(shape.volume) { (generator(random) as Float) }
+                createFloatTensorData(shape, data, FP16 as T) as TensorData<T, V>
             }
             Int32::class -> {
                 val data = IntArray(shape.volume) { (generator(random) as Int) }
@@ -558,8 +629,11 @@ public class DenseTensorDataFactory: TensorDataFactory {
         }
         @Suppress("UNCHECKED_CAST")
         return when (dtype) {
-            FP32::class, FP16::class -> {
+            FP32::class -> {
                 createFloatTensorData(shape, data, FP32 as T) as TensorData<T, V>
+            }
+            FP16::class -> {
+                createFloatTensorData(shape, data, FP16 as T) as TensorData<T, V>
             }
             else -> throw IllegalArgumentException("fromFloatArray only supports floating point types: $dtype")
         }
@@ -578,7 +652,11 @@ public class DenseTensorDataFactory: TensorDataFactory {
             Int32::class -> {
                 createIntTensorData(shape, data) as TensorData<T, V>
             }
-            else -> throw IllegalArgumentException("fromIntArray only supports Int32 type: $dtype")
+            Int8::class -> {
+                // For Int8 with IntArray input, store as Int-backed TensorData to allow Int operations
+                createIntTensorData(shape, data) as TensorData<T, V>
+            }
+            else -> throw IllegalArgumentException("fromIntArray only supports Int32/Int8 types: $dtype")
         }
     }
 }

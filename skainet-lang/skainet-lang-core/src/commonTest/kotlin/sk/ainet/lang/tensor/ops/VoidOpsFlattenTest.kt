@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
 class VoidOpsFlattenTest {
     
     private val dataFactory = DenseTensorDataFactory()
-    private val ops = VoidTensorOps<Float>()
+    private val ops = VoidTensorOps()
     
     private fun createTensor(shape: Shape): VoidOpsTensor<FP32, Float> {
         val data = dataFactory.zeros<FP32, Float>(shape, FP32::class)
@@ -174,7 +174,7 @@ class VoidOpsFlattenTest {
             for (i in 0 until shape.rank) {
                 val result = ops.flatten(tensor, i, i) // Flatten single dimension
                 assertEquals(shape, result.shape, "Identity flatten on dim $i should preserve shape for $shape")
-                println("[DEBUG_LOG] Identity flatten dim $i: ${shape} -> ${result.shape}")
+                println("[DEBUG_LOG] Identity flatten dim $i: $shape -> ${result.shape}")
             }
         }
     }
@@ -182,7 +182,7 @@ class VoidOpsFlattenTest {
     @Test
     fun testFlatten_DifferentDataTypes_PreserveDtype() {
         val intDataFactory = DenseTensorDataFactory()
-        val intOps = VoidTensorOps<Int>()
+        val intOps = VoidTensorOps()
         val intData = intDataFactory.zeros<Int32, Int>(Shape(2, 3, 4), Int32::class)
         val intTensor = VoidOpsTensor(intData, Int32::class)
         
@@ -202,7 +202,7 @@ class VoidOpsFlattenTest {
         val exception = assertFailsWith<IllegalArgumentException> {
             ops.flatten(tensor, 5, 6) // Both out of bounds
         }
-        assertTrue(exception.message?.contains("Start dimension 5 is out of bounds") == true)
+        assertEquals(exception.message?.contains("Start dimension 5 is out of bounds"), true)
         println("[DEBUG_LOG] Caught expected exception: ${exception.message}")
     }
 

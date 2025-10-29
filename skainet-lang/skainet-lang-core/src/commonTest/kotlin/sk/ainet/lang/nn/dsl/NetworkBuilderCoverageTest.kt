@@ -1,5 +1,7 @@
 package sk.ainet.lang.nn.dsl
 
+import sk.ainet.lang.nn.definition
+import sk.ainet.lang.nn.network
 import sk.ainet.lang.types.FP32
 import sk.ainet.lang.types.Int8
 import sk.ainet.lang.types.Int32
@@ -16,7 +18,7 @@ class NetworkBuilderCoverageTest {
     @Test
     fun testNetworkFP32WithFactory() {
         // Test FP32/Float combination using new context approach
-        val net = context<FP32, Float> { 
+        val net = definition<FP32, Float> {
             network {
                 input(10)
                 dense(5) {
@@ -31,8 +33,8 @@ class NetworkBuilderCoverageTest {
     @Test
     fun testDenseLayerWithoutOutputDimension() {
         // Test dense layer configuration without specifying output dimension
-        val net = context<FP32, Float> {
-            network(tensorDataFactory) {
+        val net = definition<FP32, Float> {
+            sequential() {
                 input(10)
                 dense {
                     weights { ones() }
@@ -47,8 +49,8 @@ class NetworkBuilderCoverageTest {
     fun testAdvancedRandomInitializationMethods() {
         // Test various random initialization methods not covered in existing tests
         val customRandom = Random(seed = 12345)
-        val net = context<FP32, Float> {
-            network(tensorDataFactory) {
+        val net = definition<FP32, Float> {
+            sequential {
                 input(8)
                 dense(6) {
                     weights { randn(mean = 0.0f, std = 0.1f, random = customRandom) }
@@ -66,8 +68,8 @@ class NetworkBuilderCoverageTest {
     @Test
     fun testComplexNestedNetworkStructure() {
         // Test complex nested structures with stages and sequential blocks
-        val net = context<FP32, Float> {
-            network(tensorDataFactory) {
+        val net = definition<FP32, Float> {
+            sequential() {
                 input(784)
                 stage("encoder") {
                     dense(256) {
@@ -101,8 +103,8 @@ class NetworkBuilderCoverageTest {
     @Test
     fun testFlattenLayerWithCustomConfiguration() {
         // Test flatten layer with custom start and end dimensions
-        val net = context<FP32, Float> {
-            network(tensorDataFactory) {
+        val net = definition<FP32, Float> {
+            sequential() {
                 input(28 * 28)
                 flatten("custom_flatten") {
                     startDim = 1
@@ -124,8 +126,8 @@ class NetworkBuilderCoverageTest {
     @Test
     fun testMultipleActivationLayers() {
         // Test multiple activation layers with different functions
-        val net = context<FP32, Float> {
-            network(tensorDataFactory) {
+        val net = definition<FP32, Float> {
+            sequential() {
                 input(20)
                 dense(15) { weights { ones() } }
                 activation("first_activation") { tensor -> tensor }
@@ -143,8 +145,8 @@ class NetworkBuilderCoverageTest {
     @Test
     fun testInt8NetworkWithAdvancedFeatures() {
         // Test Int8/Byte combination using new context approach
-        val net = context<Int8, Byte> {
-            network(tensorDataFactory) {
+        val net = definition<Int8, Byte> {
+            sequential {
                 input(12)
                 dense(8) {
                     weights { ones() }
@@ -168,8 +170,8 @@ class NetworkBuilderCoverageTest {
     @Test
     fun testInt32NetworkWithComplexStructure() {
         // Test Int32/Int combination using new context approach
-        val net = context<Int32, Int> {
-            network(tensorDataFactory) {
+        val net = definition <Int32, Int> {
+            sequential {
                 input(16)
                 stage("feature_stage") {
                     dense(12) {
@@ -190,14 +192,14 @@ class NetworkBuilderCoverageTest {
     @Test
     fun testEmptyAndMinimalConfigurations() {
         // Test minimal network configurations
-        val net1 = context<FP32, Float> {
-            network(tensorDataFactory) {
+        val net1 = definition<FP32, Float> {
+            sequential {
                 input(2)
             }
         }
 
-        val net2 = context<FP32, Float> {
-            network(tensorDataFactory) {
+        val net2 = definition<FP32, Float> {
+            sequential {
                 input(3)
                 dense(1) { weights { ones() } }
             }
@@ -210,8 +212,8 @@ class NetworkBuilderCoverageTest {
     @Test
     fun testMixedInitializationStrategies() {
         // Test mixing different initialization strategies within one network
-        val net = context<FP32, Float> {
-            network(tensorDataFactory) {
+        val net = definition<FP32, Float> {
+            sequential {
                 input(6)
                 dense(12) {
                     weights { full(0.5f) }
@@ -233,8 +235,8 @@ class NetworkBuilderCoverageTest {
     @Test
     fun testSequentialAndStageNesting() {
         // Test nested sequential blocks within stages
-        val net = context<FP32, Float> {
-            network(tensorDataFactory) {
+        val net = definition<FP32, Float> {
+            sequential {
                 input(20)
                 stage("outer_stage") {
                     sequential {
@@ -266,8 +268,8 @@ class NetworkBuilderCoverageTest {
         val random1 = Random(123)
         val random2 = Random(456)
         
-        val net1 = context<FP32, Float> {
-            network(tensorDataFactory) {
+        val net1 = definition<FP32, Float> {
+            sequential {
                 input(4)
                 dense(6) {
                     weights { randn(random = random1) }
@@ -286,8 +288,8 @@ class NetworkBuilderCoverageTest {
     @Test
     fun testEdgeCasesAndBoundaryConditions() {
         // Test edge cases like single neuron layers, small networks
-        val tinyNet = context<FP32, Float> {
-            network(tensorDataFactory) {
+        val tinyNet = definition<FP32, Float> {
+            sequential {
                 input(1)
                 dense(1) {
                     weights { ones() }
@@ -296,8 +298,8 @@ class NetworkBuilderCoverageTest {
             }
         }
 
-        val largeInputNet = context<FP32, Float> {
-            network(tensorDataFactory) {
+        val largeInputNet = definition<FP32, Float> {
+            sequential {
                 input(1000)
                 dense(500) {
                     weights { randn(std = 0.01f) }
@@ -321,8 +323,8 @@ class NetworkBuilderCoverageTest {
     @Test
     fun testNetworkBuilderClassDirectUsage() {
         // Test direct usage of NetworkBuilder class (if accessible)
-        val net = context<FP32, Float> {
-            network(tensorDataFactory) {
+        val net = definition<FP32, Float> {
+            sequential {
                 input(5)
                 dense(3) {
                     weights { ones() }

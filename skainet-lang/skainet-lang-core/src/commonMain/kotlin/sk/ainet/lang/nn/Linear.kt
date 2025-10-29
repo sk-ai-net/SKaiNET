@@ -26,6 +26,25 @@ public class Linear<T : DType, V>(
     initWeights: Tensor<T, V>, //= Tensor.randn<T, V>(shape = intArrayOf(outFeatures, inFeatures)),
     initBias: Tensor<T, V>, //  = Tensor.zeros<T, V>(shape = intArrayOf(outFeatures)),
 ) : Module<T, V>(), ModuleParameters<T, V> {
+
+    init {
+        // Validate weights shape: expected [outFeatures, inFeatures]
+        val wShape = initWeights.shape.dimensions
+        require(initWeights.rank == 2 && wShape[0] == outFeatures && wShape[1] == inFeatures) {
+            "Linear($name): initWeights shape must be [outFeatures, inFeatures]=[${outFeatures}, ${inFeatures}], but was ${initWeights.shape}"
+        }
+        // Validate bias shape: allow [outFeatures] or [1, outFeatures]
+        val bShape = initBias.shape.dimensions
+        val biasOk = when (initBias.rank) {
+            1 -> bShape[0] == outFeatures
+            2 -> bShape[0] == 1 && bShape[1] == outFeatures
+            else -> false
+        }
+        require(biasOk) {
+            "Linear($name): initBias shape must be [outFeatures] or [1, outFeatures] with outFeatures=${outFeatures}, but was ${initBias.shape}"
+        }
+    }
+
     override val params: List<ModuleParameter<T, V>> = listOf(
         ModuleParameter.WeightParameter("$name.weight", initWeights),
         ModuleParameter.BiasParameter("$name.bias", initBias)
@@ -42,6 +61,15 @@ public class Linear<T : DType, V>(
         // Use proper tensor operations
         val weightTransposed = weight.t()
         val matmulResult = input.matmul(weightTransposed)
-        return matmulResult + bias
+
+        // If input is a 1D vector, ensure bias is also 1D to avoid broadcasting to [1, out]
+        val result = if (input.rank == 1 && bias.rank == 2 && bias.shape.dimensions[0] == 1) {
+            val outFeatures = bias.shape.dimensions[1]
+            val bias1d = bias.reshape(Shape(outFeatures))
+            matmulResult + bias1d
+        } else {
+            matmulResult + bias
+        }
+        return result
     }
 }

@@ -2,8 +2,8 @@ package sk.ainet.lang.nn.mlp
 
 import sk.ainet.lang.nn.Model
 import sk.ainet.lang.nn.Module
-import sk.ainet.lang.nn.dsl.context
-import sk.ainet.lang.nn.dsl.network
+import sk.ainet.lang.nn.definition
+import sk.ainet.lang.nn.network
 import sk.ainet.lang.nn.reflection.describe
 import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.relu
@@ -14,7 +14,7 @@ public class SinusApproximator() : Model {
     public override fun <T : DType, V> model(): Module<FP32, Float> = model
 
 
-    private val model = context<FP32, Float> {
+    private val model = definition<FP32, Float> {
         network {
             input(1)  // Single input for x value
 
@@ -335,6 +335,6 @@ public class SinusApproximator() : Model {
     }
 
     override fun modelCard(): String {
-        return model.describe(Shape(1), FP32::class )
+        return model.describe(Shape(1), FP32::class)
     }
 }

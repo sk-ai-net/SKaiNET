@@ -1,5 +1,7 @@
 package sk.ainet.lang.nn.dsl
 
+import sk.ainet.lang.nn.definition
+import sk.ainet.lang.nn.network
 import sk.ainet.lang.types.FP32
 import kotlin.test.Test
 import kotlin.test.assertNotNull
@@ -12,7 +14,7 @@ class WeightsContextTest {
         
 
         // Simple test to check if from and ones work in weights context
-        val testNetwork = context<FP32, Float> {
+        val testNetwork = definition<FP32, Float> {
             network {
                 input(1)
                 dense(2) {

@@ -71,7 +71,7 @@ public interface Tensor<T : DType, V> {
      * It leverages the data component for element access while encapsulating
      * all computational logic.
      */
-    public val ops: TensorOps<V>
+    public val ops: TensorOps
 
     /**
      * The data type descriptor defining the numerical precision and value representation.

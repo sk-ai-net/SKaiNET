@@ -1,7 +1,6 @@
 package sk.ainet.lang.nn
 
 import sk.ainet.lang.tensor.Tensor
-import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.types.DType
 import sk.ainet.lang.nn.topology.ModuleParameter
 import sk.ainet.lang.nn.topology.ModuleParameters

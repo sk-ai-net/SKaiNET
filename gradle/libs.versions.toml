@@ -62,7 +62,7 @@ vanniktech-mavenPublish = { id = "com.vanniktech.maven.publish", version = "0.34
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 binary-compatibility-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "binaryCompatibilityValidator" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-asciidoctorJvm = { id = "org.asciidoctor.jvm.convert", version = "3.3.2" }
-asciidoctorPdf = { id = "org.asciidoctor.jvm.pdf", version = "3.3.2" }
+asciidoctorJvm = { id = "org.asciidoctor.jvm.convert", version = "4.0.5" }
+asciidoctorPdf = { id = "org.asciidoctor.jvm.pdf", version = "4.0.5" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 

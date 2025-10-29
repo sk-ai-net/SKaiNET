@@ -18,8 +18,6 @@ public class Flatten<T : DType, V>(
         get() = emptyList()
 
     override fun forward(input: Tensor<T, V>): Tensor<T, V> {
-        return with(input) {
-            flatten(startDim, endDim)
-        }
+        return input.flatten(startDim, endDim)
     }
 }
