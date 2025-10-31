@@ -8,7 +8,7 @@ plugins {
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.asciidoctorJvm) apply false
     alias(libs.plugins.dokka) apply false
-    id("sk.ainet.documentation")
+    alias(libs.plugins.skainet.docs)
 }
 
 allprojects {

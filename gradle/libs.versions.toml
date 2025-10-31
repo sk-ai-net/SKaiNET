@@ -1,5 +1,8 @@
 [versions]
 agp = "8.12.3"
+jacksonDatabind = "2.20.0"
+jsonSchemaValidator = "2.0.0"
+jsonSchemaValidatorVersion = "0.5.2"
 kotlin = "2.2.21"
 kotlinxCoroutines = "1.10.2"
 android-minSdk = "24"
@@ -18,6 +21,8 @@ dokka = "2.1.0"
 kotlinxCli = "0.3.6"
 
 [libraries]
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jacksonDatabind" }
+json-schema-validator = { module = "com.networknt:json-schema-validator", version.ref = "jsonSchemaValidator" }
 kotlinx-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-core-jvm = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
@@ -51,6 +56,7 @@ dokka-core = { module = "org.jetbrains.dokka:dokka-core", version.ref = "dokka" 
 dokka-test-utils = { module = "org.jetbrains.dokka:dokka-test-utils", version.ref = "dokka" }
 
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logbackClassic" }
+optimumcode-json-schema-validator = { module = "io.github.optimumcode:json-schema-validator", version.ref = "jsonSchemaValidatorVersion" }
 
 
 [plugins]
@@ -66,3 +72,4 @@ asciidoctorJvm = { id = "org.asciidoctor.jvm.convert", version = "4.0.5" }
 asciidoctorPdf = { id = "org.asciidoctor.jvm.pdf", version = "4.0.5" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 
+skainet-docs = { id = "sk.ainet.documentation" }

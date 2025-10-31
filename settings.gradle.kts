@@ -13,8 +13,12 @@ dependencyResolutionManagement {
     }
 }
 
+
+
+
 rootProject.name = "SKaiNET"
 
+includeBuild("build-logic")
 include("skainet-lang:skainet-lang-core")
 include("skainet-lang:skainet-lang-models")
 include("skainet-lang:skainet-lang-ksp-annotations")

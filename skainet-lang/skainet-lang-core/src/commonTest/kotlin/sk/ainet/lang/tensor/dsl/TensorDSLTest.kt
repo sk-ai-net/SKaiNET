@@ -2,7 +2,6 @@ package sk.ainet.lang.tensor.dsl
 
 import sk.ainet.context.data
 import sk.ainet.lang.tensor.Shape
-import sk.ainet.lang.tensor.testFactory
 import sk.ainet.lang.types.FP32
 import kotlin.test.Test
 import kotlin.test.assertEquals
