@@ -17,6 +17,14 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: 21
+      - name: Validate signing configuration
+        run: |
+          if ! grep -Eq '^[[:space:]]*signAllPublications[[:space:]]*=[[:space:]]*true[[:space:]]*$' gradle.properties; then
+            echo "signAllPublications must be set to true in gradle.properties to publish." >&2
+            echo "Current setting:" >&2
+            grep -n 'signAllPublications' gradle.properties || echo "No signAllPublications property found" >&2
+            exit 1
+          fi
       - name: Publish to MavenCentral
         run: ./gradlew publish --no-configuration-cache --stacktrace
         env:
