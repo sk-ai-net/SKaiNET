@@ -2,6 +2,7 @@ package sk.ainet.exec.tensor.ops
 
 import jdk.incubator.vector.FloatVector
 import jdk.incubator.vector.VectorSpecies
+import jdk.incubator.vector.VectorOperators
 import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.tensor.data.DenseFloatArrayTensorData
@@ -36,6 +37,11 @@ internal class DefaultCpuOpsJvm(
     override fun <T : DType, V> divide(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
         vectorFloatBinary(a, b, { x, y -> x.div(y) }) { x, y -> x / y }?.let { return it }
         return super.divide(a, b)
+    }
+
+    override fun <T : DType, V> matmul(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
+        vectorMatmul(a, b)?.let { return it }
+        return super.matmul(a, b)
     }
 
     override fun <T : DType, V> relu(tensor: Tensor<T, V>): Tensor<T, V> {
@@ -117,5 +123,60 @@ internal class DefaultCpuOpsJvm(
     private fun <T : DType> supportsFloatOps(tensor: Tensor<T, *>): Boolean {
         val dtype = tensor.dtype
         return (dtype == FP32::class || dtype == FP16::class)
+    }
+
+    private fun <T : DType, V> vectorMatmul(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V>? {
+        if (!supportsFloatOps(a) || !supportsFloatOps(b)) return null
+        if (a.dtype != b.dtype) return null
+        if (a.shape.rank != 2 || b.shape.rank != 2) return null
+
+        val aRows = a.shape[0]
+        val aCols = a.shape[1]
+        val bRows = b.shape[0]
+        val bCols = b.shape[1]
+        if (aCols != bRows) return null
+
+        val aData = a.data as? FloatArrayTensorData<T> ?: return null
+        val bData = b.data as? FloatArrayTensorData<T> ?: return null
+
+        val aBuffer = aData.buffer
+        val bBuffer = bData.buffer
+
+        val transposedB = FloatArray(bCols * bRows)
+        for (row in 0 until bRows) {
+            val srcOffset = row * bCols
+            for (col in 0 until bCols) {
+                transposedB[col * bRows + row] = bBuffer[srcOffset + col]
+            }
+        }
+
+        val outBuffer = FloatArray(aRows * bCols)
+        val speciesLength = floatSpecies.length()
+        val loopBound = floatSpecies.loopBound(aCols)
+
+        for (row in 0 until aRows) {
+            val aOffset = row * aCols
+            for (col in 0 until bCols) {
+                val bOffset = col * bRows
+                var idx = 0
+                var accVector = FloatVector.zero(floatSpecies)
+                while (idx < loopBound) {
+                    val vecA = FloatVector.fromArray(floatSpecies, aBuffer, aOffset + idx)
+                    val vecB = FloatVector.fromArray(floatSpecies, transposedB, bOffset + idx)
+                    accVector = accVector.add(vecA.mul(vecB))
+                    idx += speciesLength
+                }
+                var acc = accVector.reduceLanes(VectorOperators.ADD)
+                while (idx < aCols) {
+                    acc += aBuffer[aOffset + idx] * transposedB[bOffset + idx]
+                    idx++
+                }
+                outBuffer[row * bCols + col] = acc
+            }
+        }
+
+        val outData = DenseFloatArrayTensorData<T>(Shape(aRows, bCols), outBuffer)
+        @Suppress("UNCHECKED_CAST")
+        return CpuTensor(outData as TensorData<T, V>, this, a.dtype)
     }
 }
