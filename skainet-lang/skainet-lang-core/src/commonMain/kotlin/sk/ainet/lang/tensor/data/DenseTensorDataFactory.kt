@@ -21,6 +21,23 @@ import kotlin.reflect.KClass
  */
 
 public class DenseTensorDataFactory: TensorDataFactory {
+
+    private fun calcFlatIndex(shape: Shape, strides: IntArray, vararg indices: Int): Int {
+        require(indices.size == shape.dimensions.size) {
+            "Number of indices (${indices.size}) must match tensor dimensions (${shape.dimensions.size})"
+        }
+
+        var flatIndex = 0
+        for (i in indices.indices) {
+            require(indices[i] >= 0 && indices[i] < shape.dimensions[i]) {
+                "Index ${indices[i]} out of bounds for dimension $i with size ${shape.dimensions[i]}"
+            }
+            flatIndex += indices[i] * strides[i]
+        }
+        return flatIndex
+    }
+
+
     @Suppress("UNCHECKED_CAST")
     public fun <T : DType> fromFloatArray(
         shape: Shape,
