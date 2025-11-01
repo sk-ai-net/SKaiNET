@@ -9,9 +9,9 @@ import sk.ainet.lang.ops.InProgress
 import sk.ainet.lang.tensor.data.TensorDataFactory
 
 @InProgress("cpu", owner = "team:cpu", issue = "task-ops.md#defaultcpuops")
-public class DefaultCpuOps(private val dataFactory: TensorDataFactory) : TensorOps {
+public open class DefaultCpuOpsBase(protected val dataFactory: TensorDataFactory) : TensorOps {
 
-    private class CpuTensor<T : DType, V>(
+    protected class CpuTensor<T : DType, V>(
         override val data: sk.ainet.lang.tensor.data.TensorData<T, V>,
         private val opsRef: TensorOps,
         override val dtype: kotlin.reflect.KClass<T>
@@ -20,7 +20,7 @@ public class DefaultCpuOps(private val dataFactory: TensorDataFactory) : TensorO
             get() = opsRef
     }
 
-    private fun broadcastShapes(a: Shape, b: Shape): Shape {
+    protected fun broadcastShapes(a: Shape, b: Shape): Shape {
         val ad = a.dimensions
         val bd = b.dimensions
         val maxRank = maxOf(ad.size, bd.size)
@@ -39,7 +39,7 @@ public class DefaultCpuOps(private val dataFactory: TensorDataFactory) : TensorO
         return Shape(out)
     }
 
-    private fun mapIndex(idx: IntArray, inShape: Shape): IntArray {
+    protected fun mapIndex(idx: IntArray, inShape: Shape): IntArray {
         // Map output index to input index with broadcasting: if input dim == 1, use 0 for that dim.
         val inDims = inShape.dimensions
         val outRank = idx.size
@@ -56,11 +56,11 @@ public class DefaultCpuOps(private val dataFactory: TensorDataFactory) : TensorO
         return mapped
     }
 
-    private fun <T : DType, V> requireSameDType(a: Tensor<T, V>, b: Tensor<T, V>) {
+    protected fun <T : DType, V> requireSameDType(a: Tensor<T, V>, b: Tensor<T, V>) {
         require(a.dtype == b.dtype) { "DType mismatch: ${'$'}{a.dtype} vs ${'$'}{b.dtype}" }
     }
 
-    private fun <T : DType, V> elementwise(
+    protected fun <T : DType, V> elementwise(
         a: Tensor<T, V>,
         b: Tensor<T, V>,
         op: (av: V, bv: V, dtype: kotlin.reflect.KClass<T>) -> V
@@ -1349,3 +1349,5 @@ public class DefaultCpuOps(private val dataFactory: TensorDataFactory) : TensorO
     }
 
 }
+
+public class DefaultCpuOps(dataFactory: TensorDataFactory) : DefaultCpuOpsBase(dataFactory)
