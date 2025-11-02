@@ -384,6 +384,8 @@ public class DefaultCpuOps(private val dataFactory: TensorDataFactory) : TensorO
         return CpuTensor(outData, this, tensor.dtype)
     }
 
+    @TensorOp()
+    @InProgress("cpu", owner = "team:cpu", issue = "task-ops.md#op-conv2d")
     override fun <T : DType, V> conv2d(
         input: Tensor<T, V>,
         weight: Tensor<T, V>,
@@ -393,16 +395,224 @@ public class DefaultCpuOps(private val dataFactory: TensorDataFactory) : TensorO
         dilation: Pair<Int, Int>,
         groups: Int
     ): Tensor<T, V> {
-        TODO("Not yet implemented")
+        // Validate shapes
+        require(input.rank == 4) { "conv2d: input must be 4D (N, C_in, H, W), got ${input.shape.dimensions.contentToString()}" }
+        require(weight.rank == 4) { "conv2d: weight must be 4D (C_out, C_in/groups, kH, kW), got ${weight.shape.dimensions.contentToString()}" }
+        require(groups >= 1) { "conv2d: groups must be >= 1" }
+        require(input.dtype == weight.dtype) { "conv2d: dtype mismatch between input and weight: ${input.dtype} vs ${weight.dtype}" }
+        bias?.let { require(it.dtype == input.dtype) { "conv2d: dtype mismatch for bias" } }
+
+        val n = input.shape[0]
+        val cIn = input.shape[1]
+        val inH = input.shape[2]
+        val inW = input.shape[3]
+
+        val cOut = weight.shape[0]
+        val cInPerGroup = weight.shape[1]
+        val kH = weight.shape[2]
+        val kW = weight.shape[3]
+
+        require(cIn % groups == 0) { "conv2d: input channels ${cIn} not divisible by groups ${groups}" }
+        require(cOut % groups == 0) { "conv2d: output channels ${cOut} not divisible by groups ${groups}" }
+        require(cInPerGroup == cIn / groups) { "conv2d: weight input channels ${cInPerGroup} must equal C_in/groups ${cIn / groups}" }
+
+        val (sH, sW) = stride
+        val (pH, pW) = padding
+        val (dH, dW) = dilation
+
+        fun outDim(inDim: Int, k: Int, s: Int, p: Int, d: Int): Int {
+            return ((inDim + 2 * p - d * (k - 1) - 1) / s) + 1
+        }
+        val outH = outDim(inH, kH, sH, pH, dH)
+        val outW = outDim(inW, kW, sW, pW, dW)
+        require(outH >= 0 && outW >= 0) { "conv2d: computed negative output shape (H=${outH}, W=${outW})" }
+
+        // Validate bias shape if provided (accept [C_out] or [1,C_out,1,1])
+        if (bias != null) {
+            when (bias.rank) {
+                1 -> require(bias.shape[0] == cOut) { "conv2d: bias shape must be [C_out], got ${bias.shape.dimensions.contentToString()}" }
+                4 -> {
+                    require(bias.shape[0] == 1 && bias.shape[1] == cOut && bias.shape[2] == 1 && bias.shape[3] == 1) {
+                        "conv2d: bias shape must be [1,C_out,1,1] when 4D, got ${bias.shape.dimensions.contentToString()}"
+                    }
+                }
+                else -> error("conv2d: unsupported bias rank ${bias.rank}")
+            }
+        }
+
+        val outShape = Shape(n, cOut, outH, outW)
+        val outData = dataFactory.init<T, V>(outShape, input.dtype) { outIdx ->
+            val bIdx = outIdx[0]
+            val oc = outIdx[1]
+            val oh = outIdx[2]
+            val ow = outIdx[3]
+
+            when (input.dtype) {
+                sk.ainet.lang.types.FP32::class, sk.ainet.lang.types.FP16::class -> {
+                    var acc = 0.0f
+                    val groupIdx = (oc * groups) / cOut
+                    val inCStart = groupIdx * cInPerGroup
+                    val inCEnd = inCStart + cInPerGroup
+                    val hBase = oh * sH - pH
+                    val wBase = ow * sW - pW
+
+                    var ic = inCStart
+                    while (ic < inCEnd) {
+                        val kc = ic - inCStart
+                        var kh = 0
+                        while (kh < kH) {
+                            val ih = hBase + kh * dH
+                            if (ih >= 0 && ih < inH) {
+                                var kw = 0
+                                while (kw < kW) {
+                                    val iw = wBase + kw * dW
+                                    if (iw >= 0 && iw < inW) {
+                                        val vIn = input.data.get(bIdx, ic, ih, iw) as Float
+                                        val vW = weight.data.get(oc, kc, kh, kw) as Float
+                                        acc += vIn * vW
+                                    }
+                                    kw++
+                                }
+                            }
+                            kh++
+                        }
+                        ic++
+                    }
+                    if (bias != null) {
+                        val b = when (bias.rank) {
+                            1 -> bias.data.get(oc) as Float
+                            4 -> bias.data.get(0, oc, 1 - 1, 1 - 1) as Float // [1, C_out, 1, 1]
+                            else -> 0.0f
+                        }
+                        acc += b
+                    }
+                    @Suppress("UNCHECKED_CAST")
+                    acc as V
+                }
+                sk.ainet.lang.types.Int32::class -> {
+                    var acc = 0
+                    val groupIdx = (oc * groups) / cOut
+                    val inCStart = groupIdx * cInPerGroup
+                    val inCEnd = inCStart + cInPerGroup
+                    val hBase = oh * sH - pH
+                    val wBase = ow * sW - pW
+
+                    var ic = inCStart
+                    while (ic < inCEnd) {
+                        val kc = ic - inCStart
+                        var kh = 0
+                        while (kh < kH) {
+                            val ih = hBase + kh * dH
+                            if (ih >= 0 && ih < inH) {
+                                var kw = 0
+                                while (kw < kW) {
+                                    val iw = wBase + kw * dW
+                                    if (iw >= 0 && iw < inW) {
+                                        val vIn = input.data.get(bIdx, ic, ih, iw) as Int
+                                        val vW = weight.data.get(oc, kc, kh, kw) as Int
+                                        acc += vIn * vW
+                                    }
+                                    kw++
+                                }
+                            }
+                            kh++
+                        }
+                        ic++
+                    }
+                    if (bias != null) {
+                        val b = when (bias.rank) {
+                            1 -> bias.data.get(oc) as Int
+                            4 -> bias.data.get(0, oc, 0, 0) as Int
+                            else -> 0
+                        }
+                        acc += b
+                    }
+                    @Suppress("UNCHECKED_CAST")
+                    acc as V
+                }
+                else -> throw IllegalArgumentException("Unsupported dtype for conv2d: ${input.dtype}")
+            }
+        }
+        return CpuTensor(outData, this, input.dtype)
     }
 
+    @TensorOp()
+    @InProgress("cpu", owner = "team:cpu", issue = "task-ops.md#op-maxpool2d")
     override fun <T : DType, V> maxPool2d(
         input: Tensor<T, V>,
         kernelSize: Pair<Int, Int>,
         stride: Pair<Int, Int>,
         padding: Pair<Int, Int>
     ): Tensor<T, V> {
-        TODO("Not yet implemented")
+        require(input.rank == 4) { "maxPool2d: input must be 4D (N, C, H, W)" }
+        val n = input.shape[0]
+        val c = input.shape[1]
+        val inH = input.shape[2]
+        val inW = input.shape[3]
+        val (kH, kW) = kernelSize
+        val (sH, sW) = stride
+        val (pH, pW) = padding
+        require(kH > 0 && kW > 0) { "maxPool2d: kernel must be > 0" }
+        require(sH > 0 && sW > 0) { "maxPool2d: stride must be > 0" }
+        fun outDim(inDim: Int, k: Int, s: Int, p: Int): Int = ((inDim + 2 * p - k) / s) + 1
+        val outH = outDim(inH, kH, sH, pH)
+        val outW = outDim(inW, kW, sW, pW)
+        require(outH >= 0 && outW >= 0) { "maxPool2d: negative output size (H=${outH}, W=${outW})" }
+        val outShape = Shape(n, c, outH, outW)
+        val outData = dataFactory.init<T, V>(outShape, input.dtype) { outIdx ->
+            val bIdx = outIdx[0]
+            val ch = outIdx[1]
+            val oh = outIdx[2]
+            val ow = outIdx[3]
+            val hBase = oh * sH - pH
+            val wBase = ow * sW - pW
+            when (input.dtype) {
+                sk.ainet.lang.types.FP32::class, sk.ainet.lang.types.FP16::class -> {
+                    var best = Float.NEGATIVE_INFINITY
+                    var kh = 0
+                    while (kh < kH) {
+                        val ih = hBase + kh
+                        if (ih in 0 until inH) {
+                            var kw = 0
+                            while (kw < kW) {
+                                val iw = wBase + kw
+                                if (iw in 0 until inW) {
+                                    val v = input.data.get(bIdx, ch, ih, iw) as Float
+                                    if (v > best) best = v
+                                }
+                                kw++
+                            }
+                        }
+                        kh++
+                    }
+                    @Suppress("UNCHECKED_CAST")
+                    best as V
+                }
+                sk.ainet.lang.types.Int32::class, sk.ainet.lang.types.Int8::class -> {
+                    var best = Int.MIN_VALUE
+                    var kh = 0
+                    while (kh < kH) {
+                        val ih = hBase + kh
+                        if (ih in 0 until inH) {
+                            var kw = 0
+                            while (kw < kW) {
+                                val iw = wBase + kw
+                                if (iw in 0 until inW) {
+                                    val v = input.data.get(bIdx, ch, ih, iw) as Int
+                                    if (v > best) best = v
+                                }
+                                kw++
+                            }
+                        }
+                        kh++
+                    }
+                    @Suppress("UNCHECKED_CAST")
+                    best as V
+                }
+                else -> throw IllegalArgumentException("Unsupported dtype for maxPool2d: ${input.dtype}")
+            }
+        }
+        return CpuTensor(outData, this, input.dtype)
     }
 
     @TensorOp()
@@ -656,13 +866,34 @@ public class DefaultCpuOps(private val dataFactory: TensorDataFactory) : TensorO
     @TensorOp()
     @InProgress("cpu", owner = "team:cpu", issue = "task-ops.md#op-sigmoid")
     override fun <T : DType, V> sigmoid(tensor: Tensor<T, V>): Tensor<T, V> {
-        TODO("Not yet implemented")
+        val outData = dataFactory.init<T, V>(tensor.shape, tensor.dtype) { idx ->
+            when (tensor.dtype) {
+                sk.ainet.lang.types.FP32::class, sk.ainet.lang.types.FP16::class -> {
+                    val x = tensor.data.get(*idx) as Float
+                    @Suppress("UNCHECKED_CAST")
+                    (1.0f / (1.0f + kotlin.math.exp(-x))) as V
+                }
+                else -> throw IllegalArgumentException("Unsupported dtype for sigmoid: ${tensor.dtype}")
+            }
+        }
+        return CpuTensor(outData, this, tensor.dtype)
     }
 
     @TensorOp()
     @InProgress("cpu", owner = "team:cpu", issue = "task-ops.md#op-silu")
     override fun <T : DType, V> silu(tensor: Tensor<T, V>): Tensor<T, V> {
-        TODO("Not yet implemented")
+        val outData = dataFactory.init<T, V>(tensor.shape, tensor.dtype) { idx ->
+            when (tensor.dtype) {
+                sk.ainet.lang.types.FP32::class, sk.ainet.lang.types.FP16::class -> {
+                    val x = tensor.data.get(*idx) as Float
+                    val s = 1.0f / (1.0f + kotlin.math.exp(-x))
+                    @Suppress("UNCHECKED_CAST")
+                    (x * s) as V
+                }
+                else -> throw IllegalArgumentException("Unsupported dtype for silu: ${tensor.dtype}")
+            }
+        }
+        return CpuTensor(outData, this, tensor.dtype)
     }
 
     @TensorOp()
