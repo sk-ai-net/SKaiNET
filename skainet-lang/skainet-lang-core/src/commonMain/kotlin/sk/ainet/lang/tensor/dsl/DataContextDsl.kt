@@ -28,11 +28,16 @@ public inline fun <reified T : DType, V> DataContextDsl.tensor(
 internal class DataDefinitionContextDslImpl(
     override val executionContext: ExecutionContext,
 ) : DataContextDsl {
+    // Tracks the last tensor created within this DSL instance
+    internal var lastTensor: Tensor<*, *>? = null
+
     override fun <T : DType, V> tensor(
         dtype: KClass<T>,
         content: TensorFactoryContext<T, V>.() -> Tensor<T, V>
     ): Tensor<T, V> {
         val ctx = TensorFactoryContext<T, V>(executionContext, dtype)
-        return ctx.content()
+        val t = ctx.content()
+        lastTensor = t
+        return t
     }
 }
