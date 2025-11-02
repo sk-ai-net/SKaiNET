@@ -860,7 +860,41 @@ public class DefaultCpuOps(private val dataFactory: TensorDataFactory) : TensorO
         tensor: Tensor<T, V>,
         dim: Int
     ): Tensor<T, V> {
-        TODO("Not yet implemented")
+        // Stable softmax along dim
+        val rank = tensor.rank
+        require(rank > 0) { "softmax: tensor must have rank > 0" }
+        val nd = if (dim < 0) dim + rank else dim
+        require(nd in 0 until rank) { "softmax: dim ${dim} out of range for rank ${rank}" }
+        when (tensor.dtype) {
+            sk.ainet.lang.types.FP32::class, sk.ainet.lang.types.FP16::class -> {
+                val outData = dataFactory.init<T, V>(tensor.shape, tensor.dtype) { outIdx ->
+                    // For the slice defined by outIdx except for nd, compute softmax at that position
+                    val idxMax = outIdx.copyOf()
+                    // compute max along nd
+                    var maxVal = Float.NEGATIVE_INFINITY
+                    for (k in 0 until tensor.shape[nd]) {
+                        idxMax[nd] = k
+                        val x = tensor.data.get(*idxMax) as Float
+                        if (x > maxVal) maxVal = x
+                    }
+                    // compute denom
+                    var denom = 0.0f
+                    val idxDen = outIdx.copyOf()
+                    for (k in 0 until tensor.shape[nd]) {
+                        idxDen[nd] = k
+                        val x = tensor.data.get(*idxDen) as Float
+                        denom += kotlin.math.exp(x - maxVal)
+                    }
+                    // numerator for current position
+                    val xOut = tensor.data.get(*outIdx) as Float
+                    val num = kotlin.math.exp(xOut - maxVal)
+                    @Suppress("UNCHECKED_CAST")
+                    (num / denom) as V
+                }
+                return CpuTensor(outData, this, tensor.dtype)
+            }
+            else -> throw IllegalArgumentException("Unsupported dtype for softmax: ${tensor.dtype}")
+        }
     }
 
     @TensorOp()
@@ -899,7 +933,23 @@ public class DefaultCpuOps(private val dataFactory: TensorDataFactory) : TensorO
     @TensorOp()
     @InProgress("cpu", owner = "team:cpu", issue = "task-ops.md#op-gelu")
     override fun <T : DType, V> gelu(tensor: Tensor<T, V>): Tensor<T, V> {
-        TODO("Not yet implemented")
+        // Tanh approximation of GELU
+        val outData = dataFactory.init<T, V>(tensor.shape, tensor.dtype) { idx ->
+            when (tensor.dtype) {
+                sk.ainet.lang.types.FP32::class, sk.ainet.lang.types.FP16::class -> {
+                    val x = tensor.data.get(*idx) as Float
+                    val x3 = x * x * x
+                    val inner = x + 0.044715f * x3
+                    val c = 0.7978845608f // sqrt(2/pi)
+                    val t = kotlin.math.tanh(c * inner)
+                    val y = 0.5f * x * (1.0f + t)
+                    @Suppress("UNCHECKED_CAST")
+                    y as V
+                }
+                else -> throw IllegalArgumentException("Unsupported dtype for gelu: ${tensor.dtype}")
+            }
+        }
+        return CpuTensor(outData, this, tensor.dtype)
     }
 
     @TensorOp()
@@ -908,7 +958,109 @@ public class DefaultCpuOps(private val dataFactory: TensorDataFactory) : TensorO
         tensor: Tensor<T, V>,
         dim: Int?
     ): Tensor<T, V> {
-        TODO("Not yet implemented")
+        val rank = tensor.rank
+        // Determine reduction mode
+        if (dim == null) {
+            // Reduce all elements to a scalar (rank-0)
+            val outShape = Shape()
+            val outData = dataFactory.init<T, V>(outShape, tensor.dtype) {
+                when (tensor.dtype) {
+                    sk.ainet.lang.types.FP32::class, sk.ainet.lang.types.FP16::class -> {
+                        var acc = 0.0f
+                        val dims = tensor.shape.dimensions
+                        if (dims.isEmpty()) {
+                            acc = tensor.data.get() as Float
+                        } else {
+                            val idx = IntArray(dims.size) { 0 }
+                            while (true) {
+                                acc += tensor.data.get(*idx) as Float
+                                var d = dims.size - 1
+                                while (d >= 0) {
+                                    idx[d]++
+                                    if (idx[d] < dims[d]) break
+                                    idx[d] = 0
+                                    d--
+                                }
+                                if (d < 0) break
+                            }
+                        }
+                        @Suppress("UNCHECKED_CAST")
+                        acc as V
+                    }
+                    sk.ainet.lang.types.Int32::class -> {
+                        var acc = 0
+                        val dims = tensor.shape.dimensions
+                        if (dims.isEmpty()) {
+                            acc = tensor.data.get() as Int
+                        } else {
+                            val idx = IntArray(dims.size) { 0 }
+                            while (true) {
+                                acc += tensor.data.get(*idx) as Int
+                                var d = dims.size - 1
+                                while (d >= 0) {
+                                    idx[d]++
+                                    if (idx[d] < dims[d]) break
+                                    idx[d] = 0
+                                    d--
+                                }
+                                if (d < 0) break
+                            }
+                        }
+                        @Suppress("UNCHECKED_CAST")
+                        acc as V
+                    }
+                    else -> throw IllegalArgumentException("Unsupported dtype for sum: ${tensor.dtype}")
+                }
+            }
+            return CpuTensor(outData, this, tensor.dtype)
+        } else {
+            val nd = if (dim < 0) dim + rank else dim
+            require(nd in 0 until rank) { "sum: dim ${dim} out of range for rank ${rank}" }
+            val inDims = tensor.shape.dimensions
+            val outDims = IntArray(rank - 1) { 0 }
+            var oi = 0
+            for (i in 0 until rank) {
+                if (i == nd) continue
+                outDims[oi++] = inDims[i]
+            }
+            val outShape = Shape(outDims)
+            val outData = dataFactory.init<T, V>(outShape, tensor.dtype) { outIdx ->
+                when (tensor.dtype) {
+                    sk.ainet.lang.types.FP32::class, sk.ainet.lang.types.FP16::class -> {
+                        var acc = 0.0f
+                        val inIdx = IntArray(rank)
+                        var o = 0
+                        for (i in 0 until rank) {
+                            if (i == nd) continue
+                            inIdx[i] = outIdx[o++]
+                        }
+                        for (k in 0 until inDims[nd]) {
+                            inIdx[nd] = k
+                            acc += tensor.data.get(*inIdx) as Float
+                        }
+                        @Suppress("UNCHECKED_CAST")
+                        acc as V
+                    }
+                    sk.ainet.lang.types.Int32::class -> {
+                        var acc = 0
+                        val inIdx = IntArray(rank)
+                        var o = 0
+                        for (i in 0 until rank) {
+                            if (i == nd) continue
+                            inIdx[i] = outIdx[o++]
+                        }
+                        for (k in 0 until inDims[nd]) {
+                            inIdx[nd] = k
+                            acc += tensor.data.get(*inIdx) as Int
+                        }
+                        @Suppress("UNCHECKED_CAST")
+                        acc as V
+                    }
+                    else -> throw IllegalArgumentException("Unsupported dtype for sum: ${tensor.dtype}")
+                }
+            }
+            return CpuTensor(outData, this, tensor.dtype)
+        }
     }
 
     @TensorOp()
@@ -917,7 +1069,121 @@ public class DefaultCpuOps(private val dataFactory: TensorDataFactory) : TensorO
         tensor: Tensor<T, V>,
         dim: Int?
     ): Tensor<T, V> {
-        TODO("Not yet implemented")
+        val rank = tensor.rank
+        if (dim == null) {
+            val outShape = Shape()
+            val count = if (tensor.volume == 0) 0 else tensor.volume
+            val outData = dataFactory.init<T, V>(outShape, tensor.dtype) {
+                when (tensor.dtype) {
+                    sk.ainet.lang.types.FP32::class, sk.ainet.lang.types.FP16::class -> {
+                        if (count == 0) {
+                            @Suppress("UNCHECKED_CAST") (0.0f as V)
+                        } else {
+                            var acc = 0.0f
+                            val dims = tensor.shape.dimensions
+                            if (dims.isEmpty()) {
+                                acc = tensor.data.get() as Float
+                            } else {
+                                val idx = IntArray(dims.size)
+                                while (true) {
+                                    acc += tensor.data.get(*idx) as Float
+                                    var d = dims.size - 1
+                                    while (d >= 0) {
+                                        idx[d]++
+                                        if (idx[d] < dims[d]) break
+                                        idx[d] = 0
+                                        d--
+                                    }
+                                    if (d < 0) break
+                                }
+                            }
+                            @Suppress("UNCHECKED_CAST") (acc / count.toFloat()) as V
+                        }
+                    }
+                    sk.ainet.lang.types.Int32::class -> {
+                        if (count == 0) {
+                            @Suppress("UNCHECKED_CAST") (0 as V)
+                        } else {
+                            var acc = 0
+                            val dims = tensor.shape.dimensions
+                            if (dims.isEmpty()) {
+                                acc = tensor.data.get() as Int
+                            } else {
+                                val idx = IntArray(dims.size)
+                                while (true) {
+                                    acc += tensor.data.get(*idx) as Int
+                                    var d = dims.size - 1
+                                    while (d >= 0) {
+                                        idx[d]++
+                                        if (idx[d] < dims[d]) break
+                                        idx[d] = 0
+                                        d--
+                                    }
+                                    if (d < 0) break
+                                }
+                            }
+                            @Suppress("UNCHECKED_CAST") (acc / count) as V
+                        }
+                    }
+                    else -> throw IllegalArgumentException("Unsupported dtype for mean: ${tensor.dtype}")
+                }
+            }
+            return CpuTensor(outData, this, tensor.dtype)
+        } else {
+            val nd = if (dim < 0) dim + rank else dim
+            require(nd in 0 until rank) { "mean: dim ${dim} out of range for rank ${rank}" }
+            val inDims = tensor.shape.dimensions
+            val outDims = IntArray(rank - 1)
+            var oi = 0
+            for (i in 0 until rank) {
+                if (i == nd) continue
+                outDims[oi++] = inDims[i]
+            }
+            val outShape = Shape(outDims)
+            val n = inDims[nd]
+            val outData = dataFactory.init<T, V>(outShape, tensor.dtype) { outIdx ->
+                when (tensor.dtype) {
+                    sk.ainet.lang.types.FP32::class, sk.ainet.lang.types.FP16::class -> {
+                        if (n == 0) {
+                            @Suppress("UNCHECKED_CAST") (0.0f as V)
+                        } else {
+                            var acc = 0.0f
+                            val inIdx = IntArray(rank)
+                            var o = 0
+                            for (i in 0 until rank) {
+                                if (i == nd) continue
+                                inIdx[i] = outIdx[o++]
+                            }
+                            for (k in 0 until n) {
+                                inIdx[nd] = k
+                                acc += tensor.data.get(*inIdx) as Float
+                            }
+                            @Suppress("UNCHECKED_CAST") (acc / n.toFloat()) as V
+                        }
+                    }
+                    sk.ainet.lang.types.Int32::class -> {
+                        if (n == 0) {
+                            @Suppress("UNCHECKED_CAST") (0 as V)
+                        } else {
+                            var acc = 0
+                            val inIdx = IntArray(rank)
+                            var o = 0
+                            for (i in 0 until rank) {
+                                if (i == nd) continue
+                                inIdx[i] = outIdx[o++]
+                            }
+                            for (k in 0 until n) {
+                                inIdx[nd] = k
+                                acc += tensor.data.get(*inIdx) as Int
+                            }
+                            @Suppress("UNCHECKED_CAST") (acc / n) as V
+                        }
+                    }
+                    else -> throw IllegalArgumentException("Unsupported dtype for mean: ${tensor.dtype}")
+                }
+            }
+            return CpuTensor(outData, this, tensor.dtype)
+        }
     }
 
     @TensorOp()
@@ -926,7 +1192,145 @@ public class DefaultCpuOps(private val dataFactory: TensorDataFactory) : TensorO
         tensor: Tensor<T, V>,
         dim: Int?
     ): Tensor<T, V> {
-        TODO("Not yet implemented")
+        val rank = tensor.rank
+        if (dim == null) {
+            val outShape = Shape()
+            val n = tensor.volume
+            val outData = dataFactory.init<T, V>(outShape, tensor.dtype) {
+                when (tensor.dtype) {
+                    sk.ainet.lang.types.FP32::class, sk.ainet.lang.types.FP16::class -> {
+                        if (n == 0) {
+                            @Suppress("UNCHECKED_CAST") (0.0f as V)
+                        } else {
+                            var sum = 0.0f
+                            var sumSq = 0.0f
+                            val dims = tensor.shape.dimensions
+                            if (dims.isEmpty()) {
+                                val x = tensor.data.get() as Float
+                                sum = x
+                                sumSq = x * x
+                            } else {
+                                val idx = IntArray(dims.size)
+                                while (true) {
+                                    val x = tensor.data.get(*idx) as Float
+                                    sum += x
+                                    sumSq += x * x
+                                    var d = dims.size - 1
+                                    while (d >= 0) {
+                                        idx[d]++
+                                        if (idx[d] < dims[d]) break
+                                        idx[d] = 0
+                                        d--
+                                    }
+                                    if (d < 0) break
+                                }
+                            }
+                            val mean = sum / n.toFloat()
+                            val varVal = (sumSq / n.toFloat()) - mean * mean
+                            @Suppress("UNCHECKED_CAST") varVal as V
+                        }
+                    }
+                    sk.ainet.lang.types.Int32::class -> {
+                        if (n == 0) {
+                            @Suppress("UNCHECKED_CAST") (0 as V)
+                        } else {
+                            var sum = 0L
+                            var sumSq = 0L
+                            val dims = tensor.shape.dimensions
+                            if (dims.isEmpty()) {
+                                val x = (tensor.data.get() as Int).toLong()
+                                sum = x
+                                sumSq = x * x
+                            } else {
+                                val idx = IntArray(dims.size)
+                                while (true) {
+                                    val x = (tensor.data.get(*idx) as Int).toLong()
+                                    sum += x
+                                    sumSq += x * x
+                                    var d = dims.size - 1
+                                    while (d >= 0) {
+                                        idx[d]++
+                                        if (idx[d] < dims[d]) break
+                                        idx[d] = 0
+                                        d--
+                                    }
+                                    if (d < 0) break
+                                }
+                            }
+                            val meanNum = sum / n.toLong()
+                            val varNum = (sumSq / n.toLong()) - meanNum * meanNum
+                            @Suppress("UNCHECKED_CAST") (varNum.toInt() as V)
+                        }
+                    }
+                    else -> throw IllegalArgumentException("Unsupported dtype for variance: ${tensor.dtype}")
+                }
+            }
+            return CpuTensor(outData, this, tensor.dtype)
+        } else {
+            val nd = if (dim < 0) dim + rank else dim
+            require(nd in 0 until rank) { "variance: dim ${dim} out of range for rank ${rank}" }
+            val inDims = tensor.shape.dimensions
+            val outDims = IntArray(rank - 1)
+            var oi = 0
+            for (i in 0 until rank) {
+                if (i == nd) continue
+                outDims[oi++] = inDims[i]
+            }
+            val outShape = Shape(outDims)
+            val n = inDims[nd]
+            val outData = dataFactory.init<T, V>(outShape, tensor.dtype) { outIdx ->
+                when (tensor.dtype) {
+                    sk.ainet.lang.types.FP32::class, sk.ainet.lang.types.FP16::class -> {
+                        if (n == 0) {
+                            @Suppress("UNCHECKED_CAST") (0.0f as V)
+                        } else {
+                            var sum = 0.0f
+                            var sumSq = 0.0f
+                            val inIdx = IntArray(rank)
+                            var o = 0
+                            for (i in 0 until rank) {
+                                if (i == nd) continue
+                                inIdx[i] = outIdx[o++]
+                            }
+                            for (k in 0 until n) {
+                                inIdx[nd] = k
+                                val x = tensor.data.get(*inIdx) as Float
+                                sum += x
+                                sumSq += x * x
+                            }
+                            val mean = sum / n.toFloat()
+                            val varVal = (sumSq / n.toFloat()) - mean * mean
+                            @Suppress("UNCHECKED_CAST") varVal as V
+                        }
+                    }
+                    sk.ainet.lang.types.Int32::class -> {
+                        if (n == 0) {
+                            @Suppress("UNCHECKED_CAST") (0 as V)
+                        } else {
+                            var sum = 0L
+                            var sumSq = 0L
+                            val inIdx = IntArray(rank)
+                            var o = 0
+                            for (i in 0 until rank) {
+                                if (i == nd) continue
+                                inIdx[i] = outIdx[o++]
+                            }
+                            for (k in 0 until n) {
+                                inIdx[nd] = k
+                                val x = (tensor.data.get(*inIdx) as Int).toLong()
+                                sum += x
+                                sumSq += x * x
+                            }
+                            val meanNum = sum / n.toLong()
+                            val varNum = (sumSq / n.toLong()) - meanNum * meanNum
+                            @Suppress("UNCHECKED_CAST") (varNum.toInt() as V)
+                        }
+                    }
+                    else -> throw IllegalArgumentException("Unsupported dtype for variance: ${tensor.dtype}")
+                }
+            }
+            return CpuTensor(outData, this, tensor.dtype)
+        }
     }
 
     @TensorOp()
