@@ -3,6 +3,7 @@ package sk.ainet.lang.tensor.dsl
 import sk.ainet.context.ContextDsl
 import sk.ainet.context.ContextDslItem
 import sk.ainet.context.ExecutionContext
+import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.types.DType
 import kotlin.reflect.KClass
@@ -15,10 +16,27 @@ public interface DataContextDsl : ContextDslItem {
     public val executionContext: ExecutionContext
 
     // The core method uses an explicit dtype to avoid reified-in-interface
+    public fun <T : DType, V> vector(
+        length: Long,
+        dtype: KClass<T>,
+        content: TensorCreationScope<T, V>.() -> Tensor<T, V>
+    ): Tensor<T, V>
+
+    // The core method uses an explicit dtype to avoid reified-in-interface
+    public fun <T : DType, V> matrix(
+        rows: Long,
+        columns: Long,
+        dtype: KClass<T>,
+        content: TensorCreationScope<T, V>.() -> Tensor<T, V>
+    ): Tensor<T, V>
+
+
+    // The core method uses an explicit dtype to avoid reified-in-interface
     public fun <T : DType, V> tensor(
         dtype: KClass<T>,
         content: TensorFactoryContext<T, V>.() -> Tensor<T, V>
     ): Tensor<T, V>
+
 
     // Overload that allows assigning an optional unique name to the tensor within the block
     public fun <T : DType, V> tensor(
@@ -40,14 +58,32 @@ public inline fun <reified T : DType, V> DataContextDsl.tensor(
 internal class DataDefinitionContextDslImpl(
     override val executionContext: ExecutionContext,
 ) : DataContextDsl {
-    // Tracks the last tensor created within this DSL instance
-    internal var lastTensor: Tensor<*, *>? = null
+
+    var createdTensorsCount: Int = 0
 
     // Keeps all named tensors created within the block; names must be unique in this context
     internal val tensorsByName: LinkedHashMap<String, Tensor<*, *>> = LinkedHashMap()
 
-    // Tracks total number of tensors created in the block (named or unnamed)
-    internal var createdTensorsCount: Int = 0
+    override fun <T : DType, V> vector(
+        length: Long,
+        dtype: KClass<T>,
+        content: TensorCreationScope<T, V>.() -> Tensor<T, V>
+    ): Tensor<T, V> {
+        val shape = Shape(length.toInt())
+        val scope = TensorCreationScopeImpl<T, V>(executionContext, shape, dtype)
+        return scope.content()
+    }
+
+    override fun <T : DType, V> matrix(
+        rows: Long,
+        columns: Long,
+        dtype: KClass<T>,
+        content: TensorCreationScope<T, V>.() -> Tensor<T, V>
+    ): Tensor<T, V> {
+        val shape = Shape(rows.toInt(), columns.toInt())
+        val scope = TensorCreationScopeImpl<T, V>(executionContext, shape, dtype)
+        return scope.content()
+    }
 
     override fun <T : DType, V> tensor(
         dtype: KClass<T>,
@@ -55,8 +91,6 @@ internal class DataDefinitionContextDslImpl(
     ): Tensor<T, V> {
         val ctx = TensorFactoryContext<T, V>(executionContext, dtype)
         val t = ctx.content()
-        createdTensorsCount++
-        lastTensor = t
         return t
     }
 
@@ -71,8 +105,7 @@ internal class DataDefinitionContextDslImpl(
             error("Tensor name '$name' must be unique within createData block")
         }
         tensorsByName[name] = t
-        createdTensorsCount++
-        lastTensor = t
+        createdTensorsCount += 1
         return t
     }
 }

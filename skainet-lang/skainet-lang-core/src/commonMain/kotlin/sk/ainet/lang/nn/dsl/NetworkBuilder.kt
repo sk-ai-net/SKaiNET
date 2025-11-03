@@ -15,9 +15,9 @@ import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.nn.DefaultNeuralNetworkExecutionContext
 import sk.ainet.lang.nn.NeuralNetworkExecutionContext
-import sk.ainet.lang.tensor.VoidOpsTensor
 import sk.ainet.lang.types.DType
-import kotlin.random.Random
+import sk.ainet.context.ExecutionContext
+import sk.ainet.lang.tensor.dsl.TensorsValueScope
 import kotlin.reflect.KClass
 
 // DSL Marker to restrict the DSL to its intended scope
@@ -318,94 +318,6 @@ public interface CONV2D<T : DType, V> : NetworkDslItem, WandBTensorValueContext<
     public var bias: Boolean
 }
 
-/**
- * Base scope providing common tensor creation and initialization methods.
- */
-@NetworkDsl
-public interface TensorsValueScope<T : DType, V> {
-    public val shape: Shape
-    public val dtype: KClass<T>
-    public val executionContext: NeuralNetworkExecutionContext
-
-    /**
-     * Create tensor filled with zeros
-     */
-    public fun zeros(): Tensor<T, V> = executionContext.zeros(shape, dtype)
-
-    /**
-     * Create tensor filled with ones
-     */
-    public fun ones(): Tensor<T, V> = executionContext.ones(shape, dtype)
-
-    /**
-     * Create tensor filled with ones
-     */
-    public fun full(value: Number): Tensor<T, V> = executionContext.full(shape, dtype, value)
-
-
-    /**
-     * Factories
-     */
-    // fromXX Float
-    public fun from(vararg data: Float): Tensor<T, V> = fromArray(data.toTypedArray().toFloatArray())
-    public fun fromList(data: List<Float>): Tensor<T, V> = fromArray(data.toFloatArray())
-    public fun fromArray(data: FloatArray): Tensor<T, V> {
-        require(data.size == shape.volume) {
-            "Data size ${data.size} doesn't match shape volume ${shape.volume}"
-        }
-        return executionContext.fromFloatArray(shape, dtype, data)
-    }
-
-    // fromXX Int
-    public fun from(vararg data: Int): Tensor<T, V> = fromArray(data.toTypedArray().toIntArray())
-    public fun fromIntList(data: List<Int>): Tensor<T, V> = fromArray(data.toIntArray())
-    public fun fromArray(data: IntArray): Tensor<T, V> {
-        require(data.size == shape.volume) {
-            "Data size ${data.size} doesn't match shape volume ${shape.volume}"
-        }
-        return executionContext.fromIntArray(shape, dtype, data)
-    }
-
-    /**
-     * Create tensor with custom initialization function
-     */
-    public fun init(generator: (indices: IntArray) -> V): Tensor<T, V> {
-        val data = executionContext.tensorDataFactory.init(shape, dtype, generator)
-        return executionContext.fromData(data, dtype)
-    }
-
-    /**
-     * Create tensor with custom random initialization
-     */
-    public fun randomInit(generator: (random: Random) -> V, random: Random = Random.Default): Tensor<T, V> {
-        val data = executionContext.tensorDataFactory.randomInit(shape, dtype, generator, random)
-        return executionContext.fromData(data, dtype)
-    }
-
-
-    /**
-     * Advanced initialization with custom random distribution.
-     */
-    public fun random(initBlock: (Shape) -> Tensor<T, V>): Tensor<T, V> = initBlock(shape)
-
-    /**
-     * Create tensor with normal distribution
-     */
-    public fun randn(mean: Float = 0.0f, std: Float = 1.0f, random: Random = Random.Default): Tensor<T, V> {
-        val data = executionContext.tensorDataFactory.randn<T, V>(shape, dtype, mean, std, random)
-        return executionContext.fromData(data, dtype)
-    }
-
-    /**
-     * Create tensor with uniform distribution
-     */
-    public fun uniform(min: Float = 0.0f, max: Float = 1.0f, random: Random = Random.Default): Tensor<T, V> {
-        val data = executionContext.tensorDataFactory.uniform<T, V>(shape, dtype, min, max, random)
-        return executionContext.fromData(data, dtype)
-    }
-
-
-}
 
 /**
  * Scope for weights initialization with implicit shape context.
@@ -423,7 +335,7 @@ public interface BiasScope<T : DType, V> : TensorsValueScope<T, V>
  * Implementation of WeightsScope for weights initialization.
  */
 public class WeightsScopeImpl<T : DType, V>(
-    override val executionContext: NeuralNetworkExecutionContext,
+    override val executionContext: ExecutionContext,
     override val shape: Shape,
     override val dtype: KClass<T>
 ) : WeightsScope<T, V>
@@ -432,7 +344,7 @@ public class WeightsScopeImpl<T : DType, V>(
  * Implementation of BiasScope for bias initialization.
  */
 public class BiasScopeImpl<T : DType, V>(
-    override val executionContext: NeuralNetworkExecutionContext,
+    override val executionContext: ExecutionContext,
     override val shape: Shape,
     override val dtype: KClass<T>,
 ) : BiasScope<T, V>

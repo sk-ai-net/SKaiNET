@@ -21,16 +21,6 @@ public fun  data(
     dsl.content(executionContext)
 }
 
-// Variant that returns the last created tensor from the context block
-@ContextDsl
-public fun createData(
-    executionContext: ExecutionContext = DefaultDataExecutionContext(),
-    content: DataContextDsl.(executionContext: ExecutionContext) -> Unit
-): Tensor<*, *> {
-    val dsl = DataDefinitionContextDslImpl(executionContext)
-    dsl.content(executionContext)
-    return dsl.lastTensor ?: error("No tensor was created in createData block")
-}
 
 // Variant that returns a map of all tensors created in the block, keyed by their unique names
 // All tensors in the block must be named using the named `tensor(...)` overload; names must be unique
