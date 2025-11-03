@@ -152,7 +152,7 @@ internal class DataDefinitionContextDslImpl(
 
 // Implementation of the typed DSL that delegates to the base data context
 public class TypedDataContextDslImpl<T : DType, V>(
-    private val baseExecutionContext: ExecutionContext,
+    baseExecutionContext: ExecutionContext,
     override val defaultDType: KClass<T>,
 ) : TypedDataContextDsl<T, V> {
 

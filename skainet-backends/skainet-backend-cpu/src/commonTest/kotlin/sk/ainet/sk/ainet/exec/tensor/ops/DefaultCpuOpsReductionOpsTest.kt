@@ -62,7 +62,7 @@ class DefaultCpuOpsReductionOpsTest {
             // rank-0 scalar
             assertEquals(0, rAll.shape.rank)
             val expectedAll = listOf(0f,1f,10f,11f).average().toFloat()
-            assertEquals(expectedAll, rAll.data.get() as Float)
+            assertEquals(expectedAll, rAll.data.get())
 
             // Mean along dim 0 -> shape (2)
             val r0 = ops.mean(t, 0)
@@ -82,7 +82,7 @@ class DefaultCpuOpsReductionOpsTest {
             // rank-0 scalar
             assertEquals(0, rAll.shape.rank)
             // population variance of [0,1,2,3] is 1.25
-            assertEquals(1.25f, rAll.data.get() as Float)
+            assertEquals(1.25f, rAll.data.get())
 
             // 2x2; variance along dim 1 (each row)
             val m = tensor<FP32, Float> { shape(2, 2) { init { (it[0] * 10 + it[1]).toFloat() } } } // [[0,1],[10,11]]

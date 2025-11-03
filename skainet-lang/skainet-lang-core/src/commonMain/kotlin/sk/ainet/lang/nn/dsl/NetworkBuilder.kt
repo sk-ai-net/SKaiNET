@@ -13,10 +13,9 @@ import sk.ainet.lang.nn.normalization.LayerNormalization
 import sk.ainet.lang.nn.topology.MLP
 import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.Tensor
-import sk.ainet.lang.nn.DefaultNeuralNetworkExecutionContext
-import sk.ainet.lang.nn.NeuralNetworkExecutionContext
 import sk.ainet.lang.types.DType
 import sk.ainet.context.ExecutionContext
+import sk.ainet.lang.nn.DefaultNeuralNetworkExecutionContext
 import sk.ainet.lang.tensor.dsl.TensorCreationScope
 import kotlin.reflect.KClass
 
@@ -64,7 +63,7 @@ public inline fun <reified T : DType, V> sequential(
  * Overload that wires both tensor factory and ops from an ExecutionContext.
  */
 public inline fun <reified T : DType, V> sequential(
-    executionContext: NeuralNetworkExecutionContext,
+    executionContext: ExecutionContext,
     content: NeuralNetworkDsl<T, V>.() -> Unit
 ): Module<T, V> =
     NeuralNetworkDslImpl<T, V>(executionContext, T::class)
@@ -73,7 +72,7 @@ public inline fun <reified T : DType, V> sequential(
 
 @NetworkDsl
 public interface NetworkDslItem {
-    public val executionContext: NeuralNetworkExecutionContext
+    public val executionContext: ExecutionContext
 }
 
 /**
@@ -292,7 +291,7 @@ public interface NeuralNetworkDsl<T : DType, V> : NetworkDslItem {
 }
 
 public interface WandBTensorValueContext<T : DType, V> {
-    public val executionContext: NeuralNetworkExecutionContext
+    public val executionContext: ExecutionContext
     public val weightsShape: Shape
     public val biasShape: Shape
 
@@ -361,7 +360,7 @@ private fun getDefaultName(id: String, s: String, size: Int): String {
 }
 
 public class FlattenImpl<T : DType, V>(
-    override val executionContext: NeuralNetworkExecutionContext,
+    override val executionContext: ExecutionContext,
     override var startDim: Int = 1,
     override var endDim: Int = -1,
     private val id: String,
@@ -372,7 +371,7 @@ public class FlattenImpl<T : DType, V>(
 }
 
 private fun <T : DType, V> createLinear(
-    executionContext: NeuralNetworkExecutionContext,
+    executionContext: ExecutionContext,
     inFeatures: Int,
     outFeatures: Int,
     id: String,
@@ -436,7 +435,7 @@ private fun <T : DType, V> createLinear(
 
 
 public class DenseImpl<T : DType, V>(
-    override val executionContext: NeuralNetworkExecutionContext,
+    override val executionContext: ExecutionContext,
     private val inputDimension: Int,
     private var _outputDimension: Int,
     private val id: String,
@@ -505,7 +504,7 @@ public class DenseImpl<T : DType, V>(
 }
 
 public class Conv2dImpl<T : DType, V>(
-    override val executionContext: NeuralNetworkExecutionContext,
+    override val executionContext: ExecutionContext,
     initialInChannels: Int,
     initialOutChannels: Int,
     initialKernelSize: Pair<Int, Int>,
@@ -576,7 +575,7 @@ public class Conv2dImpl<T : DType, V>(
 
 // Stage implementation
 public class StageImpl<T : DType, V>(
-    override val executionContext: NeuralNetworkExecutionContext,
+    override val executionContext: ExecutionContext,
     private val id: String,
     private val kClass: KClass<T>
 ) : NeuralNetworkDsl<T, V> {
@@ -789,7 +788,7 @@ public class StageImpl<T : DType, V>(
 }
 
 public class NeuralNetworkDslImpl<T : DType, V>(
-    override val executionContext: NeuralNetworkExecutionContext,
+    override val executionContext: ExecutionContext,
     private val kClass: KClass<T>
 ) : NeuralNetworkDsl<T, V> {
 
