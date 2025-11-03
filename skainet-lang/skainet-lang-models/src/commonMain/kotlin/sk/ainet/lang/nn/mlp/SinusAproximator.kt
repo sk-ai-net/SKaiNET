@@ -17,7 +17,7 @@ public class SinusApproximator() : Model {
 
     public override fun <T : DType, V> model(): Module<FP32, Float> = model
 
-    private val model = definition<FP32, Float> {
+    private val model = definition<FP32, Float>() {
         network {
             input(1, "input")  // Single input for x value
 
