@@ -16,8 +16,37 @@ class NestedDataBlockTest {
             // create vector
             val vectorFP32 = tensor<FP32, Float> {
                 shape(3, 3, 3) {
-                    //fromArray(1.0f,2.0f,3.0f,4.0f,5.0f,6.0f)
-                    zeros()
+                    fromArray(
+                        floatArrayOf(
+                            1.0f,
+                            2.0f,
+                            3.0f,
+                            4.0f,
+                            5.0f,
+                            6.0f,
+                            1.0f,
+                            2.0f,
+                            3.0f,
+                            4.0f,
+                            5.0f,
+                            6.0f,
+                            1.0f,
+                            2.0f,
+                            3.0f,
+                            4.0f,
+                            5.0f,
+                            6.0f,
+                            1.0f,
+                            2.0f,
+                            3.0f,
+                            4.0f,
+                            5.0f,
+                            6.0f,
+                            1.0f,
+                            2.0f,
+                            3.0f
+                        )
+                    )
                 }
             }
 
@@ -33,7 +62,7 @@ class NestedDataBlockTest {
             assertTrue(nestedVector is Tensor<Int8, Byte>)
             vectorFP32
         }
-        assertEquals(0.0f, tensor.data[0, 0, 0])
+        assertEquals(1.0f, tensor.data[0, 0, 0])
         assertEquals(27, tensor.volume)
         assertEquals(3, tensor.rank)
     }
@@ -44,17 +73,18 @@ class NestedDataBlockTest {
             // create vector
             val vectorFP32 = tensor {
                 shape(3, 2) {
-                    //fromArray(1,2,3,4,5,6)
+
                     zeros()
                 }
             }
 
             val nestedVector = data<Int8, Int> {
                 vector(10) {
-                    ones()
+                    fromArray(intArrayOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10))
                 }
             }
             assertTrue(nestedVector is Tensor<Int8, Int>)
+            assertEquals(10, nestedVector.data[9])
             vectorFP32
         }
         assertTrue(result is Tensor<FP32, Float>)
