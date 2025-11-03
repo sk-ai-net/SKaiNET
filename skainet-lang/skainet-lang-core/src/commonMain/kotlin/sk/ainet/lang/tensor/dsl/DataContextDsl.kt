@@ -46,6 +46,7 @@ public interface DataContextDsl : ContextDslItem {
     ): Tensor<T, V>
 }
 
+// Reified convenience for tensor with implicit dtype
 public inline fun <reified T : DType, V> DataContextDsl.tensor(
     noinline content: TensorFactoryContext<T, V>.() -> Tensor<T, V>
 ): Tensor<T, V> = tensor(T::class, content)
@@ -54,6 +55,44 @@ public inline fun <reified T : DType, V> DataContextDsl.tensor(
     name: String,
     noinline content: TensorFactoryContext<T, V>.() -> Tensor<T, V>
 ): Tensor<T, V> = tensor(T::class, name, content)
+
+// Reified convenience for vector/matrix with implicit dtype
+public inline fun <reified T : DType, V> DataContextDsl.vector(
+    length: Long,
+    noinline content: TensorCreationScope<T, V>.() -> Tensor<T, V>
+): Tensor<T, V> = vector(length, T::class, content)
+
+public inline fun <reified T : DType, V> DataContextDsl.matrix(
+    rows: Long,
+    columns: Long,
+    noinline content: TensorCreationScope<T, V>.() -> Tensor<T, V>
+): Tensor<T, V> = matrix(rows, columns, T::class, content)
+
+// Typed variant of the DSL that carries a default dtype and provides no-dtype overloads
+@ContextDsl
+public interface TypedDataContextDsl<T : DType, V> : DataContextDsl {
+    public val defaultDType: KClass<T>
+
+    public fun vector(
+        length: Long,
+        content: TensorCreationScope<T, V>.() -> Tensor<T, V>
+    ): Tensor<T, V>
+
+    public fun matrix(
+        rows: Long,
+        columns: Long,
+        content: TensorCreationScope<T, V>.() -> Tensor<T, V>
+    ): Tensor<T, V>
+
+    public fun tensor(
+        content: TensorFactoryContext<T, V>.() -> Tensor<T, V>
+    ): Tensor<T, V>
+
+    public fun tensor(
+        name: String,
+        content: TensorFactoryContext<T, V>.() -> Tensor<T, V>
+    ): Tensor<T, V>
+}
 
 internal class DataDefinitionContextDslImpl(
     override val executionContext: ExecutionContext,
@@ -109,4 +148,61 @@ internal class DataDefinitionContextDslImpl(
         createdTensorsCount += 1
         return t
     }
+}
+
+// Implementation of the typed DSL that delegates to the base data context
+public class TypedDataContextDslImpl<T : DType, V>(
+    private val baseExecutionContext: ExecutionContext,
+    override val defaultDType: KClass<T>,
+) : TypedDataContextDsl<T, V> {
+
+    private val base: DataDefinitionContextDslImpl = DataDefinitionContextDslImpl(baseExecutionContext)
+
+    override val executionContext: ExecutionContext get() = base.executionContext
+
+    // Delegate core DataContextDsl methods to base
+    override fun <T2 : DType, V2> vector(
+        length: Long,
+        dtype: KClass<T2>,
+        content: TensorCreationScope<T2, V2>.() -> Tensor<T2, V2>
+    ): Tensor<T2, V2> = base.vector(length, dtype, content)
+
+    override fun <T2 : DType, V2> matrix(
+        rows: Long,
+        columns: Long,
+        dtype: KClass<T2>,
+        content: TensorCreationScope<T2, V2>.() -> Tensor<T2, V2>
+    ): Tensor<T2, V2> = base.matrix(rows, columns, dtype, content)
+
+    override fun <T2 : DType, V2> tensor(
+        dtype: KClass<T2>,
+        content: TensorFactoryContext<T2, V2>.() -> Tensor<T2, V2>
+    ): Tensor<T2, V2> = base.tensor(dtype, content)
+
+    override fun <T2 : DType, V2> tensor(
+        dtype: KClass<T2>,
+        name: String,
+        content: TensorFactoryContext<T2, V2>.() -> Tensor<T2, V2>
+    ): Tensor<T2, V2> = base.tensor(dtype, name, content)
+
+    // No-dtype overloads use defaultDType
+    override fun vector(
+        length: Long,
+        content: TensorCreationScope<T, V>.() -> Tensor<T, V>
+    ): Tensor<T, V> = base.vector(length, defaultDType, content)
+
+    override fun matrix(
+        rows: Long,
+        columns: Long,
+        content: TensorCreationScope<T, V>.() -> Tensor<T, V>
+    ): Tensor<T, V> = base.matrix(rows, columns, defaultDType, content)
+
+    override fun tensor(
+        content: TensorFactoryContext<T, V>.() -> Tensor<T, V>
+    ): Tensor<T, V> = base.tensor(defaultDType, content)
+
+    override fun tensor(
+        name: String,
+        content: TensorFactoryContext<T, V>.() -> Tensor<T, V>
+    ): Tensor<T, V> = base.tensor(defaultDType, name, content)
 }
