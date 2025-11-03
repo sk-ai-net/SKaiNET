@@ -17,7 +17,7 @@ import sk.ainet.lang.nn.DefaultNeuralNetworkExecutionContext
 import sk.ainet.lang.nn.NeuralNetworkExecutionContext
 import sk.ainet.lang.types.DType
 import sk.ainet.context.ExecutionContext
-import sk.ainet.lang.tensor.dsl.TensorsValueScope
+import sk.ainet.lang.tensor.dsl.TensorCreationScope
 import kotlin.reflect.KClass
 
 // DSL Marker to restrict the DSL to its intended scope
@@ -323,13 +323,13 @@ public interface CONV2D<T : DType, V> : NetworkDslItem, WandBTensorValueContext<
  * Scope for weights initialization with implicit shape context.
  */
 @NetworkDsl
-public interface WeightsScope<T : DType, V> : TensorsValueScope<T, V>
+public interface WeightsScope<T : DType, V> : TensorCreationScope<T, V>
 
 /**
  * Scope for bias initialization with implicit shape context.
  */
 @NetworkDsl
-public interface BiasScope<T : DType, V> : TensorsValueScope<T, V>
+public interface BiasScope<T : DType, V> : TensorCreationScope<T, V>
 
 /**
  * Implementation of WeightsScope for weights initialization.

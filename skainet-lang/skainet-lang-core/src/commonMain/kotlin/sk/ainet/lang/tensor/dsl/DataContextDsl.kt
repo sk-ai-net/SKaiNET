@@ -91,6 +91,7 @@ internal class DataDefinitionContextDslImpl(
     ): Tensor<T, V> {
         val ctx = TensorFactoryContext<T, V>(executionContext, dtype)
         val t = ctx.content()
+        createdTensorsCount++
         return t
     }
 

@@ -27,7 +27,7 @@ class DefaultCpuOpsReductionOpsTest {
             }
             // Scalar (rank-0) expected by backend implementation
             assertEquals(0, r.shape.rank)
-            assertEquals(expected, r.data[0])
+            assertEquals(expected, r.data.get())
         }
     }
 
