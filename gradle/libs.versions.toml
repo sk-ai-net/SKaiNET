@@ -1,6 +1,6 @@
 [versions]
 agp = "8.12.3"
-jacksonDatabind = "2.20.0"
+jacksonDatabind = "2.20.1"
 jsonSchemaValidator = "2.0.0"
 jsonSchemaValidatorVersion = "0.5.2"
 kotlin = "2.2.21"
