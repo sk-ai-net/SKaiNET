@@ -14,77 +14,79 @@ import sk.ainet.lang.types.FP32
 import kotlin.math.PI
 import kotlin.test.Test
 
-class SinusApproximatorTest {
-
-    private val sinusApproximatorWandB: SinusApproximatorWandB = SinusApproximatorWandB()
+private val sinusApproximatorWandB: SinusApproximatorWandB = SinusApproximatorWandB()
 
 
-    fun createModel(context: ExecutionContext) = definition<FP32, Float> {
-        network(context) {
-            input(1, "input")  // Single input for x value
+fun createModel(context: ExecutionContext) = definition<FP32, Float> {
+    network(context) {
+        input(1, "input")  // Single input for x value
 
-            // First hidden layer: 1 -> 16 neurons
-            dense(16, "hidden-1") {
-                // Weights: 16x1 matrix - explicitly defined values
-                weights {
-                    fromArray(
-                        sinusApproximatorWandB.getLayer1WandB("").weights
-                    )
-                }
-                // Bias: 16 values - explicitly defined
-                bias {
-                    fromArray(
-                        sinusApproximatorWandB.getLayer1WandB("").bias
-                    )
-                }
-                activation = { tensor -> with(tensor) { relu() } }
+        // First hidden layer: 1 -> 16 neurons
+        dense(16, "hidden-1") {
+            // Weights: 16x1 matrix - explicitly defined values
+            weights {
+                fromArray(
+                    sinusApproximatorWandB.getLayer1WandB("").weights
+                )
+            }
+            // Bias: 16 values - explicitly defined
+            bias {
+                fromArray(
+                    sinusApproximatorWandB.getLayer1WandB("").bias
+                )
+            }
+            activation = { tensor -> with(tensor) { relu() } }
+        }
+
+        // Second hidden layer: 16 -> 16 neurons
+        dense(16, "hidden-2") {
+            // Weights: 16x16 matrix - explicitly defined values
+            weights {
+                fromArray(
+                    sinusApproximatorWandB.getLayer2WandB("").weights
+                )
+            }
+            // Bias: 16 values - explicitly defined
+            bias {
+                fromArray(
+                    sinusApproximatorWandB.getLayer2WandB("").bias
+                )
+            }
+            activation = { tensor -> with(tensor) { relu() } }
+        }
+
+        // Output layer: 16 -> 1 neuron
+        dense(1, "output") {
+            // Weights: 1x16 matrix - explicitly defined values
+            weights {
+                fromArray(
+                    sinusApproximatorWandB.getLayer3WandB("").weights
+                )
             }
 
-            // Second hidden layer: 16 -> 16 neurons
-            dense(16, "hidden-2") {
-                // Weights: 16x16 matrix - explicitly defined values
-                weights {
-                    fromArray(
-                        sinusApproximatorWandB.getLayer2WandB("").weights
-                    )
-                }
-                // Bias: 16 values - explicitly defined
-                bias {
-                    fromArray(
-                        sinusApproximatorWandB.getLayer2WandB("").bias
-                    )
-                }
-                activation = { tensor -> with(tensor) { relu() } }
+            // Bias: single value - explicitly defined
+            bias {
+                fromArray(
+                    sinusApproximatorWandB.getLayer3WandB("").bias
+                )
             }
 
-            // Output layer: 16 -> 1 neuron
-            dense(1, "output") {
-                // Weights: 1x16 matrix - explicitly defined values
-                weights {
-                    fromArray(
-                        sinusApproximatorWandB.getLayer3WandB("").weights
-                    )
-                }
-
-                // Bias: single value - explicitly defined
-                bias {
-                    fromArray(
-                        sinusApproximatorWandB.getLayer3WandB("").bias
-                    )
-                }
-
-                // No activation for output layer (linear output)
-            }
+            // No activation for output layer (linear output)
         }
     }
+}
+
+
+class SinusApproximatorTest {
+
 
     @Test
     fun testSinusApproximator() {
         val ctx = DirectCpuExecutionContext()
-        computation<Float>(ctx) { computation ->
+        val result = computation<Float>(ctx) { _ ->
             // Create a simple input tensor compatible with the model's expected input size (1)
-            val inputTensor = data<FP32, Float> (ctx){
-                tensor<FP32, Float>() {
+            val inputTensor = data<FP32, Float>(ctx) {
+                tensor<FP32, Float> {
                     // Using shape(1, 1) to represent a single scalar input in 2D form
                     shape(2, 1) {
                         fromArray(
@@ -95,7 +97,37 @@ class SinusApproximatorTest {
             }
             val model = createModel(ctx)
             val result = model(inputTensor)
-            print(result.pprint())
+            //print(result.pprint())
+            result.data[0,0]
         }
+    }
+
+
+    class SineNN(private val ctx: ExecutionContext) {
+        val model_ = createModel(ctx)
+        fun calcSine(angle: Float): Float {
+            return computation(ctx) { computation ->
+                // Create a simple input tensor compatible with the model's expected input size (1)
+                val inputTensor = data<FP32, Float>(ctx) {
+                    tensor<FP32, Float>() {
+                        // Using shape(1, 1) to represent a single scalar input in 2D form
+                        shape(2, 1) {
+                            fromArray(
+                                floatArrayOf(0f, (PI / 2.0f).toFloat())
+                            )
+                        }
+                    }
+                }
+
+                val result = model_(inputTensor)
+                print(result.pprint())
+                result.data[0,0]
+            }
+        }
+    }
+
+    @Test
+    fun testSinusApproximatorWithWeights() {
+
     }
 }
