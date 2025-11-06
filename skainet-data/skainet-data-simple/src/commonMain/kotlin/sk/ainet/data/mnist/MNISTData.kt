@@ -1,6 +1,17 @@
 package sk.ainet.data.mnist
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import sk.ainet.context.DefaultDataExecutionContext
+import sk.ainet.context.ExecutionContext
+import sk.ainet.data.DataBatch
+import sk.ainet.data.Dataset
+import sk.ainet.lang.tensor.Shape
+import sk.ainet.lang.tensor.Tensor
+import sk.ainet.lang.types.DType
+import sk.ainet.lang.types.FP32
+import kotlin.math.min
+import kotlin.random.Random
 
 /**
  * Represents a single MNIST image with its label.
@@ -33,29 +44,80 @@ public data class MNISTImage(
 }
 
 /**
- * Represents a dataset of MNIST images.
- *
- * @property images The list of MNIST images.
+ * MNIST dataset implementation using Dataset/DataBatch API.
+ * - Provides batching as tensors [FP32] with shapes:
+ *   x: [batch, 1, 28, 28] (normalized 0..1)
+ *   y: [batch] (labels as floats)
  */
 @Serializable
 public data class MNISTDataset(
-    val images: List<MNISTImage>
-) {
+    val images: List<MNISTImage>,
+    @Transient private val executionContext: ExecutionContext = DefaultDataExecutionContext()
+) : Dataset<MNISTImage, Float>() {
+
+    override val xSize: Int get() = images.size
+
+    override fun getX(idx: Int): MNISTImage = images[idx]
+
+    override fun getY(idx: Int): Float = images[idx].label.toInt().toFloat()
+
+    override fun shuffle(): Dataset<MNISTImage, Float> {
+        val shuffled = images.toMutableList()
+        shuffled.shuffle(Random.Default)
+        return MNISTDataset(shuffled, executionContext)
+    }
+
+    override fun split(splitRatio: Double): Pair<Dataset<MNISTImage, Float>, Dataset<MNISTImage, Float>> {
+        require(splitRatio > 0.0 && splitRatio < 1.0) { "splitRatio must be in (0,1)" }
+        val splitIndex = (images.size * splitRatio).toInt()
+        val first = images.subList(0, splitIndex)
+        val second = images.subList(splitIndex, images.size)
+        return MNISTDataset(first, executionContext) to MNISTDataset(second, executionContext)
+    }
+
     /**
-     * Returns the number of images in the dataset.
+     * Creates a DataBatch with FP32 tensors. Generic parameters are satisfied via unchecked casts.
      */
-    val size: Int
-        get() = images.size
+    override fun <T : DType, V> createDataBatch(batchStart: Int, batchLength: Int): DataBatch<T, V> {
+        val actualLen = min(batchLength, xSize - batchStart)
+        val batchImages = images.subList(batchStart, batchStart + actualLen)
+
+        // Prepare image data as float array normalized to [0,1]
+        val xData = FloatArray(actualLen * MNISTConstants.IMAGE_PIXELS) { 0f }
+        var offset = 0
+        for (sample in batchImages) {
+            val bytes = sample.image
+            var j = 0
+            while (j < MNISTConstants.IMAGE_PIXELS) {
+                val v = (bytes[j].toInt() and 0xFF).toFloat() / 255f
+                xData[offset + j] = v
+                j++
+            }
+            offset += MNISTConstants.IMAGE_PIXELS
+        }
+
+        // Shape as [batch, 1, 28, 28]; data provided in NCHW but our flat array is [batch, 28*28].
+        // We will reshape downstream; for data factory we just pass flattened data with total volume.
+        val xShape = Shape(actualLen, 1, MNISTConstants.IMAGE_SIZE, MNISTConstants.IMAGE_SIZE)
+        val xTensor: Tensor<FP32, Float> = executionContext.fromFloatArray(xShape, FP32::class, xData)
+
+        // Labels as floats
+        val yData = FloatArray(actualLen) { idx -> batchImages[idx].label.toInt().toFloat() }
+        val yShape = Shape(actualLen)
+        val yTensor: Tensor<FP32, Float> = executionContext.fromFloatArray(yShape, FP32::class, yData)
+
+        // DataBatch expects array of input tensors; we provide single input
+        val xArray: Array<Tensor<FP32, Float>> = arrayOf(xTensor)
+
+        @Suppress("UNCHECKED_CAST")
+        return DataBatch(xArray as Array<Tensor<T, V>>, yTensor as Tensor<T, V>)
+    }
 
     /**
      * Returns a subset of the dataset.
-     *
-     * @param fromIndex The starting index (inclusive).
-     * @param toIndex The ending index (exclusive).
-     * @return A new MNISTDataset containing the specified range of images.
      */
     public fun subset(fromIndex: Int, toIndex: Int): MNISTDataset {
-        return MNISTDataset(images.subList(fromIndex, toIndex))
+        return MNISTDataset(images.subList(fromIndex, toIndex), executionContext)
     }
 }
 
