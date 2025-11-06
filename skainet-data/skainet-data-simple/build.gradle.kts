@@ -32,10 +32,13 @@ kotlin {
 
     jvm()
 
+    js {
+        browser()
+    }
+
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser()
-        binaries.executable()
     }
 
     sourceSets {
@@ -45,6 +48,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(project(":skainet-lang:skainet-lang-core"))
+                implementation(project(":skainet-data:skainet-data-api"))
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.ktor.client.core)
                 implementation(libs.kotlinx.coroutines)
@@ -63,6 +67,11 @@ kotlin {
 
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+        }
+        val jsMain by getting {
+            dependencies {
+                implementation(libs.ktor.client.js)
+            }
         }
         val wasmJsMain by getting {
             dependencies {

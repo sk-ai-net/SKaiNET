@@ -28,10 +28,13 @@ kotlin {
 
     jvm()
 
+    js {
+        browser()
+    }
+
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser()
-        binaries.executable()
     }
 
     sourceSets {
@@ -41,6 +44,8 @@ kotlin {
 
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(project(":skainet-backends:skainet-backend-cpu"))
+
         }
     }
 }
