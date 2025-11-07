@@ -1,4 +1,4 @@
-package sk.ainet.lang.nn
+package sk.ainet.lang.model.dnn
 
 public data class WeightAndBias(val name: String, val weights: FloatArray, val bias: FloatArray) {
     override fun equals(other: Any?): Boolean {

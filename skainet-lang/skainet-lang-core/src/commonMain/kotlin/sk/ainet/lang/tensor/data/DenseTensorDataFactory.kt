@@ -659,4 +659,21 @@ public class DenseTensorDataFactory: TensorDataFactory {
             else -> throw IllegalArgumentException("fromIntArray only supports Int32/Int8 types: $dtype")
         }
     }
+
+    override fun <T : DType, V> fromByteArray(
+        shape: Shape,
+        dtype: KClass<T>,
+        data: ByteArray
+    ): TensorData<T, V> {
+        require(data.size == shape.volume) {
+            "Data size ${data.size} doesn't match shape volume ${shape.volume}"
+        }
+        @Suppress("UNCHECKED_CAST")
+        return when (dtype) {
+            Int8::class -> {
+                createByteTensorData<T>(shape, data) as TensorData<T, V>
+            }
+            else -> throw IllegalArgumentException("fromByteArray only supports Int8 types with shape: $dtype")
+        }
+    }
 }

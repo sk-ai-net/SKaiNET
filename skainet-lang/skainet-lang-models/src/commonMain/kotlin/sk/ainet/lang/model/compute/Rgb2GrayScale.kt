@@ -1,10 +1,11 @@
-package sk.ainet.lang.nn.compute
+package sk.ainet.lang.model.compute
 
-import sk.ainet.lang.nn.Model
+import sk.ainet.context.ExecutionContext
+import sk.ainet.lang.model.Model
+import sk.ainet.lang.model.ModelCard
 import sk.ainet.lang.nn.Module
 import sk.ainet.lang.nn.definition
 import sk.ainet.lang.nn.network
-import sk.ainet.lang.types.DType
 import sk.ainet.lang.types.FP32
 
 /**
@@ -20,9 +21,10 @@ import sk.ainet.lang.types.FP32
  * Expected input shape: (N, 3, H, W)
  * Output shape: (N, 1, H, W)
  */
-public class Rgb2GrayScale : Model {
+public class Rgb2GrayScale : Model<FP32, Float> {
 
-    private val modelImpl: Module<FP32, Float> = definition<FP32, Float> {
+
+    private val modelImpl: Module<FP32, Float> = definition {
         network {
             sequential {
                 // 1x1 convolution performing per-pixel dot product with RGB weights
@@ -46,9 +48,16 @@ public class Rgb2GrayScale : Model {
         }
     }
 
-    override fun <T : DType, V> model(): Module<FP32, Float> = modelImpl
+    override fun model(executionContext: ExecutionContext): Module<FP32, Float> = modelImpl
+    override fun modelCard(): ModelCard {
+        TODO("Not yet implemented")
+    }
 
+
+    /*
     override fun modelCard(): String =
         "RGB→Grayscale via fixed 1x1 Conv2D with weights [0.2989, 0.5870, 0.1140] and no bias. " +
-        "Input: (N,3,H,W). Output: (N,1,H,W)."
+                "Input: (N,3,H,W). Output: (N,1,H,W)."
+
+     */
 }

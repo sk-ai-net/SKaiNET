@@ -1,5 +1,7 @@
 package sk.ainet.lang.nn.compute
 
+import sk.ainet.context.DirectCpuExecutionContext
+import sk.ainet.lang.model.compute.Rgb2GrayScale
 import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.tensor.VoidOpsTensor
@@ -41,8 +43,10 @@ class Rgb2GrayScaleTest {
 
     @Test
     fun testOutputShapeIsN1HW() {
+        val ctx = DirectCpuExecutionContext()
+
         val model = Rgb2GrayScale()
-        val module = model.model<FP32, Float>()
+        val module = model.model(ctx)
 
         val input = makeVoidInput1x2(
             r = 1.0f to 0.0f,
@@ -57,8 +61,10 @@ class Rgb2GrayScaleTest {
 
     @Test
     fun testZeroInputProducesZeroOutputShapeAndValues() {
+        val ctx = DirectCpuExecutionContext()
+
         val model = Rgb2GrayScale()
-        val module = model.model<FP32, Float>()
+        val module = model.model(ctx)
 
         val input = makeVoidInput1x1(Triple(0f, 0f, 0f))
         val output = module.forward(input)

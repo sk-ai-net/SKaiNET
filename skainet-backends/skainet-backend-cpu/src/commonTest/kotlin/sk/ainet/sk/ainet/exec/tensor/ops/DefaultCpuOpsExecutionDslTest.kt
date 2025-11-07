@@ -6,6 +6,7 @@ import sk.ainet.context.DirectCpuExecutionContext
 import sk.ainet.execute.context.computation
 import sk.ainet.execute.context.dsl.tensor
 import sk.ainet.lang.tensor.Shape
+import sk.ainet.lang.tensor.data.pprint
 import sk.ainet.lang.tensor.plus
 import sk.ainet.lang.tensor.minus
 import sk.ainet.lang.tensor.times
@@ -156,6 +157,53 @@ class DefaultCpuOpsExecutionDslTest {
             assertEquals(5, r.data[0]) // 10/2
             assertEquals(0, r.data[1]) // div by zero -> 0 (per implementation)
             assertEquals(15, r.data[2]) // 30/2
+        }
+    }
+
+    @Test
+    fun fp32_broadcast_vector_3_to_1_3_1_1_and_multiply() {
+        val ctx = DirectCpuExecutionContext()
+        computation(ctx) {
+            // Input x of shape (N=2, C=3, H=2, W=2), values depend only on channel: [1,2,3]
+            val x = tensor<FP32, Float> {
+                shape(2, 3, 2, 2) { init { idx -> (idx[1] + 1).toFloat() } }
+            }
+            // Factors of shape (3): [0.1, 0.2, 0.3]
+            val factors = tensor<FP32, Float> { shape(1,3) { init { i -> ((i[1] + 1) * 0.1f) } } }
+
+            // Reshape like PyTorch view(1,3,1,1)
+            val factors4311 = ctx.ops.reshape(factors, Shape(1, 3, 1, 1))
+
+            println(factors.shape)
+            println("*")
+            println(factors4311.shape)
+
+            // Multiply with broadcasting over N,H,W
+            val scaled = x * factors4311
+
+            println(scaled.shape)
+
+            // Result shape follows broadcasting to the common shape of operands: (2,3,2,2)
+            assertEquals(Shape(2, 3, 2, 2), scaled.shape)
+
+
+
+            // Check some positions: channel 0 scaled by 0.1, ch1 by 0.2, ch2 by 0.3
+            // Batch 0
+            assertEquals(1f * 0.1f, scaled.data[0, 0, 0, 0])
+            assertEquals(2f * 0.2f, scaled.data[0, 1, 1, 1])
+            assertEquals(3f * 0.3f, scaled.data[0, 2, 0, 1])
+            // Batch 1
+            assertEquals(1f * 0.1f, scaled.data[1, 0, 1, 0])
+            assertEquals(2f * 0.2f, scaled.data[1, 1, 0, 1])
+            assertEquals(3f * 0.3f, scaled.data[1, 2, 1, 1])
+
+            // Also verify constructing (1,3,1,1) via chained unsqueeze yields same result
+            val u = ctx.ops.unsqueeze(ctx.ops.unsqueeze(factors, 2), 3)
+            val scaledU = x * u
+            assertEquals(scaled.shape, scaledU.shape)
+            // Spot check equality
+            assertEquals(scaled.data[1, 2, 1, 0], scaledU.data[1, 2, 1, 0])
         }
     }
 }

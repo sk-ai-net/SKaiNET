@@ -10,6 +10,7 @@ import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.types.DType
 import sk.ainet.lang.types.FP32
+import sk.ainet.lang.types.Int8
 import kotlin.math.min
 import kotlin.random.Random
 
@@ -76,38 +77,32 @@ public data class MNISTDataset(
     }
 
     /**
-     * Creates a DataBatch with FP32 tensors. Generic parameters are satisfied via unchecked casts.
+     * Creates a DataBatch with memory-efficient Int8 tensors from raw byte arrays.
      */
     override fun <T : DType, V> createDataBatch(batchStart: Int, batchLength: Int): DataBatch<T, V> {
         val actualLen = min(batchLength, xSize - batchStart)
         val batchImages = images.subList(batchStart, batchStart + actualLen)
 
-        // Prepare image data as float array normalized to [0,1]
-        val xData = FloatArray(actualLen * MNISTConstants.IMAGE_PIXELS) { 0f }
+        // Concatenate raw image bytes (no normalization) for memory efficiency
+        val xData = ByteArray(actualLen * MNISTConstants.IMAGE_PIXELS)
         var offset = 0
         for (sample in batchImages) {
             val bytes = sample.image
-            var j = 0
-            while (j < MNISTConstants.IMAGE_PIXELS) {
-                val v = (bytes[j].toInt() and 0xFF).toFloat() / 255f
-                xData[offset + j] = v
-                j++
-            }
+            bytes.copyInto(xData, destinationOffset = offset, startIndex = 0, endIndex = MNISTConstants.IMAGE_PIXELS)
             offset += MNISTConstants.IMAGE_PIXELS
         }
 
-        // Shape as [batch, 1, 28, 28]; data provided in NCHW but our flat array is [batch, 28*28].
-        // We will reshape downstream; for data factory we just pass flattened data with total volume.
+        // Shape as [batch, 1, 28, 28]
         val xShape = Shape(actualLen, 1, MNISTConstants.IMAGE_SIZE, MNISTConstants.IMAGE_SIZE)
-        val xTensor: Tensor<FP32, Float> = executionContext.fromFloatArray(xShape, FP32::class, xData)
+        val xTensor: Tensor<Int8, Byte> = executionContext.fromByteArray(xShape, Int8::class, xData)
 
-        // Labels as floats
-        val yData = FloatArray(actualLen) { idx -> batchImages[idx].label.toInt().toFloat() }
+        // Labels as bytes (memory-efficient). Keep as Int8 to satisfy DataBatch single dtype requirement
+        val yData = ByteArray(actualLen) { idx -> batchImages[idx].label }
         val yShape = Shape(actualLen)
-        val yTensor: Tensor<FP32, Float> = executionContext.fromFloatArray(yShape, FP32::class, yData)
+        val yTensor: Tensor<Int8, Byte> = executionContext.fromByteArray(yShape, Int8::class, yData)
 
         // DataBatch expects array of input tensors; we provide single input
-        val xArray: Array<Tensor<FP32, Float>> = arrayOf(xTensor)
+        val xArray: Array<Tensor<Int8, Byte>> = arrayOf(xTensor)
 
         @Suppress("UNCHECKED_CAST")
         return DataBatch(xArray as Array<Tensor<T, V>>, yTensor as Tensor<T, V>)

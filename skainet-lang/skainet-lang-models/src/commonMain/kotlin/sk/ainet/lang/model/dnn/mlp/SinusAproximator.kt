@@ -1,9 +1,12 @@
-package sk.ainet.lang.nn.mlp
+package sk.ainet.lang.model.dnn.mlp
 
-import sk.ainet.lang.nn.Model
+import sk.ainet.context.ExecutionContext
+import sk.ainet.lang.model.dnn.mlp.pretrained.SinusApproximatorWandB
+import sk.ainet.lang.nn.DefaultNeuralNetworkExecutionContext
+import sk.ainet.lang.model.Model
+import sk.ainet.lang.model.ModelCard
 import sk.ainet.lang.nn.Module
 import sk.ainet.lang.nn.definition
-import sk.ainet.lang.nn.mlp.pretrained.SinusApproximatorWandB
 import sk.ainet.lang.nn.network
 import sk.ainet.lang.nn.reflection.describe
 import sk.ainet.lang.tensor.Shape
@@ -11,14 +14,12 @@ import sk.ainet.lang.tensor.relu
 import sk.ainet.lang.types.DType
 import sk.ainet.lang.types.FP32
 
-public class SinusApproximator() : Model {
+public class SinusApproximator() : Model<FP32, Float> {
 
     private val sinusApproximatorWandB: SinusApproximatorWandB = SinusApproximatorWandB()
 
-    public override fun <T : DType, V> model(): Module<FP32, Float> = model
-
-    private val model = definition<FP32, Float>() {
-        network {
+    override fun model(executionContext: ExecutionContext): Module<FP32, Float> = definition<FP32, Float> {
+        network(executionContext) {
             input(1, "input")  // Single input for x value
 
             // First hidden layer: 1 -> 16 neurons
@@ -76,7 +77,16 @@ public class SinusApproximator() : Model {
         }
     }
 
-    override fun modelCard(): String {
-        return model.describe(Shape(1), FP32::class)
+    override fun modelCard(): ModelCard {
+        TODO("Not yet implemented")
     }
+
+    /*
+    override fun modelCard(): String {
+        // Build with a default context to generate a model card/description
+        val defaultModel = buildModel(DefaultNeuralNetworkExecutionContext())
+        return defaultModel.describe(Shape(1), FP32::class)
+    }
+
+     */
 }

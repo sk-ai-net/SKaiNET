@@ -1,12 +1,15 @@
-package sk.ainet.lang.nn.cnn
+package sk.ainet.lang.model.dnn.cnn
 
-import sk.ainet.lang.nn.Model
+import sk.ainet.context.ExecutionContext
+import sk.ainet.lang.model.Model
+import sk.ainet.lang.model.ModelCard
 import sk.ainet.lang.nn.Module
+import sk.ainet.lang.nn.definition
+import sk.ainet.lang.nn.dsl.sequential
 import sk.ainet.lang.nn.network
 
 import sk.ainet.lang.tensor.relu
 import sk.ainet.lang.tensor.softmax
-import sk.ainet.lang.types.DType
 import sk.ainet.lang.types.FP32
 
 /**
@@ -48,42 +51,36 @@ import sk.ainet.lang.types.FP32
  *
  * @return A [Module] representing the constructed CNN model
  */
-public class MnistCnn() : Model {
+public class MnistCnn : Model<FP32, Float> {
 
-    public override fun <T : DType, V> model(): Module<FP32, Float> = model
-    override fun modelCard(): String {
-        TODO("Not yet implemented")
-    }
-
-
-    private val model = sk.ainet.lang.nn.definition<FP32, Float> {
-        network {
-            sequential {
+    override fun model(executionContext: ExecutionContext): Module<FP32, Float> = definition<FP32, Float> {
+        network(executionContext) {
+            sequential<FP32, Float> {
                 // Stage: "conv1"
                 stage("conv1") {
                     conv2d(outChannels = 16, kernelSize = 5 to 5, stride = 1 to 1, padding = 2 to 2)
                     activation(id = "relu1") { tensor -> tensor.relu() }
                     maxPool2d(kernelSize = 2 to 2, stride = 2 to 2)
                 }
-                
-                // Stage: "conv2"  
+
+                // Stage: "conv2"
                 stage("conv2") {
                     conv2d(outChannels = 32, kernelSize = 5 to 5, stride = 1 to 1, padding = 2 to 2)
                     activation(id = "relu2") { tensor -> tensor.relu() }
                     maxPool2d(kernelSize = 2 to 2, stride = 2 to 2)
                 }
-                
+
                 // Stage: "flatten"
                 stage("flatten") {
                     flatten()
                 }
-                
+
                 // Stage: "dense"
                 stage("dense") {
                     dense(outputDimension = 128)
                     activation(id = "relu3") { tensor -> tensor.relu() }
                 }
-                
+
                 // Stage: "output"
                 stage("output") {
                     dense(outputDimension = 10)
@@ -92,5 +89,21 @@ public class MnistCnn() : Model {
             }
         }
     }
-}
 
+    override fun modelCard(): ModelCard {
+        return ModelCard(
+            license = "apache-2.0",
+            libraryName = "skainet",
+            pipelineTag = "image-classification",
+            language = listOf("en"),
+            modalities = listOf("vision"),
+            baseModel = "",
+            contextLength = 0,
+            datasets = listOf("mnist"),
+            metrics = emptyList(),
+            modelIndex = emptyList(),
+            intendedUse = "MNIST CNN: 2x Conv(16,5x5)->MaxPool -> 2x Conv(32,5x5)->MaxPool -> Flatten -> Dense(128, ReLU) -> Dense(10, Softmax)",
+            limitations = ""
+        )
+    }
+}

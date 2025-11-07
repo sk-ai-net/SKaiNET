@@ -1,6 +1,8 @@
 package sk.ainet.lang.nn.compute
 
 import sk.ainet.context.data
+import sk.ainet.lang.nn.DefaultNeuralNetworkExecutionContext
+import sk.ainet.lang.model.compute.Rgb2GrayScaleMatMul
 import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.tensor.dsl.tensor
@@ -47,8 +49,9 @@ class Rgb2GrayScaleMultiplyTest {
 
     @Test
     fun testOutputShapeIsN1HW() {
-        val model = Rgb2GrayScaleMultiply()
-        val module = model.model<FP32, Float>()
+        val ctx = DefaultNeuralNetworkExecutionContext()
+        val model = Rgb2GrayScaleMatMul(DefaultNeuralNetworkExecutionContext())
+        val module = model.model(ctx)
 
         val input = makeVoidInput1x2(
             r = 1.0f to 0.0f,
@@ -64,8 +67,9 @@ class Rgb2GrayScaleMultiplyTest {
 
     @Test
     fun testZeroInputProducesZeroOutputShapeAndValues() {
-        val model = Rgb2GrayScaleMultiply()
-        val module = model.model<FP32, Float>()
+        val ctx = DefaultNeuralNetworkExecutionContext()
+        val model = Rgb2GrayScaleMatMul(DefaultNeuralNetworkExecutionContext())
+        val module = model.model(ctx)
 
         val input = makeVoidInput1x1(Triple(0f, 0f, 0f))
         val output = module.forward(input)

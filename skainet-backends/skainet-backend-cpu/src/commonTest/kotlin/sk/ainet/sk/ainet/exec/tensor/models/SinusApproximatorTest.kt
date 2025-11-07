@@ -5,7 +5,7 @@ import sk.ainet.context.ExecutionContext
 import sk.ainet.context.data
 import sk.ainet.execute.context.computation
 import sk.ainet.lang.nn.definition
-import sk.ainet.lang.nn.mlp.pretrained.SinusApproximatorWandB
+import sk.ainet.lang.model.dnn.mlp.pretrained.SinusApproximatorWandB
 import sk.ainet.lang.nn.network
 import sk.ainet.lang.tensor.dsl.tensor
 import sk.ainet.lang.tensor.pprint

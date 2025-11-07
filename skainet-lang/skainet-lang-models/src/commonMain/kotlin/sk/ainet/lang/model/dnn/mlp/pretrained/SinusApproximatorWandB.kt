@@ -1,6 +1,6 @@
-package sk.ainet.lang.nn.mlp.pretrained
+package sk.ainet.lang.model.dnn.mlp.pretrained
 
-import sk.ainet.lang.nn.WeightAndBias
+import sk.ainet.lang.model.dnn.WeightAndBias
 
 public class SinusApproximatorWandB {
 
