@@ -970,6 +970,9 @@ public open class DefaultCpuOpsBase(protected val dataFactory: TensorDataFactory
                         val dims = tensor.shape.dimensions
                         if (dims.isEmpty()) {
                             acc = tensor.data.get() as Float
+                        } else if (dims.any { it == 0 }) {
+                            // Empty tensor: by convention sum over all dims is zero
+                            acc = 0.0f
                         } else {
                             val idx = IntArray(dims.size) { 0 }
                             while (true) {
@@ -992,6 +995,9 @@ public open class DefaultCpuOpsBase(protected val dataFactory: TensorDataFactory
                         val dims = tensor.shape.dimensions
                         if (dims.isEmpty()) {
                             acc = tensor.data.get() as Int
+                        } else if (dims.any { it == 0 }) {
+                            // Empty tensor: sum is zero
+                            acc = 0
                         } else {
                             val idx = IntArray(dims.size) { 0 }
                             while (true) {

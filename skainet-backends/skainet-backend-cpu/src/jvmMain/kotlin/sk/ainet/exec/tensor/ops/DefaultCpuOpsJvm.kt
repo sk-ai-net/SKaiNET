@@ -41,7 +41,7 @@ internal class DefaultCpuOpsJvm(
     }
 
     override fun <T : DType, V> matmul(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
-        vectorMatmul(a, b)?.let { return it }
+        chooseMatmul(a, b)?.let { return it }
         return super.matmul(a, b)
     }
 
@@ -233,7 +233,7 @@ internal class DefaultCpuOpsJvm(
         return (dtype == FP32::class || dtype == FP16::class)
     }
 
-    private fun <T : DType, V> vectorMatmul(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V>? {
+    private fun <T : DType, V> chooseMatmul(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V>? {
         if (!supportsFloatOps(a) || !supportsFloatOps(b)) return null
         if (a.dtype != b.dtype) return null
         if (a.shape.rank != 2 || b.shape.rank != 2) return null
@@ -247,9 +247,39 @@ internal class DefaultCpuOpsJvm(
         val aData = a.data as? FloatArrayTensorData<T> ?: return null
         val bData = b.data as? FloatArrayTensorData<T> ?: return null
 
-        val outBuffer = FloatArray(aRows * bCols)
-        JvmVectorKernels.matmulFloat(aRows, aCols, bCols, aData.buffer, bData.buffer, outBuffer)
-        val outData = DenseFloatArrayTensorData<T>(Shape(aRows, bCols), outBuffer)
+        // Heuristics
+        val m = aRows
+        val n = bCols
+        val k = aCols
+        val work = m.toLong() * n.toLong() * k.toLong()
+
+        val outBuffer = FloatArray(m * n)
+
+        // Try BLAS for large sizes if enabled and available
+        if (JvmCpuBackendConfig.blasEnabled && JvmBlas.isAvailable()) {
+            val blasThreshold = 512L * 512L * 256L // tuneable
+            if (work >= blasThreshold) {
+                val ok = JvmBlas.sgemmRowMajorNN(m, n, k, 1f, aData.buffer, bData.buffer, outBuffer)
+                if (ok) {
+                    val outData = DenseFloatArrayTensorData<T>(Shape(m, n), outBuffer)
+                    @Suppress("UNCHECKED_CAST")
+                    return CpuTensor(outData as TensorData<T, V>, this, a.dtype)
+                }
+            }
+        }
+
+        // Use blocked matmul for small/medium sizes
+        val blockedThreshold = 16 * 16 // always use blocked above tiny cases
+        if (m >= blockedThreshold || n >= blockedThreshold || k >= blockedThreshold) {
+            JvmVectorKernels.matmulFloatBlocked(m, k, n, aData.buffer, bData.buffer, outBuffer)
+            val outData = DenseFloatArrayTensorData<T>(Shape(m, n), outBuffer)
+            @Suppress("UNCHECKED_CAST")
+            return CpuTensor(outData as TensorData<T, V>, this, a.dtype)
+        }
+
+        // Fallback to simple vectorized inner-product matmul
+        JvmVectorKernels.matmulFloat(m, k, n, aData.buffer, bData.buffer, outBuffer)
+        val outData = DenseFloatArrayTensorData<T>(Shape(m, n), outBuffer)
         @Suppress("UNCHECKED_CAST")
         return CpuTensor(outData as TensorData<T, V>, this, a.dtype)
     }
@@ -260,16 +290,10 @@ internal class DefaultCpuOpsJvm(
         val buffer = data.buffer
         val n = buffer.size
         if (n == 0) return null
+        // NOTE: For numerical reproducibility with Kotlin's FloatArray.sum(),
+        // perform strict left-to-right scalar accumulation.
+        var acc = 0.0f
         var idx = 0
-        val step = floatSpecies.length()
-        val loopBound = floatSpecies.loopBound(n)
-        var accVec = FloatVector.zero(floatSpecies)
-        while (idx < loopBound) {
-            val v = FloatVector.fromArray(floatSpecies, buffer, idx)
-            accVec = accVec.add(v)
-            idx += step
-        }
-        var acc = accVec.reduceLanes(VectorOperators.ADD)
         while (idx < n) {
             acc += buffer[idx]
             idx++
