@@ -12,6 +12,7 @@ import sk.ainet.lang.types.DType
 import sk.ainet.lang.types.FP16
 import sk.ainet.lang.types.FP32
 import sk.ainet.lang.tensor.data.TensorDataFactory
+import kotlin.math.max
 
 internal class DefaultCpuOpsJvm(
     dataFactory: TensorDataFactory,
@@ -54,36 +55,156 @@ internal class DefaultCpuOpsJvm(
         return super.relu(tensor)
     }
 
+    override fun <T : DType, V> sum(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> {
+        if (dim == null) {
+            vectorFloatReduceAllSum<T, V>(tensor)?.let { return it }
+        }
+        return super.sum(tensor, dim)
+    }
+
+    override fun <T : DType, V> mean(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> {
+        if (dim == null) {
+            val volume = tensor.shape.volume
+            if (volume == 0) return super.mean(tensor, dim)
+            vectorFloatReduceAllSum<T, V>(tensor)?.let { reduced ->
+                val out = reduced as CpuTensor<T, V>
+                @Suppress("UNCHECKED_CAST")
+                val floatData = out.data as DenseFloatArrayTensorData<T>
+                floatData.buffer[0] = floatData.buffer[0] / volume.toFloat()
+                return reduced
+            }
+        }
+        return super.mean(tensor, dim)
+    }
+
     private fun <T : DType, V> vectorFloatBinary(
         a: Tensor<T, V>,
         b: Tensor<T, V>,
         vectorOp: (FloatVector, FloatVector) -> FloatVector,
         scalarOp: (Float, Float) -> Float
     ): Tensor<T, V>? {
-        if (!supportsFloatOps(a, b)) return null
+        // Only FP32/FP16 supported for vector path
+        if (!supportsFloatOps(a) || !supportsFloatOps(b)) return null
+        if (a.dtype != b.dtype) return null
 
         val aData = a.data as? FloatArrayTensorData<T> ?: return null
         val bData = b.data as? FloatArrayTensorData<T> ?: return null
-        val volume = a.shape.volume
-        val outBuffer = FloatArray(volume)
-        val speciesLen = floatSpecies.length()
-        var index = 0
-        val loopBound = floatSpecies.loopBound(volume)
 
-        while (index < loopBound) {
-            val va = FloatVector.fromArray(floatSpecies, aData.buffer, index)
-            val vb = FloatVector.fromArray(floatSpecies, bData.buffer, index)
-            vectorOp(va, vb).intoArray(outBuffer, index)
-            index += speciesLen
-        }
-        while (index < volume) {
-            outBuffer[index] = scalarOp(aData.buffer[index], bData.buffer[index])
-            index++
+        // Determine broadcasted output shape
+        val outShape = try { broadcastShapes(a.shape, b.shape) } catch (e: IllegalArgumentException) { return null }
+        val outVolume = outShape.volume
+        val outBuffer = FloatArray(outVolume)
+
+        val aVol = a.shape.volume
+        val bVol = b.shape.volume
+
+        // Case 1: exact shape match (fast path)
+        if (a.shape == b.shape) {
+            JvmVectorKernels.binaryFloat(aData.buffer, bData.buffer, outBuffer, outVolume, vectorOp, scalarOp)
+            val outData = DenseFloatArrayTensorData<T>(Shape(outShape.dimensions.copyOf()), outBuffer)
+            @Suppress("UNCHECKED_CAST")
+            return CpuTensor(outData as TensorData<T, V>, this, a.dtype)
         }
 
-        val outData = DenseFloatArrayTensorData<T>(Shape(a.shape.dimensions.copyOf()), outBuffer)
-        @Suppress("UNCHECKED_CAST")
-        return CpuTensor(outData as TensorData<T, V>, this, a.dtype)
+        // Case 2: scalar broadcast
+        if (aVol == 1) {
+            val aval = aData.buffer[0]
+            val speciesLen = floatSpecies.length()
+            var idx = 0
+            val loopBound = floatSpecies.loopBound(outVolume)
+            while (idx < loopBound) {
+                val va = FloatVector.broadcast(floatSpecies, aval)
+                val vb = FloatVector.fromArray(floatSpecies, bData.buffer, idx)
+                vectorOp(va, vb).intoArray(outBuffer, idx)
+                idx += speciesLen
+            }
+            while (idx < outVolume) {
+                outBuffer[idx] = scalarOp(aval, bData.buffer[idx])
+                idx++
+            }
+            val outData = DenseFloatArrayTensorData<T>(Shape(outShape.dimensions.copyOf()), outBuffer)
+            @Suppress("UNCHECKED_CAST")
+            return CpuTensor(outData as TensorData<T, V>, this, a.dtype)
+        }
+        if (bVol == 1) {
+            val bval = bData.buffer[0]
+            val speciesLen = floatSpecies.length()
+            var idx = 0
+            val loopBound = floatSpecies.loopBound(outVolume)
+            while (idx < loopBound) {
+                val va = FloatVector.fromArray(floatSpecies, aData.buffer, idx)
+                val vb = FloatVector.broadcast(floatSpecies, bval)
+                vectorOp(va, vb).intoArray(outBuffer, idx)
+                idx += speciesLen
+            }
+            while (idx < outVolume) {
+                outBuffer[idx] = scalarOp(aData.buffer[idx], bval)
+                idx++
+            }
+            val outData = DenseFloatArrayTensorData<T>(Shape(outShape.dimensions.copyOf()), outBuffer)
+            @Suppress("UNCHECKED_CAST")
+            return CpuTensor(outData as TensorData<T, V>, this, a.dtype)
+        }
+
+        // Case 3: last-dimension broadcasting (bias add). Supports arbitrary leading dims.
+        val aLast = if (a.shape.rank > 0) a.shape[a.shape.rank - 1] else 1
+        val bLast = if (b.shape.rank > 0) b.shape[b.shape.rank - 1] else 1
+        val outLast = outShape.dimensions.lastOrNull() ?: 1
+        val groups = if (outLast == 0) 0 else outVolume / outLast
+        if (groups > 0) {
+            // b broadcasts across leading dims if its last dim == outLast and all other dims are 1 or equal
+            val bIsBias = (b.shape.rank == 1 && bLast == outLast) || (
+                b.shape.rank >= 1 && bLast == outLast && b.shape.dimensions.dropLast(1).all { it == 1 }
+            )
+            val aIsBias = (a.shape.rank == 1 && aLast == outLast) || (
+                a.shape.rank >= 1 && aLast == outLast && a.shape.dimensions.dropLast(1).all { it == 1 }
+            )
+            if (bIsBias && aVol == outVolume) {
+                val step = floatSpecies.length()
+                val loopBoundTail = floatSpecies.loopBound(outLast)
+                for (g in 0 until groups) {
+                    val aOff = g * outLast
+                    var idx = 0
+                    while (idx < loopBoundTail) {
+                        val va = FloatVector.fromArray(floatSpecies, aData.buffer, aOff + idx)
+                        val vb = FloatVector.fromArray(floatSpecies, bData.buffer, idx)
+                        vectorOp(va, vb).intoArray(outBuffer, aOff + idx)
+                        idx += step
+                    }
+                    while (idx < outLast) {
+                        outBuffer[aOff + idx] = scalarOp(aData.buffer[aOff + idx], bData.buffer[idx])
+                        idx++
+                    }
+                }
+                val outData = DenseFloatArrayTensorData<T>(Shape(outShape.dimensions.copyOf()), outBuffer)
+                @Suppress("UNCHECKED_CAST")
+                return CpuTensor(outData as TensorData<T, V>, this, a.dtype)
+            }
+            if (aIsBias && bVol == outVolume) {
+                val step = floatSpecies.length()
+                val loopBoundTail = floatSpecies.loopBound(outLast)
+                for (g in 0 until groups) {
+                    val bOff = g * outLast
+                    var idx = 0
+                    while (idx < loopBoundTail) {
+                        val va = FloatVector.fromArray(floatSpecies, aData.buffer, idx)
+                        val vb = FloatVector.fromArray(floatSpecies, bData.buffer, bOff + idx)
+                        vectorOp(va, vb).intoArray(outBuffer, bOff + idx)
+                        idx += step
+                    }
+                    while (idx < outLast) {
+                        outBuffer[bOff + idx] = scalarOp(aData.buffer[idx], bData.buffer[bOff + idx])
+                        idx++
+                    }
+                }
+                val outData = DenseFloatArrayTensorData<T>(Shape(outShape.dimensions.copyOf()), outBuffer)
+                @Suppress("UNCHECKED_CAST")
+                return CpuTensor(outData as TensorData<T, V>, this, a.dtype)
+            }
+        }
+
+        // Fallback when complex broadcasting not supported here
+        return null
     }
 
     private fun <T : DType, V> vectorFloatUnary(
@@ -95,20 +216,7 @@ internal class DefaultCpuOpsJvm(
         val tensorData = tensor.data as? FloatArrayTensorData<T> ?: return null
         val volume = tensor.shape.volume
         val outBuffer = FloatArray(volume)
-        val speciesLen = floatSpecies.length()
-        var index = 0
-        val loopBound = floatSpecies.loopBound(volume)
-
-        while (index < loopBound) {
-            val vec = FloatVector.fromArray(floatSpecies, tensorData.buffer, index)
-            vectorOp(vec).intoArray(outBuffer, index)
-            index += speciesLen
-        }
-        while (index < volume) {
-            outBuffer[index] = scalarOp(tensorData.buffer[index])
-            index++
-        }
-
+        JvmVectorKernels.unaryFloat(tensorData.buffer, outBuffer, volume, vectorOp, scalarOp)
         val outData = DenseFloatArrayTensorData<T>(Shape(tensor.shape.dimensions.copyOf()), outBuffer)
         @Suppress("UNCHECKED_CAST")
         return CpuTensor(outData as TensorData<T, V>, this, tensor.dtype)
@@ -139,44 +247,35 @@ internal class DefaultCpuOpsJvm(
         val aData = a.data as? FloatArrayTensorData<T> ?: return null
         val bData = b.data as? FloatArrayTensorData<T> ?: return null
 
-        val aBuffer = aData.buffer
-        val bBuffer = bData.buffer
-
-        val transposedB = FloatArray(bCols * bRows)
-        for (row in 0 until bRows) {
-            val srcOffset = row * bCols
-            for (col in 0 until bCols) {
-                transposedB[col * bRows + row] = bBuffer[srcOffset + col]
-            }
-        }
-
         val outBuffer = FloatArray(aRows * bCols)
-        val speciesLength = floatSpecies.length()
-        val loopBound = floatSpecies.loopBound(aCols)
-
-        for (row in 0 until aRows) {
-            val aOffset = row * aCols
-            for (col in 0 until bCols) {
-                val bOffset = col * bRows
-                var idx = 0
-                var accVector = FloatVector.zero(floatSpecies)
-                while (idx < loopBound) {
-                    val vecA = FloatVector.fromArray(floatSpecies, aBuffer, aOffset + idx)
-                    val vecB = FloatVector.fromArray(floatSpecies, transposedB, bOffset + idx)
-                    accVector = accVector.add(vecA.mul(vecB))
-                    idx += speciesLength
-                }
-                var acc = accVector.reduceLanes(VectorOperators.ADD)
-                while (idx < aCols) {
-                    acc += aBuffer[aOffset + idx] * transposedB[bOffset + idx]
-                    idx++
-                }
-                outBuffer[row * bCols + col] = acc
-            }
-        }
-
+        JvmVectorKernels.matmulFloat(aRows, aCols, bCols, aData.buffer, bData.buffer, outBuffer)
         val outData = DenseFloatArrayTensorData<T>(Shape(aRows, bCols), outBuffer)
         @Suppress("UNCHECKED_CAST")
         return CpuTensor(outData as TensorData<T, V>, this, a.dtype)
+    }
+
+    private fun <T : DType, V> vectorFloatReduceAllSum(tensor: Tensor<T, V>): Tensor<T, V>? {
+        if (!supportsFloatOps(tensor)) return null
+        val data = tensor.data as? FloatArrayTensorData<T> ?: return null
+        val buffer = data.buffer
+        val n = buffer.size
+        if (n == 0) return null
+        var idx = 0
+        val step = floatSpecies.length()
+        val loopBound = floatSpecies.loopBound(n)
+        var accVec = FloatVector.zero(floatSpecies)
+        while (idx < loopBound) {
+            val v = FloatVector.fromArray(floatSpecies, buffer, idx)
+            accVec = accVec.add(v)
+            idx += step
+        }
+        var acc = accVec.reduceLanes(VectorOperators.ADD)
+        while (idx < n) {
+            acc += buffer[idx]
+            idx++
+        }
+        val outData = DenseFloatArrayTensorData<T>(Shape(), floatArrayOf(acc))
+        @Suppress("UNCHECKED_CAST")
+        return CpuTensor(outData as TensorData<T, V>, this, tensor.dtype)
     }
 }
