@@ -1,7 +1,6 @@
 package sk.ainet.lang.tensor.data
 
 import sk.ainet.lang.tensor.Shape
-import sk.ainet.lang.tensor.data.dense.DenseFloatTensorArray
 import sk.ainet.lang.tensor.data.dense.DenseByteTensorArray
 import sk.ainet.lang.types.DType
 import sk.ainet.lang.types.FP16
@@ -46,16 +45,7 @@ public class DenseTensorDataFactory: TensorDataFactory {
         dtype: T
     ): TensorData<T, Float> {
         return when (dtype) {
-            is FP32, FP16 -> {
-                class FloatTensorDataImpl(
-                    private val denseArray: DenseFloatTensorArray
-                ) : TensorData<T, Float>, ItemsAccessor<Float> by denseArray {
-                    override val shape: Shape = denseArray.shape
-                }
-                val denseArray = DenseFloatTensorArray(shape, data.copyOf())
-                FloatTensorDataImpl(denseArray) as TensorData<T, Float>
-            }
-
+            is FP32, FP16 -> DenseFloatArrayTensorData<T>(shape, data.copyOf()) as TensorData<T, Float>
             else -> throw IllegalArgumentException("Unsupported dtype: ${dtype.name}")
         }
     }
@@ -153,31 +143,12 @@ public class DenseTensorDataFactory: TensorDataFactory {
     // Helper methods to create tensor data instances
 
     private fun createIntTensorData(shape: Shape, data: IntArray): TensorData<Int32, Int> {
-        class IntTensorData : TensorData<Int32, Int> {
-            private val _data = data.copyOf()
-            val strides: IntArray = shape.computeStrides()
-
-            override val shape: Shape
-                get() = Shape(shape.dimensions)
-
-            override fun get(vararg indices: Int): Int = _data[calcFlatIndex(shape, strides, *indices)]
-
-            override fun set(vararg indices: Int, value: Int) {
-                _data[calcFlatIndex(shape, strides, *indices)] = value
-            }
-        }
-        return IntTensorData()
+        return DenseIntArrayTensorData(shape, data.copyOf())
     }
 
     @Suppress("UNCHECKED_CAST")
     private fun <T : DType> createFloatTensorData(shape: Shape, data: FloatArray, dtype: T): TensorData<T, Float> {
-        class FloatTensorDataImpl(
-            private val denseArray: DenseFloatTensorArray
-        ) : TensorData<T, Float>, ItemsAccessor<Float> by denseArray {
-            override val shape: Shape = denseArray.shape
-        }
-        val denseArray = DenseFloatTensorArray(shape, data.copyOf())
-        return FloatTensorDataImpl(denseArray) as TensorData<T, Float>
+        return DenseFloatArrayTensorData<T>(shape, data.copyOf()) as TensorData<T, Float>
     }
 
     @Suppress("UNCHECKED_CAST")

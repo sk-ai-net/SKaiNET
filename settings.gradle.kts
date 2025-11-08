@@ -33,6 +33,9 @@ include("skainet-compile:skainet-compile-core")
 // ====== BACKENDS
 include("skainet-backends:skainet-backend-cpu")
 
+// ====== BENCHMARKS
+include("skainet-backends:benchmarks:jvm-cpu-jmh")
+
 // ====== DATA
 include("skainet-data:skainet-data-api")
 include("skainet-data:skainet-data-simple")

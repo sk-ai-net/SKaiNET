@@ -69,3 +69,18 @@ public interface TensorData<T : DType, V> : ItemsAccessor<V> {
     public val shape: Shape
 
 }
+
+/**
+ * Marker interface for tensor data backed by a contiguous `FloatArray`.
+ * Provides direct buffer access for performance-critical backends.
+ */
+public interface FloatArrayTensorData<T : DType> : TensorData<T, Float> {
+    public val buffer: FloatArray
+}
+
+/**
+ * Marker interface for tensor data backed by a contiguous `IntArray`.
+ */
+public interface IntArrayTensorData<T : DType> : TensorData<T, Int> {
+    public val buffer: IntArray
+}
