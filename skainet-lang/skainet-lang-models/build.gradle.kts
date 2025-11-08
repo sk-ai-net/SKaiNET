@@ -51,7 +51,7 @@ kotlin {
 }
 
 android {
-    namespace = "sk.ai.net.lang.api"
+    namespace = "sk.ainet.lang.models"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

@@ -57,7 +57,7 @@ dependencies {
 }
 
 android {
-    namespace = "sk.ai.net.lang.core"
+    namespace = "sk.ainet.lang.core"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
