@@ -6,7 +6,6 @@ import java.lang.foreign.Linker
 import java.lang.foreign.MemorySegment
 import java.lang.foreign.SymbolLookup
 import java.lang.invoke.MethodHandle
-import java.lang.invoke.MethodType
 
 /**
  * Minimal Panama FFM wrapper for BLAS `cblas_sgemm`.
