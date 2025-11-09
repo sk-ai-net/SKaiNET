@@ -1,12 +1,12 @@
-package sk.ai.net.gguf
+package sk.ainet.io.gguf
 
 import kotlinx.io.asSource
 import kotlinx.io.buffered
 import org.junit.Assert
 import org.junit.Test
-import sk.ai.net.gguf.utils.reshape
+import sk.ainet.io.gguf.utils.reshape
+import kotlin.collections.iterator
 import kotlin.test.assertNotNull
-
 
 class GGUFReaderTest {
 
