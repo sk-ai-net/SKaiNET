@@ -1,4 +1,4 @@
-package sk.ai.net.io.csv
+package sk.ainet.io.csv
 
 import kotlinx.serialization.Serializable
 

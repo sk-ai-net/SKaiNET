@@ -473,9 +473,9 @@ public class DenseImpl<T : DType, V>(
             executionContext = executionContext
         )
 
+        // Return only the linear module. Activation should be added explicitly via activation() in the DSL.
         return listOf(
-            linear,
-            ActivationsWrapperModule(activation, "activation")
+            linear
         )
     }
 

@@ -6,7 +6,6 @@ import sk.ainet.context.DirectCpuExecutionContext
 import sk.ainet.execute.context.computation
 import sk.ainet.execute.context.dsl.tensor
 import sk.ainet.lang.tensor.Shape
-import sk.ainet.lang.tensor.data.pprint
 import sk.ainet.lang.tensor.plus
 import sk.ainet.lang.tensor.minus
 import sk.ainet.lang.tensor.times

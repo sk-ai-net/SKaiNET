@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -16,23 +17,41 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_1_8)
         }
     }
-    iosX64()
+
     iosArm64()
     iosSimulatorArm64()
-    wasmJs().nodejs()
-    macosX64 ()
+    macosArm64 ()
     linuxX64 ()
+    linuxArm64 ()
+
+    js {
+        browser()
+    }
+
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
+    }
 
 
     sourceSets {
         val commonMain by getting {
             dependencies {
                 implementation(libs.kotlinx.io.core)
+                implementation(project(":skainet-lang:skainet-lang-core"))
+                implementation(project(":skainet-io:skainet-io-core"))
+
+
             }
         }
         val commonTest by getting {
             dependencies {
                 implementation(libs.kotlin.test)
+            }
+        }
+        val jvmTest by getting {
+            dependencies {
+                implementation("junit:junit:4.13.2")
             }
         }
     }
@@ -43,45 +62,5 @@ android {
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
-    }
-}
-
-publishing {
-    repositories {
-        maven {
-            name = "githubPackages"
-            url = uri("https://maven.pkg.github.com/sk-ai-net/skainet")
-            credentials {
-                credentials(PasswordCredentials::class)
-            }
-        }
-    }
-}
-
-mavenPublishing {
-
-    coordinates(group.toString(), "gguf", version.toString())
-
-    pom {
-        description.set("skainet")
-        name.set(project.name)
-        url.set("https://github.com/sk-ai-net/skainet/")
-        licenses {
-            license {
-                name.set("MIT")
-                distribution.set("repo")
-            }
-        }
-        scm {
-            url.set("https://github.com/sk-ai-net/skainet/")
-            connection.set("scm:git:git@github.com:sk-ai-net/skainet.git")
-            developerConnection.set("scm:git:ssh://git@github.com:sk-ai-net/skainet.git")
-        }
-        developers {
-            developer {
-                id.set("sk-ai-net")
-                name.set("sk-ai-net")
-            }
-        }
     }
 }
