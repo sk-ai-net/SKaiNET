@@ -1,4 +1,4 @@
-package sk.ai.net.gguf.utils
+package sk.ainet.io.gguf.utils
 
 import kotlin.reflect.KClass
 

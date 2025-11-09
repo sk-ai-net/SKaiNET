@@ -1,4 +1,4 @@
-package sk.ai.net.gguf.utils
+package sk.ainet.io.gguf.utils
 
 //TODO add support for multi dimensions
 fun <T> List<T>.reshape(rows: Int, cols: Int): List<List<T>> {

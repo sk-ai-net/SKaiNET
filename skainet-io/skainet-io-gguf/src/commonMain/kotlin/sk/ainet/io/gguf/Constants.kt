@@ -1,4 +1,4 @@
-package sk.ai.net.gguf
+package sk.ainet.io.gguf
 
 /**
  * This is a kotlin gguf reader related logic interpreted from python code "gguf-py/gguf/constants.py"

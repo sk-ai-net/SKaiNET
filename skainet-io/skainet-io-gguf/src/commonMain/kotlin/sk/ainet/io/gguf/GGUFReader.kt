@@ -1,11 +1,10 @@
-package sk.ai.net.gguf
+package sk.ainet.io.gguf
 
 import kotlinx.io.Source
 import kotlinx.io.readByteArray
-import sk.ai.net.gguf.utils.Endian
-import sk.ai.net.gguf.utils.numberOfBytes
-import sk.ai.net.gguf.utils.readDataByType
-import sk.ai.net.gguf.utils.reshape
+import sk.ainet.io.gguf.utils.Endian
+import sk.ainet.io.gguf.utils.numberOfBytes
+import sk.ainet.io.gguf.utils.readDataByType
 import kotlin.reflect.KClass
 
 /**
@@ -52,7 +51,20 @@ data class FieldParts(
 )
 
 @OptIn(ExperimentalUnsignedTypes::class)
-class GGUFReader(source: Source) {
+class GGUFReader(source: Source, private val loadTensorData: Boolean = true) {
+    // Public API additions
+    /**
+     * Lazily materialize the raw payload for the given tensor, honoring its ggml quantization.
+     * Returns a typed Kotlin List corresponding to the underlying storage:
+     * - F32 -> List<Float>, F64 -> List<Double>, I8 -> List<Byte>, I16 -> List<Short>, I32 -> List<Int>, I64 -> List<Long>
+     * - Quantized types -> List<UByte> of raw bytes with shape adapted via quantShapeToByteShape
+     */
+    fun materialize(tensor: ReaderTensor): List<Any> = materializeTensorData(
+        ggmlType = tensor.tensorType,
+        dataOffs = tensor.dataOffset,
+        nElems = tensor.nElements,
+        nBytes = tensor.nBytes
+    )
     // Properties
     var byteOrder: Char = 'I' // 'I' - same as host, 'S' - swapped
     var alignment: Int = GGUF_DEFAULT_ALIGNMENT
@@ -95,10 +107,28 @@ class GGUFReader(source: Source) {
         function()
     }
 
+    // Internal: materialize raw tensor payload based on ggml type
+    private fun materializeTensorData(
+        ggmlType: GGMLQuantizationType,
+        dataOffs: Int,
+        nElems: Int,
+        nBytes: Int
+    ): List<Any> {
+        return when (ggmlType) {
+            // Return raw bytes for F16 to avoid platform float16 issues
+            GGMLQuantizationType.F16 -> data.readDataByType<UByte>(dataOffs, nElems * 2)
+            GGMLQuantizationType.F32 -> data.readDataByType<Float>(dataOffs, nElems)
+            GGMLQuantizationType.F64 -> data.readDataByType<Double>(dataOffs, nElems)
+            GGMLQuantizationType.I8 -> data.readDataByType<Byte>(dataOffs, nElems)
+            GGMLQuantizationType.I16 -> data.readDataByType<Short>(dataOffs, nElems)
+            GGMLQuantizationType.I32 -> data.readDataByType<Int>(dataOffs, nElems)
+            GGMLQuantizationType.I64 -> data.readDataByType<Long>(dataOffs, nElems)
+            else -> data.readDataByType<UByte>(dataOffs, nBytes)
+        }
+    }
+
     private fun buildTensorInfoFields() {
         // Build tensor info fields
-        println("====Building Tensors now=======")
-
         val (newOffs, tensorFields) = buildTensorInfo(offs, tensorCount.toInt())
         offs = newOffs
         val newAlign = fields["general.alignment"]
@@ -341,10 +371,7 @@ class GGUFReader(source: Source) {
             val rawDtype = field.parts[4] as List<UInt>
             val offsetTensor = field.parts[5] as List<ULong>
 
-            // Check if there's any tensor with the same name already in the list
             val tensorName: String = nameData.toUByteArray().toByteArray().decodeToString()
-
-            //val tensorName = String(nameData.toUByteArray().toByteArray(), Charsets.UTF_8)
             if (tensorNames.contains(tensorName)) {
                 throw IllegalArgumentException("buildTensors: Found duplicated tensor with name $tensorName")
             }
@@ -359,29 +386,28 @@ class GGUFReader(source: Source) {
             val nBytes = nElems.toInt() * typeSize / blockSize
             val dataOffs = startOffs + offsetTensor[0].toInt()
 
-            val (itemCount, itemType) = when (ggmlType) {
-                GGMLQuantizationType.F16 -> throw IllegalArgumentException("No float16 in kotlin")
-                GGMLQuantizationType.F32 -> nElems.toInt() to Float::class
-                GGMLQuantizationType.F64 -> nElems.toInt() to Double::class
-                GGMLQuantizationType.I8 -> nElems.toInt() to Byte::class
-                GGMLQuantizationType.I16 -> nElems.toInt() to Short::class
-                GGMLQuantizationType.I32 -> nElems.toInt() to Int::class
-                GGMLQuantizationType.I64 -> nElems.toInt() to Long::class
-                else -> {
-                    npDims = quantShapeToByteShape(npDims, ggmlType)
-                    nBytes to UByte::class
-                }
+            // For non-native/quantized types, tensor payload is stored as bytes
+            if (ggmlType !in listOf(
+                    GGMLQuantizationType.F32,
+                    GGMLQuantizationType.F64,
+                    GGMLQuantizationType.I8,
+                    GGMLQuantizationType.I16,
+                    GGMLQuantizationType.I32,
+                    GGMLQuantizationType.I64
+                )
+            ) {
+                npDims = quantShapeToByteShape(npDims, ggmlType)
             }
 
-            val tempData = when (itemType) {
-                Float::class -> data.readDataByType<Float>(dataOffs, itemCount)
-                Double::class -> data.readDataByType<Double>(dataOffs, itemCount)
-                Byte::class -> data.readDataByType<Byte>(dataOffs, itemCount)
-                Short::class -> data.readDataByType<Short>(dataOffs, itemCount)
-                Int::class -> data.readDataByType<Int>(dataOffs, itemCount)
-                Long::class -> data.readDataByType<Long>(dataOffs, itemCount)
-                UByte::class -> data.readDataByType<UByte>(dataOffs, itemCount)
-                else -> throw IllegalArgumentException("buildTensors: illegal itemType=$itemType")
+            val materializedData: List<Any> = if (loadTensorData) {
+                materializeTensorData(
+                    ggmlType = ggmlType,
+                    dataOffs = dataOffs,
+                    nElems = nElems.toInt(),
+                    nBytes = nBytes
+                )
+            } else {
+                emptyList()
             }
 
             tensors.add(
@@ -392,7 +418,7 @@ class GGUFReader(source: Source) {
                     nElements = nElems.toInt(),
                     nBytes = nBytes,
                     dataOffset = dataOffs,
-                    data =  tempData,
+                    data = materializedData,
                     field = field
                 )
             )
