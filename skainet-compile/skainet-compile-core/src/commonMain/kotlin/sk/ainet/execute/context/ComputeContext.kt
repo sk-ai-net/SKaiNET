@@ -6,26 +6,12 @@ import sk.ainet.execute.context.dsl.ComputationContextDsl
 import sk.ainet.execute.context.dsl.ComputationContextDslImpl
 
 
-@ContextDsl
-public fun computation(
-    executionContext: ExecutionContext,
-    content: ComputationContextDsl.() -> Unit
-) {
-    val dsl = ComputationContextDslImpl(
-        executionContext
-    )
-    dsl.apply(content)
-}
-
-public fun interface ComputationBlockWithContext<V> {
-    public fun ComputationContextDsl.invoke(computation: ExecutionContext)
-}
 
 @ContextDsl
 public fun <V> computation(
     executionContext: ExecutionContext,
-    content: ComputationBlockWithContext<V>
-) {
+    content: ComputationContextDsl.(ExecutionContext) -> V
+): V {
     val dsl = ComputationContextDslImpl(executionContext)
-    content.run { dsl.invoke(executionContext) }
+    return dsl.content(executionContext)
 }

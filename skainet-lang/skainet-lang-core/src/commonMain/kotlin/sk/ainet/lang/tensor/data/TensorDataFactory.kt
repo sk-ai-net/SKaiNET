@@ -53,6 +53,12 @@ public interface TensorDataFactory {
         dtype: KClass<T>,
         data: IntArray
     ): TensorData<T, V>
+
+    public fun <T : DType, V> fromByteArray(
+        shape: Shape,
+        dtype: KClass<T>,
+        data: ByteArray
+    ): TensorData<T, V>
 }
 
 /**

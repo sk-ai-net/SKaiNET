@@ -253,4 +253,41 @@ class DefaultCpuOpsMatmulTest {
         for (k in 0 until 3) acc += a.data[2, 1, k] * b.data[k]
         assertEquals(acc, r.data[2, 1])
     }
+
+
+    @Test
+    fun matmul_specific_outer_product_given_matrices() {
+        // A: (2x1) column vector [[0.0],[1.5707964]]
+        val a = fMat(2, 1, floatArrayOf(0.0f, 1.5707964f))
+        // B: (1x16) row vector with provided values
+        val b = fMat(
+            1,
+            16,
+            floatArrayOf(
+                -0.5437579f, -0.40618014f, -0.049072437f, -0.20548964f,
+                0.7046659f, 0.12716591f, -0.6933681f, -0.69114095f,
+                0.7351928f, 0.87753433f, 0.038990114f, -0.5247653f,
+                -0.9077183f, 0.7729037f, -0.584505f, 0.8824522f
+            )
+        )
+        val r = cpuOpsF.matmul(a, b)
+        // Expect outer product -> (2x16)
+        assertEquals(Shape(2, 16), r.shape)
+        // First row should be all zeros
+        for (j in 0 until 16) {
+            assertEquals(0.0f, r.data[0, j], 1e-6f)
+        }
+        // Second row equals 1.5707964 times the row vector
+        val scale = 1.5707964f
+        val expectedRow1 = floatArrayOf(
+            -0.5437579f, -0.40618014f, -0.049072437f, -0.20548964f,
+            0.7046659f, 0.12716591f, -0.6933681f, -0.69114095f,
+            0.7351928f, 0.87753433f, 0.038990114f, -0.5247653f,
+            -0.9077183f, 0.7729037f, -0.584505f, 0.8824522f
+        )
+        for (j in 0 until 16) {
+            val expected = scale * expectedRow1[j]
+            assertEquals(expected, r.data[1, j], 1e-5f)
+        }
+    }
 }

@@ -61,6 +61,15 @@ public interface ExecutionContext {
         return fromData(data, dtype)
     }
 
+    public fun <T : DType, V> fromByteArray(
+        shape: Shape,
+        dtype: KClass<T>,
+        data: ByteArray
+    ): Tensor<T, V> {
+        val data = tensorDataFactory.fromByteArray<T, V>(shape, dtype, data)
+        return fromData(data, dtype)
+    }
+
 
     // runtime information
     public val memoryInfo: MemoryInfo

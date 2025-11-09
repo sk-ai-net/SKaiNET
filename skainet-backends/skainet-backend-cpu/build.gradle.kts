@@ -12,6 +12,7 @@ plugins {
 
 kotlin {
     explicitApi()
+    jvmToolchain(21)
 
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
@@ -28,10 +29,13 @@ kotlin {
 
     jvm()
 
+    js {
+        browser()
+    }
+
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser()
-        binaries.executable()
     }
 
     sourceSets {
@@ -42,12 +46,69 @@ kotlin {
 
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(project(":skainet-lang:skainet-lang-models"))
+        }
+
+        val jvmMain by getting
+        val jvmTest by getting {
+            dependencies {
+                implementation(libs.kotlin.test)
+            }
+        }
+        val androidMain by getting
+        val wasmJsMain by getting
+
+        val commonMain by getting
+
+        val nativeMain by creating {
+            dependsOn(commonMain)
+        }
+
+        val linuxMain by creating {
+            dependsOn(nativeMain)
+        }
+
+        val iosMain by creating {
+            dependsOn(nativeMain)
+        }
+
+        val macosMain by creating {
+            dependsOn(nativeMain)
+        }
+
+        val iosArm64Main by getting {
+            dependsOn(iosMain)
+        }
+
+        val iosSimulatorArm64Main by getting {
+            dependsOn(iosMain)
+        }
+
+        val macosArm64Main by getting {
+            dependsOn(macosMain)
+        }
+
+        val linuxX64Main by getting {
+            dependsOn(linuxMain)
+        }
+
+        val linuxArm64Main by getting {
+            dependsOn(linuxMain)
         }
     }
 }
 
+
+tasks.withType<Test>().configureEach {
+    jvmArgs("--enable-preview", "--add-modules", "jdk.incubator.vector")
+}
+
+tasks.withType<JavaExec>().configureEach {
+    jvmArgs("--enable-preview", "--add-modules", "jdk.incubator.vector")
+}
+
 android {
-    namespace = "sk.ai.net.lang.api"
+    namespace = "sk.ainet.backend.cpu"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

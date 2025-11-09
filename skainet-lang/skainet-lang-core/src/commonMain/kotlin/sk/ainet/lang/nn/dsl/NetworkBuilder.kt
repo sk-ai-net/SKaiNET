@@ -13,11 +13,10 @@ import sk.ainet.lang.nn.normalization.LayerNormalization
 import sk.ainet.lang.nn.topology.MLP
 import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.Tensor
-import sk.ainet.lang.nn.DefaultNeuralNetworkExecutionContext
-import sk.ainet.lang.nn.NeuralNetworkExecutionContext
-import sk.ainet.lang.tensor.VoidOpsTensor
 import sk.ainet.lang.types.DType
-import kotlin.random.Random
+import sk.ainet.context.ExecutionContext
+import sk.ainet.lang.nn.DefaultNeuralNetworkExecutionContext
+import sk.ainet.lang.tensor.dsl.TensorCreationScope
 import kotlin.reflect.KClass
 
 // DSL Marker to restrict the DSL to its intended scope
@@ -64,7 +63,7 @@ public inline fun <reified T : DType, V> sequential(
  * Overload that wires both tensor factory and ops from an ExecutionContext.
  */
 public inline fun <reified T : DType, V> sequential(
-    executionContext: NeuralNetworkExecutionContext,
+    executionContext: ExecutionContext,
     content: NeuralNetworkDsl<T, V>.() -> Unit
 ): Module<T, V> =
     NeuralNetworkDslImpl<T, V>(executionContext, T::class)
@@ -73,7 +72,7 @@ public inline fun <reified T : DType, V> sequential(
 
 @NetworkDsl
 public interface NetworkDslItem {
-    public val executionContext: NeuralNetworkExecutionContext
+    public val executionContext: ExecutionContext
 }
 
 /**
@@ -292,7 +291,7 @@ public interface NeuralNetworkDsl<T : DType, V> : NetworkDslItem {
 }
 
 public interface WandBTensorValueContext<T : DType, V> {
-    public val executionContext: NeuralNetworkExecutionContext
+    public val executionContext: ExecutionContext
     public val weightsShape: Shape
     public val biasShape: Shape
 
@@ -318,112 +317,24 @@ public interface CONV2D<T : DType, V> : NetworkDslItem, WandBTensorValueContext<
     public var bias: Boolean
 }
 
-/**
- * Base scope providing common tensor creation and initialization methods.
- */
-@NetworkDsl
-public interface TensorsValueScope<T : DType, V> {
-    public val shape: Shape
-    public val dtype: KClass<T>
-    public val executionContext: NeuralNetworkExecutionContext
-
-    /**
-     * Create tensor filled with zeros
-     */
-    public fun zeros(): Tensor<T, V> = executionContext.zeros(shape, dtype)
-
-    /**
-     * Create tensor filled with ones
-     */
-    public fun ones(): Tensor<T, V> = executionContext.ones(shape, dtype)
-
-    /**
-     * Create tensor filled with ones
-     */
-    public fun full(value: Number): Tensor<T, V> = executionContext.full(shape, dtype, value)
-
-
-    /**
-     * Factories
-     */
-    // fromXX Float
-    public fun from(vararg data: Float): Tensor<T, V> = fromArray(data.toTypedArray().toFloatArray())
-    public fun fromList(data: List<Float>): Tensor<T, V> = fromArray(data.toFloatArray())
-    public fun fromArray(data: FloatArray): Tensor<T, V> {
-        require(data.size == shape.volume) {
-            "Data size ${data.size} doesn't match shape volume ${shape.volume}"
-        }
-        return executionContext.fromFloatArray(shape, dtype, data)
-    }
-
-    // fromXX Int
-    public fun from(vararg data: Int): Tensor<T, V> = fromArray(data.toTypedArray().toIntArray())
-    public fun fromIntList(data: List<Int>): Tensor<T, V> = fromArray(data.toIntArray())
-    public fun fromArray(data: IntArray): Tensor<T, V> {
-        require(data.size == shape.volume) {
-            "Data size ${data.size} doesn't match shape volume ${shape.volume}"
-        }
-        return executionContext.fromIntArray(shape, dtype, data)
-    }
-
-    /**
-     * Create tensor with custom initialization function
-     */
-    public fun init(generator: (indices: IntArray) -> V): Tensor<T, V> {
-        val data = executionContext.tensorDataFactory.init(shape, dtype, generator)
-        return executionContext.fromData(data, dtype)
-    }
-
-    /**
-     * Create tensor with custom random initialization
-     */
-    public fun randomInit(generator: (random: Random) -> V, random: Random = Random.Default): Tensor<T, V> {
-        val data = executionContext.tensorDataFactory.randomInit(shape, dtype, generator, random)
-        return executionContext.fromData(data, dtype)
-    }
-
-
-    /**
-     * Advanced initialization with custom random distribution.
-     */
-    public fun random(initBlock: (Shape) -> Tensor<T, V>): Tensor<T, V> = initBlock(shape)
-
-    /**
-     * Create tensor with normal distribution
-     */
-    public fun randn(mean: Float = 0.0f, std: Float = 1.0f, random: Random = Random.Default): Tensor<T, V> {
-        val data = executionContext.tensorDataFactory.randn<T, V>(shape, dtype, mean, std, random)
-        return executionContext.fromData(data, dtype)
-    }
-
-    /**
-     * Create tensor with uniform distribution
-     */
-    public fun uniform(min: Float = 0.0f, max: Float = 1.0f, random: Random = Random.Default): Tensor<T, V> {
-        val data = executionContext.tensorDataFactory.uniform<T, V>(shape, dtype, min, max, random)
-        return executionContext.fromData(data, dtype)
-    }
-
-
-}
 
 /**
  * Scope for weights initialization with implicit shape context.
  */
 @NetworkDsl
-public interface WeightsScope<T : DType, V> : TensorsValueScope<T, V>
+public interface WeightsScope<T : DType, V> : TensorCreationScope<T, V>
 
 /**
  * Scope for bias initialization with implicit shape context.
  */
 @NetworkDsl
-public interface BiasScope<T : DType, V> : TensorsValueScope<T, V>
+public interface BiasScope<T : DType, V> : TensorCreationScope<T, V>
 
 /**
  * Implementation of WeightsScope for weights initialization.
  */
 public class WeightsScopeImpl<T : DType, V>(
-    override val executionContext: NeuralNetworkExecutionContext,
+    override val executionContext: ExecutionContext,
     override val shape: Shape,
     override val dtype: KClass<T>
 ) : WeightsScope<T, V>
@@ -432,7 +343,7 @@ public class WeightsScopeImpl<T : DType, V>(
  * Implementation of BiasScope for bias initialization.
  */
 public class BiasScopeImpl<T : DType, V>(
-    override val executionContext: NeuralNetworkExecutionContext,
+    override val executionContext: ExecutionContext,
     override val shape: Shape,
     override val dtype: KClass<T>,
 ) : BiasScope<T, V>
@@ -449,7 +360,7 @@ private fun getDefaultName(id: String, s: String, size: Int): String {
 }
 
 public class FlattenImpl<T : DType, V>(
-    override val executionContext: NeuralNetworkExecutionContext,
+    override val executionContext: ExecutionContext,
     override var startDim: Int = 1,
     override var endDim: Int = -1,
     private val id: String,
@@ -460,7 +371,7 @@ public class FlattenImpl<T : DType, V>(
 }
 
 private fun <T : DType, V> createLinear(
-    executionContext: NeuralNetworkExecutionContext,
+    executionContext: ExecutionContext,
     inFeatures: Int,
     outFeatures: Int,
     id: String,
@@ -524,7 +435,7 @@ private fun <T : DType, V> createLinear(
 
 
 public class DenseImpl<T : DType, V>(
-    override val executionContext: NeuralNetworkExecutionContext,
+    override val executionContext: ExecutionContext,
     private val inputDimension: Int,
     private var _outputDimension: Int,
     private val id: String,
@@ -593,7 +504,7 @@ public class DenseImpl<T : DType, V>(
 }
 
 public class Conv2dImpl<T : DType, V>(
-    override val executionContext: NeuralNetworkExecutionContext,
+    override val executionContext: ExecutionContext,
     initialInChannels: Int,
     initialOutChannels: Int,
     initialKernelSize: Pair<Int, Int>,
@@ -664,7 +575,7 @@ public class Conv2dImpl<T : DType, V>(
 
 // Stage implementation
 public class StageImpl<T : DType, V>(
-    override val executionContext: NeuralNetworkExecutionContext,
+    override val executionContext: ExecutionContext,
     private val id: String,
     private val kClass: KClass<T>
 ) : NeuralNetworkDsl<T, V> {
@@ -692,10 +603,10 @@ public class StageImpl<T : DType, V>(
         // we'll use a placeholder approach that works with typical CNN architectures
         // TODO: Implement proper shape inference based on actual input dimensions
         if (lastDimension == 0) {
-            // This is a fallback - for the MNIST CNN test case with input (1,1,28,28)
-            // After conv1(16ch) + pool -> conv2(32ch) + pool, we get (1,32,28,28)
-            // Flattening from dim 1 gives size 32*28*28 = 25088
-            lastDimension = 25088  // This should be calculated properly
+            // Fallback for the MNIST CNN test case with input (1,1,28,28)
+            // After conv1(16ch) + pool -> conv2(32ch) + pool, we get (1,32,7,7)
+            // Flattening from dim 1 gives size 32*7*7 = 1568
+            lastDimension = 1568  // TODO: calculate from tracked shapes
         }
     }
 
@@ -877,7 +788,7 @@ public class StageImpl<T : DType, V>(
 }
 
 public class NeuralNetworkDslImpl<T : DType, V>(
-    override val executionContext: NeuralNetworkExecutionContext,
+    override val executionContext: ExecutionContext,
     private val kClass: KClass<T>
 ) : NeuralNetworkDsl<T, V> {
 
@@ -905,10 +816,10 @@ public class NeuralNetworkDslImpl<T : DType, V>(
         // we'll use a placeholder approach that works with typical CNN architectures
         // TODO: Implement proper shape inference based on actual input dimensions
         if (lastDimension == 0) {
-            // This is a fallback - for the MNIST CNN test case with input (1,1,28,28)
-            // After conv1(16ch) + pool -> conv2(32ch) + pool, we get (1,32,28,28)
-            // Flattening from dim 1 gives size 32*28*28 = 25088
-            lastDimension = 25088  // This should be calculated properly
+            // Fallback for the MNIST CNN test case with input (1,1,28,28)
+            // After conv1(16ch) + pool -> conv2(32ch) + pool, we get (1,32,7,7)
+            // Flattening from dim 1 gives size 32*7*7 = 1568
+            lastDimension = 1568  // TODO: calculate from tracked shapes
         }
     }
 

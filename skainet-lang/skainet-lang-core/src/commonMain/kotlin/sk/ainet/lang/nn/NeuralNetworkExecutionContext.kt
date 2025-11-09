@@ -49,6 +49,18 @@ public inline fun <reified T : DType, V> NeuralNetworkExecutionContext.network(
     .apply(content)
     .create()
 
+/**
+ * Extension function to create a network within a NetworkContext.
+ * This bridges the context wrapper with the network DSL using the context's tensor factory.
+ */
+public inline fun <reified T : DType, V> NeuralNetworkExecutionContext.network(
+    executionContext: ExecutionContext,
+    content: NeuralNetworkDsl<T, V>.() -> Unit
+): Module<T, V> = NeuralNetworkDslImpl<T, V>(executionContext, T::class)
+    .apply(content)
+    .create()
+
+
 public class DefaultNeuralNetworkExecutionContext() : NeuralNetworkExecutionContext {
 
     private companion object Companion {
