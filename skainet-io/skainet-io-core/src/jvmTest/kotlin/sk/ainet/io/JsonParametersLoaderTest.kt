@@ -9,7 +9,7 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 import sk.ainet.io.mapper.NamesBasedValuesModelMapper
 import sk.ainet.context.DirectCpuExecutionContext
-import sk.ainet.io.csv.JsonParametersLoader
+import sk.ainet.io.json.JsonParametersLoader
 import sk.ainet.lang.nn.Module
 import sk.ainet.lang.nn.definition
 import sk.ainet.lang.nn.network

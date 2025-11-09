@@ -1,15 +1,15 @@
-package sk.ainet.io.csv
+package sk.ainet.io.json
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Tensor(
+internal data class Tensor(
     val shape: List<Int>,
     val values: List<Double>
 )
 
 @Serializable
-data class Parameter(
+internal data class Parameter(
     val unique_parameter_name: String,
     val tensor: Tensor
 )

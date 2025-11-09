@@ -1,4 +1,4 @@
-package sk.ainet.io.csv
+package sk.ainet.io.json
 
 import kotlinx.io.Source
 import kotlinx.io.readString
