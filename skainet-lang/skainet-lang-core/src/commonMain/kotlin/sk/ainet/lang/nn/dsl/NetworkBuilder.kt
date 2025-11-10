@@ -242,6 +242,21 @@ public interface NeuralNetworkDsl<T : DType, V> : NetworkDslItem {
     )
 
     /**
+     * Creates a 2D convolutional layer with all parameters configured inside the DSL block.
+     * Example:
+     * conv2d("conv1") {
+     *     outChannels = 16
+     *     kernelSize(5)
+     *     stride(1)
+     *     padding(2)
+     * }
+     */
+    public fun conv2d(
+        id: String = "",
+        content: CONV2D<T, V>.() -> Unit
+    )
+
+    /**
      * Creates a 2D max pooling layer for downsampling feature maps.
      *
      * @param kernelSize Size of the pooling window (height, width)
@@ -254,6 +269,20 @@ public interface NeuralNetworkDsl<T : DType, V> : NetworkDslItem {
         stride: Pair<Int, Int> = kernelSize,
         padding: Pair<Int, Int> = 0 to 0,
         id: String = ""
+    )
+
+    /**
+     * Creates a 2D max pooling layer with all parameters configured inside the DSL block.
+     * Example:
+     * maxPool2d("pool1") {
+     *     kernelSize(2)
+     *     stride(2)
+     *     padding(0)
+     * }
+     */
+    public fun maxPool2d(
+        id: String = "",
+        content: MAXPOOL2D<T, V>.() -> Unit
     )
 
     /**
@@ -315,6 +344,23 @@ public interface CONV2D<T : DType, V> : NetworkDslItem, WandBTensorValueContext<
     public var dilation: Pair<Int, Int>
     public var groups: Int
     public var bias: Boolean
+
+    // Helper setters to allow concise Int-based configuration in DSL blocks
+    public fun kernelSize(size: Int)
+    public fun stride(size: Int)
+    public fun padding(size: Int)
+}
+
+@NetworkDsl
+public interface MAXPOOL2D<T : DType, V> : NetworkDslItem {
+    public var kernelSize: Pair<Int, Int>
+    public var stride: Pair<Int, Int>
+    public var padding: Pair<Int, Int>
+
+    // Helper setters to allow concise Int-based configuration in DSL blocks
+    public fun kernelSize(size: Int)
+    public fun stride(size: Int)
+    public fun padding(size: Int)
 }
 
 
@@ -458,6 +504,8 @@ public class DenseImpl<T : DType, V>(
     override val biasShape: Shape
         get() = Shape(_outputDimension)
 
+    private var activationSet: Boolean = false
+
     public fun create(): List<Module<T, V>> {
         // Create default tensors if not provided - use factory for defaults
         val weights = weightsValue
@@ -473,16 +521,20 @@ public class DenseImpl<T : DType, V>(
             executionContext = executionContext
         )
 
-        // Return only the linear module. Activation should be added explicitly via activation() in the DSL.
-        return listOf(
-            linear
-        )
+        // Build module list: always the linear layer, and optionally the activation if set inside dense{}
+        val modules = mutableListOf<Module<T, V>>()
+        modules += linear
+        if (activationSet) {
+            modules += ActivationsWrapperModule(_activation, getDefaultName("$id-activation", "activation", 0))
+        }
+        return modules
     }
 
     override var activation: (Tensor<T, V>) -> Tensor<T, V>
         get() = _activation
         set(value) {
             _activation = value
+            activationSet = true
         }
 
     override var units: Int
@@ -518,6 +570,11 @@ public class Conv2dImpl<T : DType, V>(
 
     ) : CONV2D<T, V> {
 
+    // Helper setters implementation
+    override fun kernelSize(size: Int) { this.kernelSize = size to size }
+    override fun stride(size: Int) { this.stride = size to size }
+    override fun padding(size: Int) { this.padding = size to size }
+
     private var weightsValue: Tensor<T, V>? = null
     private var biasValue: Tensor<T, V>? = null
 
@@ -539,6 +596,11 @@ public class Conv2dImpl<T : DType, V>(
         get() = Shape(intArrayOf(outChannels))
 
     public fun create(): Conv2d<T, V> {
+        // Validate required fields
+        require(outChannels > 0) { "Conv2d outChannels must be > 0. Set it in the DSL block." }
+        require(kernelSize.first > 0 && kernelSize.second > 0) { "Conv2d kernelSize must be > 0. Set it in the DSL block." }
+        require(inChannels > 0) { "Conv2d inChannels must be > 0 (set explicitly if not inferred)." }
+
         // Create default tensors if not provided
         val weights = weightsValue ?: executionContext.zeros(weightsShape, kClass)
 
@@ -569,6 +631,37 @@ public class Conv2dImpl<T : DType, V>(
     override fun bias(initBlock: BiasScope<T, V>.(Shape) -> Tensor<T, V>) {
         val scope = BiasScopeImpl<T, V>(executionContext, biasShape, kClass)
         biasValue = scope.initBlock(biasShape)
+    }
+}
+
+public class MaxPool2dImpl<T : DType, V>(
+    override val executionContext: ExecutionContext,
+    initialKernelSize: Pair<Int, Int>,
+    initialStride: Pair<Int, Int>,
+    initialPadding: Pair<Int, Int>,
+    private val id: String,
+) : MAXPOOL2D<T, V> {
+
+    // Helper setters implementation
+    override fun kernelSize(size: Int) { this.kernelSize = size to size }
+    override fun stride(size: Int) { this.stride = size to size }
+    override fun padding(size: Int) { this.padding = size to size }
+
+    override var kernelSize: Pair<Int, Int> = initialKernelSize
+    override var stride: Pair<Int, Int> = initialStride
+    override var padding: Pair<Int, Int> = initialPadding
+
+    public fun create(): MaxPool2d<T, V> {
+        require(kernelSize.first > 0 && kernelSize.second > 0) { "MaxPool2d kernelSize must be > 0. Set it in the DSL block." }
+        require(stride.first > 0 && stride.second > 0) { "MaxPool2d stride must be > 0. Set it in the DSL block." }
+        require(padding.first >= 0 && padding.second >= 0) { "MaxPool2d padding must be >= 0. Set it in the DSL block." }
+
+        return MaxPool2d(
+            kernelSize = kernelSize,
+            stride = stride,
+            padding = padding,
+            name = getDefaultName(id, "MaxPool2d", 0)
+        )
     }
 }
 
@@ -771,6 +864,27 @@ public class StageImpl<T : DType, V>(
         modules.add(conv2dImpl.create())
     }
 
+    override fun conv2d(
+        id: String,
+        content: CONV2D<T, V>.() -> Unit
+    ) {
+        val conv2dImpl = Conv2dImpl<T, V>(
+            executionContext = executionContext,
+            initialInChannels = 1,
+            initialOutChannels = 1,
+            initialKernelSize = 1 to 1,
+            initialStride = 1 to 1,
+            initialPadding = 0 to 0,
+            initialDilation = 1 to 1,
+            initialGroups = 1,
+            initialBias = true,
+            id = getDefaultName(id, "Conv2d", modules.size),
+            kClass = kClass
+        )
+        conv2dImpl.content()
+        modules.add(conv2dImpl.create())
+    }
+
 
     override fun maxPool2d(
         kernelSize: Pair<Int, Int>,
@@ -784,6 +898,21 @@ public class StageImpl<T : DType, V>(
             padding = padding,
             name = getDefaultName(id, "MaxPool2d", modules.size)
         )
+    }
+
+    override fun maxPool2d(
+        id: String,
+        content: MAXPOOL2D<T, V>.() -> Unit
+    ) {
+        val impl = MaxPool2dImpl<T, V>(
+            executionContext = executionContext,
+            initialKernelSize = 1 to 1,
+            initialStride = 1 to 1,
+            initialPadding = 0 to 0,
+            id = getDefaultName(id, "MaxPool2d", modules.size)
+        )
+        impl.content()
+        modules += impl.create()
     }
 }
 
@@ -984,6 +1113,27 @@ public class NeuralNetworkDslImpl<T : DType, V>(
         modules.add(conv2dImpl.create())
     }
 
+    override fun conv2d(
+        id: String,
+        content: CONV2D<T, V>.() -> Unit
+    ) {
+        val conv2dImpl = Conv2dImpl<T, V>(
+            executionContext = executionContext,
+            initialInChannels = 1,
+            initialOutChannels = 1,
+            initialKernelSize = 1 to 1,
+            initialStride = 1 to 1,
+            initialPadding = 0 to 0,
+            initialDilation = 1 to 1,
+            initialGroups = 1,
+            initialBias = true,
+            id = getDefaultName(id, "Conv2d", modules.size),
+            kClass = kClass
+        )
+        conv2dImpl.content()
+        modules.add(conv2dImpl.create())
+    }
+
     override fun maxPool2d(
         kernelSize: Pair<Int, Int>,
         stride: Pair<Int, Int>,
@@ -996,6 +1146,21 @@ public class NeuralNetworkDslImpl<T : DType, V>(
             padding = padding,
             name = getDefaultName(id, "MaxPool2d", modules.size)
         )
+    }
+
+    override fun maxPool2d(
+        id: String,
+        content: MAXPOOL2D<T, V>.() -> Unit
+    ) {
+        val impl = MaxPool2dImpl<T, V>(
+            executionContext = executionContext,
+            initialKernelSize = 1 to 1,
+            initialStride = 1 to 1,
+            initialPadding = 0 to 0,
+            id = getDefaultName(id, "MaxPool2d", modules.size)
+        )
+        impl.content()
+        modules.add(impl.create())
     }
 }
 

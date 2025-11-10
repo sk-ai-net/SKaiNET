@@ -15,9 +15,6 @@ import kotlin.test.assertTrue
  * - build a name->tensor map (using ExecutionContext)
  */
 import sk.ainet.context.DefaultDataExecutionContext
-import sk.ainet.io.gguf.GGMLQuantizationType
-import sk.ainet.io.gguf.GGUFReader
-import sk.ainet.io.gguf.ReaderTensor
 import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.types.DType
 import sk.ainet.lang.types.FP16
