@@ -7,6 +7,7 @@ import sk.ainet.exec.tensor.ops.platformDefaultCpuOpsFactory
 
 public class DirectCpuExecutionContext(
     override val executionStats: ExecutionStats = ExecutionStats(),
+    override val phase: Phase = Phase.EVAL,
 ) : ExecutionContext {
     private val _memoryInfo = MemoryInfo(
         totalMemory = 0,

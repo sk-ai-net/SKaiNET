@@ -6,7 +6,8 @@ import sk.ainet.lang.tensor.ops.TensorOps
 import sk.ainet.lang.tensor.ops.VoidTensorOps
 
 public class DefaultDataExecutionContext(
-    override val tensorDataFactory: TensorDataFactory = DenseTensorDataFactory()
+    override val tensorDataFactory: TensorDataFactory = DenseTensorDataFactory(),
+    override val phase: Phase = Phase.EVAL
 ) : ExecutionContext {
 
     // class instance of voidOps created only once

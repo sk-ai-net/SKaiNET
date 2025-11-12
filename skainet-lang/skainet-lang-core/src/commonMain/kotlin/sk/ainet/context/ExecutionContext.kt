@@ -12,6 +12,9 @@ import kotlin.reflect.KClass
 public interface ExecutionContext {
     public val ops: TensorOps
 
+    // Execution phase and convenience training flag
+    public val phase: Phase
+    public val inTraining: Boolean get() = phase == Phase.TRAIN
 
     public val tensorDataFactory: TensorDataFactory
 

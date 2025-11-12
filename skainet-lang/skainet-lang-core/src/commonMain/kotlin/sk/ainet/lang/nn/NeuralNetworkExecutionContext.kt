@@ -61,7 +61,9 @@ public inline fun <reified T : DType, V> NeuralNetworkExecutionContext.network(
     .create()
 
 
-public class DefaultNeuralNetworkExecutionContext() : NeuralNetworkExecutionContext {
+public class DefaultNeuralNetworkExecutionContext(
+    override val phase: sk.ainet.context.Phase = sk.ainet.context.Phase.EVAL
+) : NeuralNetworkExecutionContext {
 
     private companion object Companion {
         val voidOps = VoidTensorOps()
