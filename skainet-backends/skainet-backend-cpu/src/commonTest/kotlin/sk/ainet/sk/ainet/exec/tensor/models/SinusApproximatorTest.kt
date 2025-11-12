@@ -12,7 +12,11 @@ import sk.ainet.lang.tensor.pprint
 import sk.ainet.lang.tensor.relu
 import sk.ainet.lang.types.FP32
 import kotlin.math.PI
+import kotlin.math.sin
+import kotlin.math.abs
+import kotlin.random.Random
 import kotlin.test.Test
+import kotlin.test.assertTrue
 
 private val sinusApproximatorWandB: SinusApproximatorWandB = SinusApproximatorWandB()
 
@@ -37,6 +41,7 @@ fun createModel(context: ExecutionContext) = definition<FP32, Float> {
             }
             activation = { tensor -> with(tensor) { relu() } }
         }
+        activation("relu-1") { tensor -> with(tensor) { relu() } }
 
         // Second hidden layer: 16 -> 16 neurons
         dense(16, "hidden-2") {
@@ -54,6 +59,7 @@ fun createModel(context: ExecutionContext) = definition<FP32, Float> {
             }
             activation = { tensor -> with(tensor) { relu() } }
         }
+        activation("relu-2") { tensor -> with(tensor) { relu() } }
 
         // Output layer: 16 -> 1 neuron
         dense(1, "output") {
@@ -128,6 +134,35 @@ class SinusApproximatorTest {
 
     @Test
     fun testSinusApproximatorWithWeights() {
+        val ctx = DirectCpuExecutionContext()
+        val model = createModel(ctx)
 
+        val rng = Random(42)
+        val samples = 10
+        val maxError = 0.1f
+
+        repeat(samples) {
+            val x: Float = (rng.nextFloat() * (PI.toFloat() / 2f))
+
+            val predicted = computation(ctx) { _ ->
+                val inputTensor = data<FP32, Float>(ctx) {
+                    tensor<FP32, Float> {
+                        // batch=1, features=1
+                        shape(1, 1) {
+                            fromArray(floatArrayOf(x))
+                        }
+                    }
+                }
+                val out = model(inputTensor)
+                out.data[0, 0]
+            }
+
+            val expected = sin(x)
+            val diff = abs(predicted - expected)
+            assertTrue(
+                diff <= maxError,
+                message = "sin approximation error too high for x=$x: predicted=$predicted expected=$expected diff=$diff (max=$maxError)"
+            )
+        }
     }
 }

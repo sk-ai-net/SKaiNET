@@ -40,3 +40,7 @@ include("skainet-backends:benchmarks:jvm-cpu-jmh")
 include("skainet-data:skainet-data-api")
 include("skainet-data:skainet-data-simple")
 
+// ====== IO
+include("skainet-io:skainet-io-core")
+include("skainet-io:skainet-io-gguf")
+

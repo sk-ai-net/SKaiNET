@@ -3,6 +3,7 @@ agp = "8.12.3"
 jacksonDatabind = "2.20.1"
 jsonSchemaValidator = "2.0.0"
 jsonSchemaValidatorVersion = "0.5.2"
+junit = "4.13.2"
 kotlin = "2.2.21"
 kotlinxCoroutines = "1.10.2"
 android-minSdk = "24"
@@ -13,19 +14,23 @@ ktorClientPlugins = "3.1.1"
 logbackClassic = "1.5.20"
 kover = "0.9.3"
 binaryCompatibilityValidator = "0.18.1"
-ksp = "2.2.20-2.0.4"
+ksp = "2.2.21-2.0.4"
 kotlinpoet = "2.2.0"
 kotlin-compile-testing = "1.6.0"
-asciidoctorj = "3.0.0"
+asciidoctorj = "3.0.1"
 dokka = "2.1.0"
 kotlinxCli = "0.3.6"
+kotlinxIo = "0.8.0"
 
 [libraries]
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jacksonDatabind" }
 json-schema-validator = { module = "com.networknt:json-schema-validator", version.ref = "jsonSchemaValidator" }
+junit = { module = "junit:junit", version.ref = "junit" }
 kotlinx-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-core-jvm = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
+kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinxIo" }
+
 
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }

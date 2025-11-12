@@ -42,6 +42,8 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":skainet-lang:skainet-lang-core"))
             implementation(project(":skainet-compile:skainet-compile-core"))
+            implementation(project(":skainet-lang:skainet-lang-ksp-annotations"))
+
         }
 
         commonTest.dependencies {
