@@ -946,7 +946,42 @@ public open class DefaultCpuOpsBase(protected val dataFactory: TensorDataFactory
                     @Suppress("UNCHECKED_CAST")
                     y as V
                 }
-                else -> throw IllegalArgumentException("Unsupported dtype for gelu: ${tensor.dtype}")
+                else -> throw IllegalArgumentException("Unsupported dtype for gelu: ${'$'}{tensor.dtype}")
+            }
+        }
+        return CpuTensor(outData, this, tensor.dtype)
+    }
+
+    @TensorOp()
+    @InProgress("cpu", owner = "team:cpu", issue = "task-ops.md#op-tril")
+    override fun <T : DType, V> tril(tensor: Tensor<T, V>, k: Int): Tensor<T, V> {
+        val rank = tensor.rank
+        // Apply over last two dims; for rank < 2, just copy
+        val outData = dataFactory.init<T, V>(tensor.shape, tensor.dtype) { outIdx ->
+            if (rank < 2) {
+                @Suppress("UNCHECKED_CAST")
+                return@init tensor.data.get(*outIdx) as V
+            }
+            val rows = tensor.shape[rank - 2]
+            val cols = tensor.shape[rank - 1]
+            val i = outIdx[rank - 2]
+            val j = outIdx[rank - 1]
+            val keep = j - i <= k
+            if (keep) {
+                @Suppress("UNCHECKED_CAST")
+                tensor.data.get(*outIdx) as V
+            } else {
+                when (tensor.dtype) {
+                    sk.ainet.lang.types.FP32::class, sk.ainet.lang.types.FP16::class -> {
+                        @Suppress("UNCHECKED_CAST")
+                        0.0f as V
+                    }
+                    sk.ainet.lang.types.Int32::class, sk.ainet.lang.types.Int8::class -> {
+                        @Suppress("UNCHECKED_CAST")
+                        0 as V
+                    }
+                    else -> throw IllegalArgumentException("Unsupported dtype for tril: ${'$'}{tensor.dtype}")
+                }
             }
         }
         return CpuTensor(outData, this, tensor.dtype)

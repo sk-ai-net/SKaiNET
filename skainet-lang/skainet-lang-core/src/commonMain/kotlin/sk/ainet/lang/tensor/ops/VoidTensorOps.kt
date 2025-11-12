@@ -246,6 +246,12 @@ public class VoidTensorOps : TensorOps {
         return VoidOpsTensor(resultData, tensor.dtype)
     }
 
+    override fun <T : DType, V> tril(tensor: Tensor<T, V>, k: Int): Tensor<T, V> {
+        // tril preserves shape
+        val resultData = dataFactory.zeros<T, V>(tensor.shape, tensor.dtype)
+        return VoidOpsTensor(resultData, tensor.dtype)
+    }
+
     /**
      * Validates shapes for matrix multiplication.
      * For 2D matrices: (m, k) × (k, n) -> (m, n)
