@@ -20,8 +20,8 @@ public abstract class DualModule<InT : DType, OutT : DType, V> : ModuleNode {
     /** Child modules/nodes for traversal. Keep dtype-agnostic. */
     public abstract val modules: List<ModuleNode>
 
-    /** Forward pass that may optionally use an ExecutionContext. */
-    public abstract fun forward(input: Tensor<InT, V>, ctx: ExecutionContext? = null): Tensor<OutT, V>
+    /** Forward pass that requires an ExecutionContext. */
+    public abstract fun forward(input: Tensor<InT, V>, ctx: ExecutionContext): Tensor<OutT, V>
 
     // ModuleNode implementation
     override val id: String get() = name
@@ -34,8 +34,6 @@ public abstract class DualModule<InT : DType, OutT : DType, V> : ModuleNode {
             is ModuleParameters<*, *> -> (this as ModuleParameters<Any?, Any?>).params as List<ModuleParameter<*, *>>
             else -> emptyList()
         }
-
-    public operator fun invoke(input: Tensor<InT, V>, ctx: ExecutionContext? = null): Tensor<OutT, V> = forward(input, ctx)
 }
 
 /**
@@ -45,9 +43,9 @@ public fun <T : DType, U : DType, V> compose(u: Module<T, V>, d: DualModule<T, U
     object : DualModule<T, U, V>() {
         override val name: String = "Compose(${u.name}→${d.name})"
         override val modules: List<ModuleNode> = listOf(u, d)
-        override fun forward(input: Tensor<T, V>, ctx: ExecutionContext?): Tensor<U, V> =
+        override fun forward(input: Tensor<T, V>, ctx: ExecutionContext): Tensor<U, V> =
             sk.ainet.lang.nn.hooks.withForwardHooks(ctx, this, input) {
-                d.forward(u.forward(input), ctx)
+                d.forward(u.forward(input, ctx), ctx)
             }
     }
 
@@ -55,8 +53,8 @@ public fun <T : DType, U : DType, V> compose(d: DualModule<T, U, V>, u: Module<U
     object : DualModule<T, U, V>() {
         override val name: String = "Compose(${d.name}→${u.name})"
         override val modules: List<ModuleNode> = listOf(d, u)
-        override fun forward(input: Tensor<T, V>, ctx: ExecutionContext?): Tensor<U, V> =
+        override fun forward(input: Tensor<T, V>, ctx: ExecutionContext): Tensor<U, V> =
             sk.ainet.lang.nn.hooks.withForwardHooks(ctx, this, input) {
-                u.forward(d.forward(input, ctx))
+                u.forward(d.forward(input, ctx), ctx)
             }
     }

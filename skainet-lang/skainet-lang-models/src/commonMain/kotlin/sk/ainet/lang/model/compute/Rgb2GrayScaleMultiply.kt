@@ -45,7 +45,7 @@ public class Rgb2GrayScaleMatMul(constCtx: ExecutionContext) : Model<FP16, Float
         // Pre-allocate luminance weights in broadcastable shape (1, 3, 1, 1)
 
 
-        override fun forward(input: Tensor<FP16, Float>): Tensor<FP16, Float> {
+        override fun forward(input: Tensor<FP16, Float>, ctx: ExecutionContext): Tensor<FP16, Float> {
             // Validate shape (N,3,H,W)
             val dims = input.shape.dimensions
             require(input.rank == 4) { "Rgb2GrayScaleMultiply expects rank-4 input (B,3,H,W), but was ${input.shape}" }

@@ -20,12 +20,12 @@ class DualModuleCompositionTest {
     private class IntToFloatDual<V> : DualModule<Int32, FP32, V>() {
         override val name: String = "IntToFloatDual"
         override val modules: List<ModuleNode> = emptyList()
-        override fun forward(input: Tensor<Int32, V>, ctx: ExecutionContext?): Tensor<FP32, V> {
+        override fun forward(input: Tensor<Int32, V>, ctx: ExecutionContext): Tensor<FP32, V> {
             val shape = input.shape
             val intData = (input.data as IntArrayTensorData<Int32>).buffer
             val floatData = FloatArray(intData.size) { idx -> intData[idx].toFloat() }
             @Suppress("UNCHECKED_CAST")
-            return ((ctx ?: DefaultNeuralNetworkExecutionContext())
+            return (ctx
                 .fromFloatArray<FP32, Any>(shape, FP32::class, floatData) as Tensor<FP32, Any>) as Tensor<FP32, V>
         }
     }
@@ -34,7 +34,7 @@ class DualModuleCompositionTest {
     private class AddOne<V> : Module<FP32, V>() {
         override val name: String = "AddOne"
         override val modules: List<Module<FP32, V>> = emptyList()
-        override fun forward(input: Tensor<FP32, V>): Tensor<FP32, V> {
+        override fun forward(input: Tensor<FP32, V>, executionContext: ExecutionContext): Tensor<FP32, V> {
             val shape = input.shape
             val floats = (input.data as FloatArrayTensorData<FP32>).buffer
             val out = FloatArray(floats.size) { i -> floats[i] + 1f }
@@ -49,7 +49,7 @@ class DualModuleCompositionTest {
         val u = AddOne<Any>()
         val chain: DualModule<Int32, FP32, Any> = compose(d, u)
         val input: Tensor<Int32, Any> = ctx.fromIntArray<Int32, Any>(Shape(2), Int32::class, intArrayOf(1, 2)) as Tensor<Int32, Any>
-        val out = chain.forward(input)
+        val out = chain.forward(input, ctx)
         val arr = (out.data as FloatArrayTensorData<FP32>).buffer
         assertEquals(2f, arr[0])
         assertEquals(3f, arr[1])
@@ -61,14 +61,14 @@ class DualModuleCompositionTest {
         val identityInt32 = object : Module<Int32, Any>() {
             override val name: String = "IdI32"
             override val modules: List<Module<Int32, Any>> = emptyList()
-            override fun forward(input: Tensor<Int32, Any>): Tensor<Int32, Any> = input
+            override fun forward(input: Tensor<Int32, Any>, ctx: ExecutionContext): Tensor<Int32, Any> = input
         }
         val d = IntToFloatDual<Any>()
 
         val chain: DualModule<Int32, FP32, Any> = compose(identityInt32, d)
 
         val input: Tensor<Int32, Any> = ctx.fromIntArray<Int32, Any>(Shape(3), Int32::class, intArrayOf(5, -1, 0)) as Tensor<Int32, Any>
-        val out = chain.forward(input)
+        val out = chain.forward(input, ctx)
         val arr = (out.data as FloatArrayTensorData<FP32>).buffer
         assertEquals(5f, arr[0])
         assertEquals(-1f, arr[1])

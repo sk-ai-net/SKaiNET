@@ -1,6 +1,7 @@
 package sk.ainet.lang.nn.topology
 
 import sk.ainet.context.data
+import sk.ainet.lang.nn.DefaultNeuralNetworkExecutionContext
 import sk.ainet.lang.tensor.dsl.tensor
 import sk.ainet.lang.nn.Linear
 import sk.ainet.lang.nn.activations.ReLU
@@ -53,8 +54,9 @@ class MLPTest {
                 shape(1, 1) {  full(2.0f) }
             }
 
+            val ctx = DefaultNeuralNetworkExecutionContext()
             // Perform inference
-            val output = mlp.forward(input)
+            val output = mlp.forward(input, ctx)
 
             // Basic assertions to verify the test works
             assertNotNull(output)

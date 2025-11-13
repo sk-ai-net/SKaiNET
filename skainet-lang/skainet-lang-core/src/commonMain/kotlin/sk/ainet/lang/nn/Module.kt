@@ -1,5 +1,6 @@
 package sk.ainet.lang.nn
 
+import sk.ainet.context.ExecutionContext
 import sk.ainet.lang.nn.topology.ModuleNode
 import sk.ainet.lang.nn.topology.ModuleParameter
 import sk.ainet.lang.nn.topology.ModuleParameters
@@ -13,7 +14,7 @@ public abstract class Module<T : DType, V> : ModuleNode {
 
     public abstract val modules: List<Module<T, V>>
 
-    public abstract fun forward(input: Tensor<T, V>): Tensor<T, V>
+    public abstract fun forward(input: Tensor<T, V>, ctx: ExecutionContext): Tensor<T, V>
 
     // ModuleNode implementation
     override val id: String get() = name
@@ -26,9 +27,5 @@ public abstract class Module<T : DType, V> : ModuleNode {
             is ModuleParameters<*, *> -> (this as ModuleParameters<Any?, Any?>).params as List<ModuleParameter<*, *>>
             else -> emptyList()
         }
-
-    public operator fun invoke(input: Tensor<T, V>): Tensor<T, V> {
-        return forward(input)
-    }
 }
 

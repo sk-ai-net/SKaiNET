@@ -1,5 +1,6 @@
 package sk.ainet.lang.nn
 
+import sk.ainet.context.ExecutionContext
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.tensor.ops.MixedPrecisionTensorOps
 import sk.ainet.lang.types.DType
@@ -77,38 +78,37 @@ public abstract class MixedPrecisionModule<TInput : DType, TOutput : DType, V>(
      * Main forward pass implementation that handles precision conversions automatically.
      * This method wraps the actual implementation with conversion logic.
      */
-    final override fun forward(input: Tensor<TInput, V>): Tensor<TInput, V> {
-        conversionStats.totalForwardCalls++
-        
-        try {
-            // Convert input if necessary and requested
-            val convertedInput = if (autoConvertInput && !isSameType(input, inputType)) {
-                conversionStats.inputConversions++
-                convertInput(input)
-            } else {
-                input
+    final override fun forward(input: Tensor<TInput, V>, ctx: ExecutionContext): Tensor<TInput, V> =
+        sk.ainet.lang.nn.hooks.withForwardHooks(ctx, this, input) {
+            conversionStats.totalForwardCalls++
+            try {
+                // Convert input if necessary and requested
+                val convertedInput = if (autoConvertInput && !isSameType(input, inputType)) {
+                    conversionStats.inputConversions++
+                    convertInput(input)
+                } else {
+                    input
+                }
+                
+                // Call the actual implementation
+                val internalOutput = forwardImpl(convertedInput)
+                
+                // Convert output if necessary and requested
+                val finalOutput = if (autoConvertOutput && !isSameType(internalOutput, inputType)) {
+                    conversionStats.outputConversions++
+                    @Suppress("UNCHECKED_CAST")
+                    convertOutput(internalOutput) as Tensor<TInput, V>
+                } else {
+                    @Suppress("UNCHECKED_CAST")
+                    internalOutput as Tensor<TInput, V>
+                }
+                
+                finalOutput
+            } catch (e: Exception) {
+                conversionStats.conversionErrors++
+                throw MixedPrecisionException("Error in mixed precision forward pass: ${e.message}", e)
             }
-            
-            // Call the actual implementation
-            val internalOutput = forwardImpl(convertedInput)
-            
-            // Convert output if necessary and requested
-            val finalOutput = if (autoConvertOutput && !isSameType(internalOutput, inputType)) {
-                conversionStats.outputConversions++
-                @Suppress("UNCHECKED_CAST")
-                convertOutput(internalOutput) as Tensor<TInput, V>
-            } else {
-                @Suppress("UNCHECKED_CAST")
-                internalOutput as Tensor<TInput, V>
-            }
-            
-            return finalOutput
-            
-        } catch (e: Exception) {
-            conversionStats.conversionErrors++
-            throw MixedPrecisionException("Error in mixed precision forward pass: ${e.message}", e)
         }
-    }
     
     /**
      * Abstract method that derived classes must implement.
@@ -219,26 +219,27 @@ public abstract class InternalMixedPrecisionModule<TIO : DType, TInternal : DTyp
     /**
      * Forward implementation that ensures output is converted back to input type.
      */
-    override fun forward(input: Tensor<TIO, V>): Tensor<TIO, V> {
-        // Convert input to internal precision if needed
-        val internalInput = if (ioType != internalType) {
-            conversionOps.convert(input, internalType)
-        } else {
-            @Suppress("UNCHECKED_CAST")
-            input as Tensor<TInternal, V>
+    override fun forward(input: Tensor<TIO, V>, ctx: ExecutionContext): Tensor<TIO, V> =
+        sk.ainet.lang.nn.hooks.withForwardHooks(ctx, this, input) {
+            // Convert input to internal precision if needed
+            val internalInput = if (ioType != internalType) {
+                conversionOps.convert(input, internalType)
+            } else {
+                @Suppress("UNCHECKED_CAST")
+                input as Tensor<TInternal, V>
+            }
+            
+            // Perform internal computation
+            val internalOutput = forwardImpl(internalInput)
+            
+            // Convert back to IO precision if needed
+            if (internalType != ioType) {
+                conversionOps.convert(internalOutput, ioType)
+            } else {
+                @Suppress("UNCHECKED_CAST")
+                internalOutput as Tensor<TIO, V>
+            }
         }
-        
-        // Perform internal computation
-        val internalOutput = forwardImpl(internalInput)
-        
-        // Convert back to IO precision if needed
-        return if (internalType != ioType) {
-            conversionOps.convert(internalOutput, ioType)
-        } else {
-            @Suppress("UNCHECKED_CAST")
-            internalOutput as Tensor<TIO, V>
-        }
-    }
     
     /**
      * Abstract method for internal computation in the internal precision.

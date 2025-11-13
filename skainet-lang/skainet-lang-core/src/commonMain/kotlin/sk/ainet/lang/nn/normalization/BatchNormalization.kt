@@ -1,5 +1,6 @@
 package sk.ainet.lang.nn.normalization
 
+import sk.ainet.context.ExecutionContext
 import sk.ainet.lang.nn.Module
 import sk.ainet.lang.nn.topology.ModuleParameter
 import sk.ainet.lang.nn.topology.ModuleParameters
@@ -92,14 +93,16 @@ public class BatchNormalization<T : DType, V>(
         isTraining = false
     }
 
-    override fun forward(input: Tensor<T, V>): Tensor<T, V> {
-        // TODO(skainet #module-1.5): Align training/eval with ExecutionContext.inTraining once context-aware forward is available.
-        if (isTraining) {
-            return forwardTraining(input)
-        } else {
-            return forwardInference(input)
+    override fun forward(input: Tensor<T, V>, ctx: ExecutionContext): Tensor<T, V> =
+        sk.ainet.lang.nn.hooks.withForwardHooks(ctx, this, input) {
+            // Gate behavior via execution phase. Keep legacy isTraining as fallback if needed.
+            val train = ctx.inTraining
+            if (train) {
+                forwardTraining(input)
+            } else {
+                forwardInference(input)
+            }
         }
-    }
 
     private fun forwardTraining(input: Tensor<T, V>): Tensor<T, V> {
         // Calculate batch statistics

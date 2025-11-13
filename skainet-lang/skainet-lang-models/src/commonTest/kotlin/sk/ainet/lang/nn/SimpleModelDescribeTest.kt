@@ -14,6 +14,7 @@ import kotlin.test.assertTrue
 class SimpleModelDescribeTest {
 
     private val dataFactory = DenseTensorDataFactory()
+    private val ctx = DefaultNeuralNetworkExecutionContext()
 
     private fun createTensor(shape: Shape): VoidOpsTensor<FP32, Float> {
         val data = dataFactory.zeros<FP32, Float>(shape, FP32::class)
@@ -59,7 +60,7 @@ class SimpleModelDescribeTest {
                  */
             }
         }
-        print(model.describe(Shape(1,1,28,28), FP32::class))
+        print(model.describe(Shape(1,1,28,28), ctx, FP32::class))
     }
 
 
@@ -82,7 +83,7 @@ class SimpleModelDescribeTest {
         )
 
         // Test describe method
-        val description = linear.describe(inputShape, FP32::class)
+        val description = linear.describe(inputShape, ctx,FP32::class)
         assertNotNull(description, "Description should not be null")
         assertTrue(description.isNotEmpty(), "Description should not be empty")
         assertTrue(description.contains("Output Shape"), "Description should contain output shape information")
@@ -92,7 +93,7 @@ class SimpleModelDescribeTest {
         println(description)
 
         // Test summary method
-        val summary = Summary<FP32, Float>()
+        val summary = Summary<FP32, Float>(ctx)
         val nodes = summary.summary(linear, inputShape, FP32::class)
 
         assertNotNull(nodes, "Summary nodes should not be null")

@@ -92,7 +92,7 @@ public class Embedding<OutT : DType, V>(
         return row.reshape(Shape(embeddingDim))
     }
 
-    override fun forward(input: Tensor<Int32, V>, ctx: ExecutionContext?): Tensor<OutT, V> {
+    override fun forward(input: Tensor<Int32, V>, ctx: ExecutionContext): Tensor<OutT, V> {
         val weight = (params[0] as ModuleParameter.WeightParameter<OutT, V>).value
         val ops = weight.ops
         return sk.ainet.lang.nn.hooks.withForwardHooks(ctx, this, input) {
@@ -101,12 +101,12 @@ public class Embedding<OutT : DType, V>(
     }
 
     /** Accepts any tensor and validates/coerces to indices in strict mode. Useful for legacy FP tensors. */
-    public fun forwardAny(input: Tensor<out DType, V>, ctx: ExecutionContext? = null, strict: Boolean = true): Tensor<OutT, V> {
+    public fun forwardAny(input: Tensor<out DType, V>, ctx: ExecutionContext, strict: Boolean = true): Tensor<OutT, V> {
         @Suppress("UNCHECKED_CAST")
         val idxTensor = (input as Tensor<DType, V>).asIndices(strict).t
         // best-effort: if not Int32 storage, repackage via context if provided
         val exec = ctx
-        return if (exec != null && idxTensor.dtype != Int32::class) {
+        return if (idxTensor.dtype != Int32::class) {
             // create a fresh Int32 tensor copying values
             val vol = idxTensor.volume
             val buffer = IntArray(vol) { i ->

@@ -33,7 +33,7 @@ class BatchNormalizationTest {
         )
         bn.eval()
         assertFailsWith<IllegalStateException> {
-            bn.forward(x)
+            bn.forward(x, exec)
         }
     }
 
@@ -49,13 +49,13 @@ class BatchNormalizationTest {
         )
         // training pass initializes running stats
         bn.train()
-        val yTrain = bn.forward(x)
+        val yTrain = bn.forward(x, exec)
         assertNotNull(yTrain)
         assertEquals(x.shape, yTrain.shape)
 
         // eval should now work using running stats
         bn.eval()
-        val yEval = bn.forward(x)
+        val yEval = bn.forward(x, exec)
         assertNotNull(yEval)
         assertEquals(x.shape, yEval.shape)
     }
@@ -73,7 +73,7 @@ class BatchNormalizationTest {
             name = "bn"
         )
         bn.train()
-        val y = bn.forward(x)
+        val y = bn.forward(x, exec)
         // Expected per-channel normalization across batch (N):
         // channel 0: values [1,3] -> mean=2, var=1 -> [-1, +1]
         // channel 1: values [2,4] -> mean=3, var=1 -> [-1, +1]

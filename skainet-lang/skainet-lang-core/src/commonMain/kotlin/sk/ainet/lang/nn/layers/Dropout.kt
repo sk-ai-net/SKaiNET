@@ -1,13 +1,16 @@
 package sk.ainet.lang.nn.layers
 
+import sk.ainet.context.ExecutionContext
 import sk.ainet.lang.nn.Module
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.types.DType
 
 /**
- * Dropout layer (API skeleton). Currently acts as identity in forward pass while
- * providing parameter validation and training flag. This keeps behavior consistent across
- * backends without introducing RNG dependencies here.
+ * Dropout layer that is aware of ExecutionContext phases.
+ *
+ * Current implementation keeps identity semantics on both TRAIN and EVAL phases,
+ * but exposes a context-aware forward that can later be extended to apply
+ * stochastic masking when ctx.inTraining is true.
  */
 public class Dropout<T : DType, V>(
     public val p: Float = 0.5f,
@@ -23,9 +26,13 @@ public class Dropout<T : DType, V>(
     override val modules: List<Module<T, V>>
         get() = emptyList()
 
-    override fun forward(input: Tensor<T, V>): Tensor<T, V> {
-        // TODO(skainet #module-1.5): Respect ExecutionContext.inTraining when context-aware forward is available.
-        // For now, identity semantics. Future: when training, apply mask and scale by 1/(1-p)
-        return input
-    }
+    /**
+     * Context-aware forward that can use ExecutionContext.phase. Hooks are dispatched if available.
+     */
+    override fun forward(input: Tensor<T, V>, ctx: ExecutionContext): Tensor<T, V> =
+        sk.ainet.lang.nn.hooks.withForwardHooks(ctx, this, input) {
+            // Placeholder behavior: identity in both phases. When RNG and elementwise ops are available,
+            // implement: if (ctx.inTraining && p > 0f) then output = input * mask / (1 - p)
+            input
+        }
 }
