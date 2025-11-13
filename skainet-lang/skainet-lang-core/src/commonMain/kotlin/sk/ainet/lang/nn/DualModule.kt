@@ -45,12 +45,18 @@ public fun <T : DType, U : DType, V> compose(u: Module<T, V>, d: DualModule<T, U
     object : DualModule<T, U, V>() {
         override val name: String = "Compose(${u.name}→${d.name})"
         override val modules: List<ModuleNode> = listOf(u, d)
-        override fun forward(input: Tensor<T, V>, ctx: ExecutionContext?): Tensor<U, V> = d.forward(u.forward(input), ctx)
+        override fun forward(input: Tensor<T, V>, ctx: ExecutionContext?): Tensor<U, V> =
+            sk.ainet.lang.nn.hooks.withForwardHooks(ctx, this, input) {
+                d.forward(u.forward(input), ctx)
+            }
     }
 
 public fun <T : DType, U : DType, V> compose(d: DualModule<T, U, V>, u: Module<U, V>): DualModule<T, U, V> =
     object : DualModule<T, U, V>() {
         override val name: String = "Compose(${d.name}→${u.name})"
         override val modules: List<ModuleNode> = listOf(d, u)
-        override fun forward(input: Tensor<T, V>, ctx: ExecutionContext?): Tensor<U, V> = u.forward(d.forward(input, ctx))
+        override fun forward(input: Tensor<T, V>, ctx: ExecutionContext?): Tensor<U, V> =
+            sk.ainet.lang.nn.hooks.withForwardHooks(ctx, this, input) {
+                u.forward(d.forward(input, ctx))
+            }
     }
