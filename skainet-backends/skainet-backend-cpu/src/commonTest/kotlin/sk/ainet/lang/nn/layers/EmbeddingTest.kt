@@ -3,16 +3,13 @@ package sk.ainet.lang.nn.layers
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertTrue
 import sk.ainet.context.DirectCpuExecutionContext
 import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.Tensor
-import sk.ainet.lang.tensor.IndexOutOfRangeException
 import sk.ainet.lang.tensor.NonIntegralIndexException
-import sk.ainet.lang.types.DType
 import sk.ainet.lang.types.FP32
 
-class EmbeddingDualTest {
+class EmbeddingTest {
 
     private fun makeWeights(exec: DirectCpuExecutionContext): Tensor<FP32, Float> {
         // 4 x 3 matrix with simple, distinct values per row
@@ -33,7 +30,7 @@ class EmbeddingDualTest {
     fun embedding_withIntIndices_returnsExpectedRows() {
         val exec = DirectCpuExecutionContext()
         val weight = makeWeights(exec)
-        val emb = EmbeddingDual(
+        val emb = Embedding(
             numEmbeddings = 4,
             embeddingDim = 3,
             initWeight = weight,
@@ -58,7 +55,7 @@ class EmbeddingDualTest {
     fun embedding_forwardAny_rejectsNonIntegralFloats_whenStrict() {
         val exec = DirectCpuExecutionContext()
         val weight = makeWeights(exec)
-        val emb = EmbeddingDual(
+        val emb = Embedding(
             numEmbeddings = 4,
             embeddingDim = 3,
             initWeight = weight,
@@ -76,7 +73,7 @@ class EmbeddingDualTest {
     fun embedding_withPaddingIndex_producesZeroRow() {
         val exec = DirectCpuExecutionContext()
         val base = makeWeights(exec)
-        val emb = EmbeddingDual(
+        val emb = Embedding(
             numEmbeddings = 4,
             embeddingDim = 3,
             initWeight = base,

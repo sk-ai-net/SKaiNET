@@ -1,7 +1,8 @@
 package sk.ainet.lang.nn.layers
 
-import sk.ainet.lang.nn.Module
-import sk.ainet.lang.nn.NeuralNetworkExecutionContext
+import sk.ainet.context.ExecutionContext
+import sk.ainet.lang.nn.DualModule
+import sk.ainet.lang.nn.topology.ModuleNode
 import sk.ainet.lang.nn.topology.ModuleParameter
 import sk.ainet.lang.nn.topology.ModuleParameters
 import sk.ainet.lang.tensor.Shape
@@ -9,102 +10,60 @@ import sk.ainet.lang.tensor.Slice
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.tensor.reshape
 import sk.ainet.lang.tensor.slice
+import sk.ainet.lang.tensor.IndexOutOfRangeException
+import sk.ainet.lang.tensor.asIndices
 import sk.ainet.lang.tensor.ops.TensorOps
 import sk.ainet.lang.types.DType
+import sk.ainet.lang.types.Int32
 import kotlin.random.Random
 import kotlin.reflect.KClass
 
 /**
- * Embedding layer: maps integer token ids to dense vectors using a lookup table (weights).
- *
- * Notes/Constraints:
- * - Due to current Module<T,V> design, input and output dtypes must be the same T.
- *   Indices are therefore read from input tensor's data as Number and coerced to Int.
- *   Caller must ensure integer-valued contents by contract.
- * - Implements minimal gather using slice() + concat() provided by TensorOps.
- * - paddingIdx (if provided): rows equal to paddingIdx are zeroed by subtracting the row from itself.
+ * Embedding layer as a DualModule: consumes integer index tensors (Int32) and produces floating outputs (OutT).
+ * Supports optional paddingIdx which zeros the corresponding embedding row.
  */
-public class Embedding<T : DType, V>(
+public class Embedding<OutT : DType, V>(
     public val numEmbeddings: Int,
     public val embeddingDim: Int,
-    initWeight: Tensor<T, V>,
+    initWeight: Tensor<OutT, V>,
     public val paddingIdx: Int? = null,
     override val name: String = "Embedding"
-) : Module<T, V>(), ModuleParameters<T, V> {
+) : DualModule<Int32, OutT, V>(), ModuleParameters<OutT, V> {
 
-    public companion object {
-        internal fun <T : DType, V> initWeight(
-            ctx: NeuralNetworkExecutionContext,
-            dtype: KClass<T>,
+    public companion object Companion {
+        internal fun <OutT : DType, V> initWeight(
+            ctx: ExecutionContext,
+            dtype: KClass<OutT>,
             numEmbeddings: Int,
             embeddingDim: Int,
             mean: Float,
             std: Float,
             random: Random
-        ): Tensor<T, V> {
-            val data = ctx.tensorDataFactory.randn<T, V>(Shape(numEmbeddings, embeddingDim), dtype, mean, std, random)
+        ): Tensor<OutT, V> {
+            // Use randn if available via data factory
+            val data = ctx.tensorDataFactory.randn<OutT, V>(Shape(numEmbeddings, embeddingDim), dtype, mean, std, random)
             return ctx.fromData(data, dtype)
         }
     }
 
-    /** Convenience constructor taking [EmbeddingParams] with explicit weight. */
+    /** Default-initializing constructor with FP32 weights by default. */
     public constructor(
+        ctx: ExecutionContext,
+        dtype: KClass<OutT>,
         params: EmbeddingParams,
-        initWeight: Tensor<T, V>,
-        name: String = "Embedding"
-    ) : this(
-        numEmbeddings = params.numEmbeddings,
-        embeddingDim = params.embeddingDim,
-        initWeight = initWeight,
-        paddingIdx = params.paddingIdx,
-        name = name
-    )
-
-    /**
-     * Default-initializing constructor: creates the weight tensor internally using a standard normal init.
-     * Uses mean=0 and small std (0.1) similar to typical Linear initializers.
-     */
-    public constructor(
-        ctx: NeuralNetworkExecutionContext,
-        dtype: KClass<T>,
-        numEmbeddings: Int,
-        embeddingDim: Int,
-        paddingIdx: Int? = null,
         name: String = "Embedding",
-        mean: Float = 0.0f,
+        mean: Float = 0f,
         std: Float = 0.1f,
         random: Random = Random.Default
     ) : this(
-        numEmbeddings = numEmbeddings,
-        embeddingDim = embeddingDim,
-        initWeight = Companion.initWeight<T, V>(ctx, dtype, numEmbeddings, embeddingDim, mean, std, random),
-        paddingIdx = paddingIdx,
-        name = name
-    )
-
-    /** Params-based default-initializing constructor. */
-    public constructor(
-        ctx: NeuralNetworkExecutionContext,
-        dtype: KClass<T>,
-        params: EmbeddingParams,
-        name: String = "Embedding",
-        mean: Float = 0.0f,
-        std: Float = 0.1f,
-        random: Random = Random.Default
-    ) : this(
-        ctx = ctx,
-        dtype = dtype,
         numEmbeddings = params.numEmbeddings,
         embeddingDim = params.embeddingDim,
+        initWeight = initWeight(ctx, dtype, params.numEmbeddings, params.embeddingDim, mean, std, random),
         paddingIdx = params.paddingIdx,
-        name = name,
-        mean = mean,
-        std = std,
-        random = random
+        name = name
     )
 
     init {
-        // Validate weight shape: [numEmbeddings, embeddingDim]
         val wShape = initWeight.shape.dimensions
         require(initWeight.rank == 2 && wShape[0] == numEmbeddings && wShape[1] == embeddingDim) {
             "Embedding($name): weight shape must be [numEmbeddings, embeddingDim]=[${numEmbeddings}, ${embeddingDim}], but was ${initWeight.shape}"
@@ -116,79 +75,103 @@ public class Embedding<T : DType, V>(
         }
     }
 
-    override val params: List<ModuleParameter<T, V>> = listOf(
+    override val params: List<ModuleParameter<OutT, V>> = listOf(
         ModuleParameter.WeightParameter("$name.weight", initWeight)
     )
 
-    override val modules: List<Module<T, V>>
-        get() = emptyList()
+    override val modules: List<ModuleNode> get() = emptyList()
 
-    private fun gatherRow(ops: TensorOps, weight: Tensor<T, V>, index: Int): Tensor<T, V> {
-        // slice out a single row with shape [1, embeddingDim]
-        val row = weight.slice<T, V>(listOf(
-            Slice.Range<T, V>(index, index + 1),
-            Slice.All<T, V>()
+    private fun gatherRow(ops: TensorOps, weight: Tensor<OutT, V>, index: Int): Tensor<OutT, V> {
+        // Slice out a single row: initial shape [1, embeddingDim]
+        val row2D = weight.slice<OutT, V>(listOf(
+            Slice.Range<OutT, V>(index, index + 1),
+            Slice.All<OutT, V>()
         ))
-        // If padding, turn into zeros by row - row
-        return if (paddingIdx != null && index == paddingIdx) {
-            ops.subtract(row, row)
-        } else row
+        // Apply padding zeroing if applicable, then reshape to 1D [embeddingDim]
+        val row = if (paddingIdx != null && index == paddingIdx) ops.subtract(row2D, row2D) else row2D
+        return row.reshape(Shape(embeddingDim))
     }
 
-    override fun forward(input: Tensor<T, V>): Tensor<T, V> {
-        val weight = (params[0] as ModuleParameter.WeightParameter<T, V>).value
+    override fun forward(input: Tensor<Int32, V>, ctx: ExecutionContext?): Tensor<OutT, V> {
+        val weight = (params[0] as ModuleParameter.WeightParameter<OutT, V>).value
         val ops = weight.ops
+        return forwardImpl(weight, ops, input)
+    }
 
-        fun coerceToInt(v: Any?): Int {
-            return when (v) {
-                is Number -> {
-                    val f = v.toFloat()
-                    val i = v.toInt()
-                    if (i.toFloat() != f) {
-                        throw sk.ainet.lang.tensor.NonIntegralIndexException(
-                            "Embedding($name): non-integral index value $f encountered. Migrate to integer tensors or call asIndices(strict=false)."
-                        )
-                    }
-                    i
-                }
-                else -> error("Embedding($name): input values must be numeric indices, but got ${v?.let { it::class.simpleName }}")
+    /** Accepts any tensor and validates/coerces to indices in strict mode. Useful for legacy FP tensors. */
+    public fun forwardAny(input: Tensor<out DType, V>, ctx: ExecutionContext? = null, strict: Boolean = true): Tensor<OutT, V> {
+        @Suppress("UNCHECKED_CAST")
+        val idxTensor = (input as Tensor<DType, V>).asIndices(strict).t
+        // best-effort: if not Int32 storage, repackage via context if provided
+        val exec = ctx
+        return if (exec != null && idxTensor.dtype != Int32::class) {
+            // create a fresh Int32 tensor copying values
+            val vol = idxTensor.volume
+            val buffer = IntArray(vol) { i ->
+                val any = idxTensor.data[i]
+                (any as Number).toInt()
             }
+            val shape = idxTensor.shape
+            val t: Tensor<Int32, V> = exec.fromIntArray(shape, Int32::class, buffer)
+            forward(t, exec)
+        } else {
+            @Suppress("UNCHECKED_CAST")
+            forward(idxTensor as Tensor<Int32, V>, ctx)
         }
+    }
 
+    private fun forwardImpl(weight: Tensor<OutT, V>, ops: TensorOps, input: Tensor<Int32, V>): Tensor<OutT, V> {
         return when (input.rank) {
-            // Unbatched: [L] -> [L, D]
             1 -> {
                 val L = input.shape[0]
-                val rows = ArrayList<Tensor<T, V>>(L)
+                val rows = ArrayList<Tensor<OutT, V>>(L)
                 for (i in 0 until L) {
-                    val idx = coerceToInt(input.data[i])
-                    require(idx in 0 until numEmbeddings) {
-                        "Embedding($name): index out of range at position $i: $idx not in [0, $numEmbeddings)"
+                    val idx = input.data[i]
+                    if (idx !is Int) error("Embedding($name): expected Int storage for indices")
+                    if (idx < 0 || idx >= numEmbeddings) {
+                        throw IndexOutOfRangeException("Embedding($name): index out of range at position $i: $idx not in [0, $numEmbeddings)")
                     }
-                    rows += gatherRow(ops, weight, idx)
+                    rows += gatherRow(ops, weight, idx) // each row is 1D [embeddingDim]
                 }
-                // concat along dim 0 to get [L, D]
-                ops.concat(rows, 0)
+                // Concatenate 1D rows -> 1D [L * embeddingDim], then reshape to [L, embeddingDim]
+                val concatenated = ops.concat(rows, 0)
+                concatenated.reshape(Shape(L, embeddingDim))
             }
-            // Batched: [N, L] -> [N, L, D]
             2 -> {
                 val N = input.shape[0]
                 val L = input.shape[1]
-                val flatRows = ArrayList<Tensor<T, V>>(N * L)
+                val flatRows = ArrayList<Tensor<OutT, V>>(N * L)
                 for (n in 0 until N) {
                     for (l in 0 until L) {
-                        val idx = coerceToInt(input.data[n, l])
-                        require(idx in 0 until numEmbeddings) {
-                            "Embedding($name): index out of range at position ($n,$l): $idx not in [0, $numEmbeddings)"
+                        val v = input.data[n, l]
+                        if (v !is Int) error("Embedding($name): expected Int storage for indices")
+                        if (v < 0 || v >= numEmbeddings) {
+                            throw IndexOutOfRangeException("Embedding($name): index out of range at position ($n,$l): $v not in [0, $numEmbeddings)")
                         }
-                        flatRows += gatherRow(ops, weight, idx)
+                        flatRows += gatherRow(ops, weight, v) // 1D [embeddingDim]
                     }
                 }
-                // [N*L, D] then reshape to [N, L, D]
+                // Concatenate 1D rows -> 1D [N*L*embeddingDim], then reshape
                 val concatenated = ops.concat(flatRows, 0)
                 concatenated.reshape(Shape(N, L, embeddingDim))
             }
             else -> error("Embedding($name): input shape ${input.shape} not supported; expected [L] or [N, L]")
         }
+    }
+
+    // Ergonomic overloads building tensors from arrays using provided context
+    public fun forward(indices: IntArray, ctx: ExecutionContext): Tensor<OutT, V> {
+        val t: Tensor<Int32, V> = ctx.fromIntArray(Shape(indices.size), Int32::class, indices)
+        return forward(t, ctx)
+    }
+
+    public fun forward(indices: LongArray, ctx: ExecutionContext): Tensor<OutT, V> {
+        val ints = IntArray(indices.size) { i ->
+            val v = indices[i]
+            if (v < 0 || v > Int.MAX_VALUE) throw IndexOutOfRangeException("Embedding($name): index value $v out of Int range")
+            v.toInt()
+        }
+        val t: Tensor<Int32, V> = ctx.fromIntArray(Shape(ints.size), Int32::class, ints)
+        return forward(t, ctx)
     }
 }
