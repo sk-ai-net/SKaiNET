@@ -13,6 +13,7 @@ import kotlin.reflect.KClass
 /**
  * BatchNormalization layer for training stability and performance.
  * Normalizes the input across the batch dimension.
+ * https://arxiv.org/abs/1607.06450
  *
  * @param numFeatures Number of features (channels)
  * @param eps Small value added to the denominator for numerical stability
