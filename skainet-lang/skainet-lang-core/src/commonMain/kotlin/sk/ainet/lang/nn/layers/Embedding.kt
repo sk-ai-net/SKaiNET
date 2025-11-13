@@ -95,7 +95,9 @@ public class Embedding<OutT : DType, V>(
     override fun forward(input: Tensor<Int32, V>, ctx: ExecutionContext?): Tensor<OutT, V> {
         val weight = (params[0] as ModuleParameter.WeightParameter<OutT, V>).value
         val ops = weight.ops
-        return forwardImpl(weight, ops, input)
+        return sk.ainet.lang.nn.hooks.withForwardHooks(ctx, this, input) {
+            forwardImpl(weight, ops, input)
+        }
     }
 
     /** Accepts any tensor and validates/coerces to indices in strict mode. Useful for legacy FP tensors. */

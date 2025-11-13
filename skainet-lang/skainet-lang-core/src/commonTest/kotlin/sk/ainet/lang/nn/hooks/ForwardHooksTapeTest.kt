@@ -3,7 +3,7 @@ package sk.ainet.lang.nn.hooks
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import sk.ainet.context.DirectCpuExecutionContext
+import sk.ainet.context.DefaultDataExecutionContext
 import sk.ainet.context.ExecutionContext
 import sk.ainet.lang.nn.layers.Embedding
 import sk.ainet.lang.nn.layers.EmbeddingParams
@@ -16,10 +16,10 @@ class ForwardHooksTapeTest {
     @Test
     fun embedding_records_single_forward() {
         val tape = TapeRecorder()
-        val ctx: ExecutionContext = DirectCpuExecutionContext(_hooks = tape)
+        val ctx: ExecutionContext = DefaultDataExecutionContext(_hooks = tape)
 
         val params = EmbeddingParams(numEmbeddings = 10, embeddingDim = 4, paddingIdx = null)
-        val emb = Embedding(ctx, FP32::class, params, name = "Emb")
+        val emb = Embedding<FP32, Float>(ctx, FP32::class, params, name = "Emb")
 
         val indices = intArrayOf(1, 2, 3)
         val out = emb.forward(indices, ctx)
