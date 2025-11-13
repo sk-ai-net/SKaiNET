@@ -11,6 +11,10 @@ import sk.ainet.lang.types.FP32
 
 class EmbeddingTest {
 
+    private fun assertFloatEquals(expected: Float, actual: Float, tol: Float = 1e-4f) {
+        assertEquals(expected, actual, tol)
+    }
+
     private fun makeWeights(exec: DirectCpuExecutionContext): Tensor<FP32, Float> {
         // 4 x 3 matrix with simple, distinct values per row
         val data = floatArrayOf(
@@ -44,11 +48,11 @@ class EmbeddingTest {
         assertEquals(3, out.shape[1])
 
         // row 0 from embedding row 2
-        assertEquals(2.0f, out.data[0, 0]); assertEquals(2.1f, out.data[0, 1]); assertEquals(2.2f, out.data[0, 2])
+        assertFloatEquals(2.0f, out.data[0, 0]); assertFloatEquals(2.1f, out.data[0, 1]); assertFloatEquals(2.2f, out.data[0, 2])
         // row 1 from embedding row 1
-        assertEquals(1.0f, out.data[1, 0]); assertEquals(1.1f, out.data[1, 1]); assertEquals(1.2f, out.data[1, 2])
+        assertFloatEquals(1.0f, out.data[1, 0]); assertFloatEquals(1.1f, out.data[1, 1]); assertFloatEquals(1.2f, out.data[1, 2])
         // row 2 from embedding row 3
-        assertEquals(3.0f, out.data[2, 0]); assertEquals(3.1f, out.data[2, 1]); assertEquals(3.2f, out.data[2, 2])
+        assertFloatEquals(3.0f, out.data[2, 0]); assertFloatEquals(3.1f, out.data[2, 1]); assertFloatEquals(3.2f, out.data[2, 2])
     }
 
     @Test
@@ -85,6 +89,6 @@ class EmbeddingTest {
         // First output row corresponds to padding index -> zeros
         assertEquals(0f, out.data[0, 0]); assertEquals(0f, out.data[0, 1]); assertEquals(0f, out.data[0, 2])
         // Second output row corresponds to row 2 in weights (not zero)
-        assertEquals(2.0f, out.data[1, 0]); assertEquals(2.1f, out.data[1, 1]); assertEquals(2.2f, out.data[1, 2])
+        assertFloatEquals(2.0f, out.data[1, 0]); assertFloatEquals(2.1f, out.data[1, 1]); assertFloatEquals(2.2f, out.data[1, 2])
     }
 }

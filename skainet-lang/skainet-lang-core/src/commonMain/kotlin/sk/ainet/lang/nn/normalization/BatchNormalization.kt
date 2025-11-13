@@ -92,6 +92,7 @@ public class BatchNormalization<T : DType, V>(
     }
 
     override fun forward(input: Tensor<T, V>): Tensor<T, V> {
+        // TODO(skainet #module-1.5): Align training/eval with ExecutionContext.inTraining once context-aware forward is available.
         if (isTraining) {
             return forwardTraining(input)
         } else {
@@ -119,13 +120,31 @@ public class BatchNormalization<T : DType, V>(
     }
 
     private fun calculateBatchMean(input: Tensor<T, V>): Tensor<T, V> {
-        // Calculate mean across batch and spatial dimensions, keeping channel dimension
-        TODO("Implement batch mean calculation")
+        // Calculate mean across all dimensions except channel (dim=1)
+        val reduceDims = (0 until input.rank).filter { it != 1 }.sortedDescending()
+        var result: Tensor<T, V> = input
+        for (dim in reduceDims) {
+            result = result.mean(dim)
+        }
+        // result shape is (C)
+        return result
     }
 
     private fun calculateBatchVariance(input: Tensor<T, V>, mean: Tensor<T, V>): Tensor<T, V> {
-        // Calculate variance across batch and spatial dimensions
-        TODO("Implement batch variance calculation")
+        // Variance across the same dimensions as mean (all except channel)
+        val reduceDims = (0 until input.rank).filter { it != 1 }.sortedDescending()
+        var result: Tensor<T, V> = input
+        for (dim in reduceDims) {
+            result = result.variance(dim)
+        }
+        return reshapeForBroadcast(result, input.shape)
+    }
+
+    private fun reshapeForBroadcast(stat: Tensor<T, V>, targetShape: Shape): Tensor<T, V> {
+        // stat is (C). We need (1,C,1,1,...) to match target rank
+        if (targetShape.rank == 1) return stat // degenerate
+        val dims = IntArray(targetShape.rank) { idx -> if (idx == 1) numFeatures else 1 }
+        return stat.reshape(Shape(dims))
     }
 
     private fun updateRunningStatistics(batchMean: Tensor<T, V>, batchVar: Tensor<T, V>) {
@@ -135,21 +154,40 @@ public class BatchNormalization<T : DType, V>(
         } else {
             // runningMean = (1 - momentum) * runningMean + momentum * batchMean
             // runningVar = (1 - momentum) * runningVar + momentum * batchVar
-            TODO("Implement running statistics update")
+            val rm = runningMean!!
+            val rv = runningVar!!
+            val oneMinus = fullLike(rm, 1.0 - momentum)
+            val mom = fullLike(rm, momentum)
+            runningMean = rm * oneMinus + batchMean * mom
+            runningVar = rv * oneMinus + batchVar * mom
         }
     }
 
     private fun normalize(input: Tensor<T, V>, mean: Tensor<T, V>, variance: Tensor<T, V>): Tensor<T, V> {
         // normalized = (input - mean) / sqrt(variance + eps)
-        // Note: eps handling would need proper scalar-tensor operations
-        val normalized = (input - mean) / variance.sqrt()
+        val epsTensor = fullLike(variance, eps)
+        val denom = (variance + epsTensor).sqrt()
+        val normalized = (input - mean) / denom
         
         return if (affine) {
-            val gamma = params[0].value // weight parameter
-            val beta = params[1].value  // bias parameter
+            var gamma = params[0].value // (C)
+            var beta = params[1].value  // (C)
+            // reshape to broadcast along channel dim
+            val bshape = input.shape
+            if (bshape.rank >= 2) {
+                val dims = IntArray(bshape.rank) { idx -> if (idx == 1) numFeatures else 1 }
+                gamma = gamma.reshape(Shape(dims))
+                beta = beta.reshape(Shape(dims))
+            }
             normalized * gamma + beta
         } else {
             normalized
         }
+    }
+
+    private fun fullLike(reference: Tensor<T, V>, value: Double): Tensor<T, V> {
+        val factory = DenseTensorDataFactory()
+        val data = factory.full<T, V>(reference.shape, reference.dtype, value)
+        return VoidOpsTensor(data, reference.dtype)
     }
 }
