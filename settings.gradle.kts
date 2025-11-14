@@ -43,6 +43,7 @@ include("skainet-data:skainet-data-simple")
 // ====== IO
 include("skainet-io:skainet-io-core")
 include("skainet-io:skainet-io-gguf")
+include("skainet-io:skainet-io-safetensors")
 
 
 // ====== APPS

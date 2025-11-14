@@ -51,7 +51,15 @@ data class FieldParts(
 )
 
 @OptIn(ExperimentalUnsignedTypes::class)
-class GGUFReader(source: Source, private val loadTensorData: Boolean = true) {
+class GGUFReader {
+    constructor(source: Source, loadTensorData: Boolean = true) : this(source.readByteArray(), loadTensorData)
+
+    constructor(bytes: ByteArray, loadTensorData: Boolean = true) {
+        this.loadTensorData = loadTensorData
+        this.data = bytes
+        parse()
+    }
+
     // Public API additions
     /**
      * Lazily materialize the raw payload for the given tensor, honoring its ggml quantization.
@@ -72,9 +80,10 @@ class GGUFReader(source: Source, private val loadTensorData: Boolean = true) {
     val fields: LinkedHashMap<String, ReaderField> = linkedMapOf()
     var tensors: MutableList<ReaderTensor> = mutableListOf()
 
-    private val data: ByteArray
+    private var data: ByteArray
     private var offs = 0
     private var tensorCount: ULong = 0u
+    private var loadTensorData: Boolean = true
 
     // Mapping GGUFValueType to Kotlin types (or placeholders for illustrative purposes)
     val ggufScalarToKotlinType: Map<GGUFValueType, KClass<*>> = mapOf(
@@ -91,9 +100,10 @@ class GGUFReader(source: Source, private val loadTensorData: Boolean = true) {
         GGUFValueType.BOOL to Boolean::class
     )
 
-    init {
-        data = source.readByteArray()
-
+    private fun parse() {
+        offs = 0
+        fields.clear()
+        tensors.clear()
         checkGGUFMagicNumber().then {
             checkGGUFVersion().then {
                 checkTensorAndKvCounts().then {
