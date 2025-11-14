@@ -24,7 +24,7 @@ class DefaultCpuOpsJvmNnIntegrationTest {
         fun runOnce(vectorFlag: Boolean) {
             System.setProperty("skainet.cpu.vector.enabled", vectorFlag.toString())
 
-            data(DirectCpuExecutionContext()) {
+            data(DirectCpuExecutionContext())  { ctx ->
                 // in=3, out=2
                 val weights = tensor<FP32, Float> {
                     // Rows = outFeatures, Cols = inFeatures
@@ -37,7 +37,7 @@ class DefaultCpuOpsJvmNnIntegrationTest {
 
                 // Case 1: 1D input
                 val x = tensor<FP32, Float> { shape(3) { init { (it[0] + 1).toFloat() } } } // [1,2,3]
-                val y = layer(x)
+                val y = layer.forward(x, ctx)
                 // x @ W^T = [14,32]; + b = [24,52]
                 assertEquals(Shape(2), y.shape)
                 assertEquals(24f, y.data[0], 1e-5f)
@@ -47,7 +47,7 @@ class DefaultCpuOpsJvmNnIntegrationTest {
                 val xb = tensor<FP32, Float> {
                     shape(2, 3) { init { (1 + it[0] * 3 + it[1]).toFloat() } } // [[1,2,3],[4,5,6]]
                 }
-                val yb = layer(xb)
+                val yb = layer.forward(xb, ctx)
                 // Manual:
                 // Row0: [1,2,3] -> [24,52]
                 // Row1: [4,5,6] -> [(4+10+18)+10=42, (16+25+36)+20=97]

@@ -12,10 +12,7 @@ public inline fun <I, O> withForwardHooks(
     input: I,
     forward: () -> O
 ): O {
-    val hooks = ctx?.hooks
-    if (hooks == null) {
-        return forward()
-    }
+    val hooks = ctx?.hooks ?: return forward()
     hooks.onForwardBegin(module, input as Any)
     val out = forward()
     hooks.onForwardEnd(module, input as Any, out as Any)

@@ -5,6 +5,39 @@
 
 **SKaiNET** is an open-source deep learning framework written in Kotlin, designed with developers in mind to enable the creation modern AI powered applications with ease.
 
+## Quick example: training/eval phases with context wrappers
+
+SKaiNET provides small helper scopes to override the execution phase for a given call without mutating your base context:
+
+- train(ctx) { ... } — runs the block with phase = TRAIN
+- eval(ctx) { ... } — runs the block with phase = EVAL
+
+This is useful for modules that behave differently in training vs evaluation (e.g., Dropout, BatchNorm).
+
+Kotlin
+
+import sk.ainet.context.train
+import sk.ainet.context.eval
+import sk.ainet.lang.nn.DefaultNeuralNetworkExecutionContext
+// import your model class that defines forward(x, ctx)
+
+val base = DefaultNeuralNetworkExecutionContext() // default phase is EVAL
+val x = /* prepare your input tensor */
+val model = /* construct your model */
+
+// Force TRAIN phase for this call only
+val yTrain = train(base) { ctx ->
+    model.forward(x, ctx)
+}
+
+// Force EVAL phase for this call only
+val yEval = eval(base) { ctx ->
+    model.forward(x, ctx)
+}
+
+// You can still call with the base context directly (uses its phase)
+val yBase = model.forward(x, base)
+
 ## Development Practices
 
 This project follows established development practices for maintaining code quality and release management:
