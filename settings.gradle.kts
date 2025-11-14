@@ -44,3 +44,7 @@ include("skainet-data:skainet-data-simple")
 include("skainet-io:skainet-io-core")
 include("skainet-io:skainet-io-gguf")
 
+
+// ====== APPS
+//include("skainet-apps:skainet-KGPChat")
+

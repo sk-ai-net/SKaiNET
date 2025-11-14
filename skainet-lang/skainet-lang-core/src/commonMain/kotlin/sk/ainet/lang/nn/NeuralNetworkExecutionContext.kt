@@ -45,7 +45,7 @@ public fun <T : DType, V> definition(init: NeuralNetworkExecutionContext.(Neural
  */
 public inline fun <reified T : DType, V> NeuralNetworkExecutionContext.network(
     content: NeuralNetworkDsl<T, V>.() -> Unit
-): Module<T, V> = NeuralNetworkDslImpl<T, V>(DefaultNeuralNetworkExecutionContext(), T::class)
+): Module<T, V> = NeuralNetworkDslImpl<T, V>(this, T::class)
     .apply(content)
     .create()
 
@@ -61,7 +61,9 @@ public inline fun <reified T : DType, V> NeuralNetworkExecutionContext.network(
     .create()
 
 
-public class DefaultNeuralNetworkExecutionContext() : NeuralNetworkExecutionContext {
+public class DefaultNeuralNetworkExecutionContext(
+    override val phase: sk.ainet.context.Phase = sk.ainet.context.Phase.EVAL
+) : NeuralNetworkExecutionContext {
 
     private companion object Companion {
         val voidOps = VoidTensorOps()

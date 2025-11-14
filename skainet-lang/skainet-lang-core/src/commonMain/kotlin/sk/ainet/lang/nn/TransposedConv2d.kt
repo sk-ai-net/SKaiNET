@@ -1,5 +1,6 @@
 package sk.ainet.lang.nn
 
+import sk.ainet.context.ExecutionContext
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.types.DType
 import sk.ainet.lang.nn.topology.ModuleParameter
@@ -75,15 +76,13 @@ public class TransposedConv2d<T : DType, V>(
     override val modules: List<Module<T, V>>
         get() = emptyList()
 
-    override fun forward(input: Tensor<T, V>): Tensor<T, V> {
-        val weight = params.first { it.name.endsWith(".weight") }.value
-        val biasValue = if (bias) params.firstOrNull { it.name.endsWith(".bias") }?.value else null
-        
-        // TODO: Implement actual transposed convolution operation
-        // This is a placeholder - actual transposed convolution would use tensor operations
-        // For now, we'll throw an exception indicating the operation needs to be implemented
-        throw NotImplementedError("TransposedConv2d forward pass requires tensor transposed convolution operations to be implemented")
-    }
+    override fun forward(input: Tensor<T, V>, ctx: ExecutionContext): Tensor<T, V> =
+        sk.ainet.lang.nn.hooks.withForwardHooks(ctx, this, input) {
+            val weight = params.first { it.name.endsWith(".weight") }.value
+            val biasValue = if (bias) params.firstOrNull { it.name.endsWith(".bias") }?.value else null
+            // TODO: Implement actual transposed convolution operation
+            throw NotImplementedError("TransposedConv2d forward pass requires tensor transposed convolution operations to be implemented")
+        }
 
     /**
      * Calculates the output size for a given input size and transposed convolution parameters.

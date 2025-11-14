@@ -12,6 +12,12 @@ import kotlin.reflect.KClass
 public interface ExecutionContext {
     public val ops: TensorOps
 
+    // Optional forward hooks for recording or diagnostics (null → disabled)
+    public val hooks: sk.ainet.lang.nn.hooks.ForwardHooks? get() = null
+
+    // Execution phase and convenience training flag
+    public val phase: Phase
+    public val inTraining: Boolean get() = phase == Phase.TRAIN
 
     public val tensorDataFactory: TensorDataFactory
 

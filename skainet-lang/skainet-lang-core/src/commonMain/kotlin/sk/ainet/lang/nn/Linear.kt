@@ -1,5 +1,6 @@
 package sk.ainet.lang.nn
 
+import sk.ainet.context.ExecutionContext
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.tensor.*
 import sk.ainet.lang.types.DType
@@ -54,22 +55,23 @@ public class Linear<T : DType, V>(
     override val modules: List<Module<T, V>>
         get() = emptyList()
 
-    override fun forward(input: Tensor<T, V>): Tensor<T, V> {
-        val weight = params.weights().value
-        val bias = params.bias().value
+    override fun forward(input: Tensor<T, V>, ctx: ExecutionContext): Tensor<T, V> =
+        sk.ainet.lang.nn.hooks.withForwardHooks(ctx, this, input) {
+            val weight = params.weights().value
+            val bias = params.bias().value
 
-        // Use proper tensor operations
-        val weightTransposed = weight.t()
-        val matmulResult = input.matmul(weightTransposed)
+            // Use proper tensor operations
+            val weightTransposed = weight.t()
+            val matmulResult = input.matmul(weightTransposed)
 
-        // If input is a 1D vector, ensure bias is also 1D to avoid broadcasting to [1, out]
-        val result = if (input.rank == 1 && bias.rank == 2 && bias.shape.dimensions[0] == 1) {
-            val outFeatures = bias.shape.dimensions[1]
-            val bias1d = bias.reshape(Shape(outFeatures))
-            matmulResult + bias1d
-        } else {
-            matmulResult + bias
+            // If input is a 1D vector, ensure bias is also 1D to avoid broadcasting to [1, out]
+            val result = if (input.rank == 1 && bias.rank == 2 && bias.shape.dimensions[0] == 1) {
+                val outFeatures = bias.shape.dimensions[1]
+                val bias1d = bias.reshape(Shape(outFeatures))
+                matmulResult + bias1d
+            } else {
+                matmulResult + bias
+            }
+            result
         }
-        return result
-    }
 }

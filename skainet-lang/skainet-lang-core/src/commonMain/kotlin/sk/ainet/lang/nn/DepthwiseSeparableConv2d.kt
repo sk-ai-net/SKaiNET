@@ -1,5 +1,6 @@
 package sk.ainet.lang.nn
 
+import sk.ainet.context.ExecutionContext
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.types.DType
 import sk.ainet.lang.nn.topology.ModuleParameter
@@ -89,15 +90,16 @@ public class DepthwiseSeparableConv2d<T : DType, V>(
     override val modules: List<Module<T, V>>
         get() = listOf(depthwiseConv, pointwiseConv)
 
-    override fun forward(input: Tensor<T, V>): Tensor<T, V> {
-        // First apply depthwise convolution
-        val depthwiseOutput = depthwiseConv.forward(input)
-        
-        // Then apply pointwise convolution
-        val pointwiseOutput = pointwiseConv.forward(depthwiseOutput)
-        
-        return pointwiseOutput
-    }
+    override fun forward(input: Tensor<T, V>, ctx: ExecutionContext): Tensor<T, V> =
+        sk.ainet.lang.nn.hooks.withForwardHooks(ctx, this, input) {
+            // First apply depthwise convolution
+            val depthwiseOutput = depthwiseConv.forward(input, ctx)
+            
+            // Then apply pointwise convolution
+            val pointwiseOutput = pointwiseConv.forward(depthwiseOutput, ctx)
+            
+            pointwiseOutput
+        }
 
     /**
      * Calculates the output size for the entire depthwise separable convolution.

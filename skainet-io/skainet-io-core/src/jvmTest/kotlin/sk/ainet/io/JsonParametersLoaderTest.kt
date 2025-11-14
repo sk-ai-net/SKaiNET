@@ -21,7 +21,7 @@ class JsonParametersLoaderTest {
 
     private fun Module<FP32, Float>.infer(ctx: DirectCpuExecutionContext, x: Float): Float {
         val input = ctx.fromFloatArray<FP32, Float>(Shape(1), FP32::class, floatArrayOf(x))
-        val out = this.forward(input)
+        val out = this.forward(input, ctx)
         // If you have a proper accessor/iterator use that; otherwise adjust per your Tensor API
         return out.data[0] // Replace with the correct element access for your Tensor
     }

@@ -54,7 +54,7 @@ class Rgb2GrayScaleTest {
             b = 0.5f to 0.25f
         )
 
-        val output = module.forward(input)
+        val output = module.forward(input, ctx)
         assertEquals(Shape(1, 1, 1, 2), output.shape, "Output shape must be (N,1,H,W)")
         assertEquals(FP32::class, output.dtype)
     }
@@ -67,7 +67,7 @@ class Rgb2GrayScaleTest {
         val module = model.model(ctx)
 
         val input = makeVoidInput1x1(Triple(0f, 0f, 0f))
-        val output = module.forward(input)
+        val output = module.forward(input, ctx)
 
         // Output shape should be (1,1,1,1) and value should be 0 with VoidOps
         assertEquals(Shape(1, 1, 1, 1), output.shape)

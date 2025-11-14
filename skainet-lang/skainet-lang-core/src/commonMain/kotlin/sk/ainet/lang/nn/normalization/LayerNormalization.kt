@@ -1,5 +1,6 @@
 package sk.ainet.lang.nn.normalization
 
+import sk.ainet.context.ExecutionContext
 import sk.ainet.lang.nn.Module
 import sk.ainet.lang.nn.topology.ModuleParameter
 import sk.ainet.lang.nn.topology.ModuleParameters
@@ -69,32 +70,33 @@ public class LayerNormalization<T : DType, V>(
         )
     }
 
-    override fun forward(input: Tensor<T, V>): Tensor<T, V> {
-        // Calculate the dimensions to normalize over (last normalizedShape.size dimensions)
-        val inputShape = input.shape.dimensions
-        val numNormDims = normalizedShape.size
-        val normDims = inputShape.takeLast(numNormDims).toIntArray()
-        
-        // Verify that the input shape matches the expected normalized shape
-        require(normDims.contentEquals(normalizedShape)) {
-            "Input shape ${normDims.contentToString()} doesn't match normalized shape ${normalizedShape.contentToString()}"
+    override fun forward(input: Tensor<T, V>, ctx: ExecutionContext): Tensor<T, V> =
+        sk.ainet.lang.nn.hooks.withForwardHooks(ctx, this, input) {
+            // Calculate the dimensions to normalize over (last normalizedShape.size dimensions)
+            val inputShape = input.shape.dimensions
+            val numNormDims = normalizedShape.size
+            val normDims = inputShape.takeLast(numNormDims).toIntArray()
+            
+            // Verify that the input shape matches the expected normalized shape
+            require(normDims.contentEquals(normalizedShape)) {
+                "Input shape ${normDims.contentToString()} doesn't match normalized shape ${normalizedShape.contentToString()}"
+            }
+            
+            // Calculate mean and variance across the normalized dimensions
+            val mean = calculateLayerMean(input)
+            val variance = calculateLayerVariance(input, mean)
+            
+            // Normalize
+            val normalized = normalize(input, mean, variance)
+            
+            if (elementwiseAffine) {
+                val gamma = params[0].value // weight parameter
+                val beta = params[1].value  // bias parameter
+                normalized * gamma + beta
+            } else {
+                normalized
+            }
         }
-        
-        // Calculate mean and variance across the normalized dimensions
-        val mean = calculateLayerMean(input)
-        val variance = calculateLayerVariance(input, mean)
-        
-        // Normalize
-        val normalized = normalize(input, mean, variance)
-        
-        return if (elementwiseAffine) {
-            val gamma = params[0].value // weight parameter
-            val beta = params[1].value  // bias parameter
-            normalized * gamma + beta
-        } else {
-            normalized
-        }
-    }
 
     private fun calculateLayerMean(input: Tensor<T, V>): Tensor<T, V> {
         // Calculate mean across the last normalizedShape.size dimensions

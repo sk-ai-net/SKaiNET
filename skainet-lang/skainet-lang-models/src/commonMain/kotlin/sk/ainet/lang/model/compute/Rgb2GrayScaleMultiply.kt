@@ -45,20 +45,21 @@ public class Rgb2GrayScaleMatMul(constCtx: ExecutionContext) : Model<FP16, Float
         // Pre-allocate luminance weights in broadcastable shape (1, 3, 1, 1)
 
 
-        override fun forward(input: Tensor<FP16, Float>): Tensor<FP16, Float> {
-            // Validate shape (N,3,H,W)
-            val dims = input.shape.dimensions
-            require(input.rank == 4) { "Rgb2GrayScaleMultiply expects rank-4 input (B,3,H,W), but was ${input.shape}" }
-            require(dims[1] == 3) { "Rgb2GrayScaleMultiply expects 3 channels at dim=1, but was ${dims[1]}" }
+        override fun forward(input: Tensor<FP16, Float>, ctx: ExecutionContext): Tensor<FP16, Float> =
+            sk.ainet.lang.nn.hooks.withForwardHooks(ctx, this, input) {
+                // Validate shape (N,3,H,W)
+                val dims = input.shape.dimensions
+                require(input.rank == 4) { "Rgb2GrayScaleMultiply expects rank-4 input (B,3,H,W), but was ${input.shape}" }
+                require(dims[1] == 3) { "Rgb2GrayScaleMultiply expects 3 channels at dim=1, but was ${dims[1]}" }
 
-            // Elementwise weighted sum across channel dimension using broadcasting
-            val weighted = input * weights // (N,3,H,W)
-            val grayHW = input.ops.sum(weighted, 1) // (N,H,W)
+                // Elementwise weighted sum across channel dimension using broadcasting
+                val weighted = input * weights // (N,3,H,W)
+                val grayHW = input.ops.sum(weighted, 1) // (N,H,W)
 
-            // Restore channel dimension to get (N,1,H,W)
-            val gray = input.ops.unsqueeze(grayHW, 1)
-            return gray
-        }
+                // Restore channel dimension to get (N,1,H,W)
+                val gray = input.ops.unsqueeze(grayHW, 1)
+                gray
+            }
 
         override val name: String = "Rgb2GrayScaleMultiply"
         override val modules: List<Module<FP16, Float>> = emptyList()

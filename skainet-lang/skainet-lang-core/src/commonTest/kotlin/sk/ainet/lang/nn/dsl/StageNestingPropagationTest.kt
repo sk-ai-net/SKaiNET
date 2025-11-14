@@ -1,5 +1,6 @@
 package sk.ainet.lang.nn.dsl
 
+import sk.ainet.lang.nn.DefaultNeuralNetworkExecutionContext
 import sk.ainet.lang.nn.definition
 import sk.ainet.lang.nn.network
 import sk.ainet.lang.nn.reflection.Summary
@@ -17,6 +18,7 @@ class StageNestingPropagationTest {
 
     @Test
     fun testNestedStagesPropagateLastDimension() {
+        val ctx = DefaultNeuralNetworkExecutionContext()
         val model = definition<FP32, Float> {
             network {
                 input(10)
@@ -40,8 +42,7 @@ class StageNestingPropagationTest {
                 }
             }
         }
-
-        val summary = Summary<FP32, Float>()
+        val summary = Summary<FP32, Float>(ctx)
         val nodes = summary.summary(model, Shape(1, 10), FP32::class)
 
         // Expect three linear layers with shapes: 10->20, 20->30, 30->5

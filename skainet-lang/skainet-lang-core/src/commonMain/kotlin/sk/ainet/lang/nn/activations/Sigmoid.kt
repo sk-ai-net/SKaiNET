@@ -1,5 +1,6 @@
 package sk.ainet.lang.nn.activations
 
+import sk.ainet.context.ExecutionContext
 import sk.ainet.lang.nn.Module
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.tensor.sigmoid
@@ -9,5 +10,6 @@ public class Sigmoid<T : DType, V>(override val name: String = "Sigmoid") : Modu
     override val modules: List<Module<T, V>>
         get() = emptyList()
 
-    override fun forward(input: Tensor<T, V>): Tensor<T, V> = with(input) { sigmoid() }
+    override fun forward(input: Tensor<T, V>, ctx: ExecutionContext): Tensor<T, V> =
+        sk.ainet.lang.nn.hooks.withForwardHooks(ctx, this, input) { with(input) { sigmoid() } }
 }

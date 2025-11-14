@@ -1,5 +1,6 @@
 package sk.ainet.lang.nn
 
+import sk.ainet.context.ExecutionContext
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.types.DType
 import sk.ainet.lang.nn.topology.ModuleParameter
@@ -58,20 +59,21 @@ public class Conv2d<T : DType, V>(
     override val modules: List<Module<T, V>>
         get() = emptyList()
 
-    override fun forward(input: Tensor<T, V>): Tensor<T, V> {
-        val weight = params.weights().value
-        val biasValue = if (bias) params.bias().value else null
-        
-        return input.ops.conv2d(
-            input = input,
-            weight = weight,
-            bias = biasValue,
-            stride = stride,
-            padding = padding,
-            dilation = dilation,
-            groups = groups
-        )
-    }
+    override fun forward(input: Tensor<T, V>, ctx: ExecutionContext): Tensor<T, V> =
+        sk.ainet.lang.nn.hooks.withForwardHooks(ctx, this, input) {
+            val weight = params.weights().value
+            val biasValue = if (bias) params.bias().value else null
+
+            input.ops.conv2d(
+                input = input,
+                weight = weight,
+                bias = biasValue,
+                stride = stride,
+                padding = padding,
+                dilation = dilation,
+                groups = groups
+            )
+        }
 
     /**
      * Calculates the output size for a given input size and convolution parameters.

@@ -7,6 +7,8 @@ import sk.ainet.exec.tensor.ops.platformDefaultCpuOpsFactory
 
 public class DirectCpuExecutionContext(
     override val executionStats: ExecutionStats = ExecutionStats(),
+    override val phase: Phase = Phase.EVAL,
+    private val _hooks: sk.ainet.lang.nn.hooks.ForwardHooks? = null,
 ) : ExecutionContext {
     private val _memoryInfo = MemoryInfo(
         totalMemory = 0,
@@ -22,4 +24,7 @@ public class DirectCpuExecutionContext(
 
     override val ops: TensorOps
         get() = opsFactory(tensorDataFactory)
+
+    override val hooks: sk.ainet.lang.nn.hooks.ForwardHooks?
+        get() = _hooks
 }

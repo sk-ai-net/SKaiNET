@@ -58,6 +58,9 @@ public interface TensorOps {
     // Mathematical functions
     public fun <T : DType, V> sqrt(tensor: Tensor<T, V>): Tensor<T, V>
 
+    // Matrix utilities
+    public fun <T : DType, V> tril(tensor: Tensor<T, V>, k: Int = 0): Tensor<T, V>
+
     // Type conversion operations
     public fun <TFrom : DType, TTo : DType, V> convert(
         tensor: Tensor<TFrom, V>,

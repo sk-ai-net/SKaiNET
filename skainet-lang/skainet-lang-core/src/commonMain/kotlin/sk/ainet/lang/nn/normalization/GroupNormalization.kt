@@ -1,5 +1,6 @@
 package sk.ainet.lang.nn.normalization
 
+import sk.ainet.context.ExecutionContext
 import sk.ainet.lang.nn.Module
 import sk.ainet.lang.nn.topology.ModuleParameter
 import sk.ainet.lang.nn.topology.ModuleParameters
@@ -79,28 +80,29 @@ public class GroupNormalization<T : DType, V>(
         )
     }
 
-    override fun forward(input: Tensor<T, V>): Tensor<T, V> {
-        // Reshape input to separate groups: (N, C, H, W) -> (N, G, C//G, H, W)
-        val groupedInput = reshapeForGroups(input)
-        
-        // Calculate group statistics
-        val groupMean = calculateGroupMean(groupedInput)
-        val groupVar = calculateGroupVariance(groupedInput, groupMean)
-        
-        // Normalize within groups
-        val normalized = normalizeGroups(groupedInput, groupMean, groupVar)
-        
-        // Reshape back to original format
-        val output = reshapeFromGroups(normalized, input.shape)
-        
-        return if (affine) {
-            val gamma = params[0].value // weight parameter
-            val beta = params[1].value  // bias parameter
-            output * gamma + beta
-        } else {
-            output
+    override fun forward(input: Tensor<T, V>, ctx: ExecutionContext): Tensor<T, V> =
+        sk.ainet.lang.nn.hooks.withForwardHooks(ctx, this, input) {
+            // Reshape input to separate groups: (N, C, H, W) -> (N, G, C//G, H, W)
+            val groupedInput = reshapeForGroups(input)
+            
+            // Calculate group statistics
+            val groupMean = calculateGroupMean(groupedInput)
+            val groupVar = calculateGroupVariance(groupedInput, groupMean)
+            
+            // Normalize within groups
+            val normalized = normalizeGroups(groupedInput, groupMean, groupVar)
+            
+            // Reshape back to original format
+            val output = reshapeFromGroups(normalized, input.shape)
+            
+            if (affine) {
+                val gamma = params[0].value // weight parameter
+                val beta = params[1].value  // bias parameter
+                output * gamma + beta
+            } else {
+                output
+            }
         }
-    }
 
     private fun reshapeForGroups(input: Tensor<T, V>): Tensor<T, V> {
         // Reshape from (N, C, H, W) to (N, G, C//G, H, W)

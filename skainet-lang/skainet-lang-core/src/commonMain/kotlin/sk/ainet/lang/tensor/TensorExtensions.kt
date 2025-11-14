@@ -25,5 +25,6 @@ public fun <T : DType, V> Tensor<T, V>.sum(dim: Int? = null): Tensor<T, V> = ops
 public fun <T : DType, V> Tensor<T, V>.mean(dim: Int? = null): Tensor<T, V> = ops.mean(this, dim)
 public fun <T : DType, V> Tensor<T, V>.variance(dim: Int? = null): Tensor<T, V> = ops.variance(this, dim)
 public fun <T : DType, V> Tensor<T, V>.sqrt(): Tensor<T, V> = ops.sqrt(this)
+public fun <T : DType, V> Tensor<T, V>.tril(k: Int = 0): Tensor<T, V> = ops.tril(this, k)
 
 // Global matmul function for the Linear layer usage pattern (removed due to duplicate with extension function)

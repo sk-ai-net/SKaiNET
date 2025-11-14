@@ -102,7 +102,7 @@ class SinusApproximatorTest {
                 }
             }
             val model = createModel(ctx)
-            val result = model(inputTensor)
+            val result = model.forward(inputTensor, ctx)
             //print(result.pprint())
             result.data[0,0]
         }
@@ -125,7 +125,7 @@ class SinusApproximatorTest {
                     }
                 }
 
-                val result = model_(inputTensor)
+                val result = model_.forward(inputTensor, ctx)
                 print(result.pprint())
                 result.data[0,0]
             }
@@ -153,7 +153,7 @@ class SinusApproximatorTest {
                         }
                     }
                 }
-                val out = model(inputTensor)
+                val out = model.forward(inputTensor, ctx)
                 out.data[0, 0]
             }
 

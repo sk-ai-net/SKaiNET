@@ -18,7 +18,7 @@ class DescribeSinusApproximatorTest {
         // Create the SinusApproximator model
         val sinusModel = SinusApproximator()
 
-        print(sinusModel.model(ctx).describe(Shape(16, 1), FP32::class))
+        print(sinusModel.model(ctx).describe(Shape(16, 1), ctx,FP32::class))
 
     }
 }

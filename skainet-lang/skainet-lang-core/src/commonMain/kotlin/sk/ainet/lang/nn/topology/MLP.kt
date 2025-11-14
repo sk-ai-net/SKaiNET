@@ -1,5 +1,6 @@
 package sk.ainet.lang.nn.topology
 
+import sk.ainet.context.ExecutionContext
 import sk.ainet.lang.nn.Module
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.types.DType
@@ -11,13 +12,14 @@ public class MLP<T : DType, V>(vararg modules: Module<T, V>, override val name: 
     override val modules: List<Module<T, V>>
         get() = modulesList
 
-    override fun forward(input: Tensor<T, V>): Tensor<T, V> {
-        var tmp = input
-        modulesList.forEach { module ->
-            tmp = module.forward(tmp)
+    override fun forward(input: Tensor<T, V>, ctx: ExecutionContext): Tensor<T, V> =
+        sk.ainet.lang.nn.hooks.withForwardHooks(ctx, this, input) {
+            var tmp = input
+            modulesList.forEach { module ->
+                tmp = module.forward(tmp, ctx)
+            }
+            tmp
         }
-        return tmp
-    }
 
     override val params: List<ModuleParameter<T, V>>
         get() = emptyList()

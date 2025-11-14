@@ -10,7 +10,7 @@ import sk.ainet.lang.types.FP32
 class LinearVectorInputTest {
     @Test
     fun linear_accepts_1D_input_vector_and_produces_1D_output() {
-        data {
+        data { ctx ->
             // Build a simple Linear layer: in=3, out=2
             val weights = tensor<FP32, Float> {
                 shape(2, 3) { init { (it[0] * 3 + it[1] + 1).toFloat() } }
@@ -27,7 +27,7 @@ class LinearVectorInputTest {
             // Expected: y = x @ W^T + b
             // W = [[1,2,3],[4,5,6]] from formula above
             // x @ W^T = [14, 32]; + b = [24, 52]
-            val y = layer(x)
+            val y = layer.forward(x, ctx)
             // In core module with VoidTensorOps, numerical values may be zeros. We only assert shape behavior.
             assertEquals(Shape(2), y.shape)
             assertEquals(1, y.rank)
