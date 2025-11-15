@@ -2,6 +2,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.tasks.*
 import sk.ainet.buildlogic.json.SimpleJsonValidator
+import java.io.ByteArrayInputStream
 
 @CacheableTask
 abstract class SchemaValidationTask : DefaultTask() {
@@ -18,8 +19,9 @@ abstract class SchemaValidationTask : DefaultTask() {
     fun validate() {
         val buildDir =
             (if (searchDirectory.isPresent) searchDirectory.get() else project.rootProject.layout.projectDirectory).asFile
-        val schemaStream = this::class.java.classLoader.getResourceAsStream("schemas/operator-doc-schema-v1.json")
+        val schemaResource = this::class.java.classLoader.getResourceAsStream("schemas/operator-doc-schema-v1.json")
             ?: throw IllegalStateException("Cannot find schema resource: schemas/operator-doc-schema-v1.json")
+        val schemaBytes = schemaResource.readAllBytes()
         val validator = SimpleJsonValidator()
 
         if (!buildDir.exists()) {
@@ -41,7 +43,7 @@ abstract class SchemaValidationTask : DefaultTask() {
 
         operatorJsonFiles.forEach { file ->
             total++
-            val result = validator.validate(schemaStream, file)
+            val result = validator.validate(ByteArrayInputStream(schemaBytes), file)
             if (result.valid) {
                 valid++
                 logger.lifecycle("✓ VALID: ${file.relativeTo(buildDir)}")
