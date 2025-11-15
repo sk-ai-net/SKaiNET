@@ -4,6 +4,10 @@ import sk.ainet.context.ExecutionContext
 import sk.ainet.lang.model.Model
 import sk.ainet.lang.model.ModelCard
 import sk.ainet.lang.model.ModelIndexEntry
+import sk.ainet.lang.model.ModelResult
+import sk.ainet.lang.model.Task
+import sk.ainet.lang.model.Dataset
+import sk.ainet.lang.model.Metric
 import sk.ainet.lang.nn.Module
 import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.Tensor
@@ -23,7 +27,7 @@ import sk.ainet.lang.types.FP16
  * Expected input shape: (N, 3, H, W)
  * Output shape: (N, 1, H, W)
  */
-public class Rgb2GrayScaleMatMul(constCtx: ExecutionContext) : Model<FP16, Float> {
+public class Rgb2GrayScaleMatMul(constCtx: ExecutionContext) : Model<FP16, Float, Tensor<FP16, Float>, Tensor<FP16, Float>> {
 
     // Use a local execution context only to build constant tensors (weights).
     // Runtime compute ops will come from the input tensor's ops during forward.
@@ -40,11 +44,7 @@ public class Rgb2GrayScaleMatMul(constCtx: ExecutionContext) : Model<FP16, Float
         weights = constCtx.ops.reshape(factors, Shape(1, 3, 1, 1))
     }
 
-
     private val impl = object : Module<FP16, Float>() {
-        // Pre-allocate luminance weights in broadcastable shape (1, 3, 1, 1)
-
-
         override fun forward(input: Tensor<FP16, Float>, ctx: ExecutionContext): Tensor<FP16, Float> =
             sk.ainet.lang.nn.hooks.withForwardHooks(ctx, this, input) {
                 // Validate shape (N,3,H,W)
@@ -65,7 +65,22 @@ public class Rgb2GrayScaleMatMul(constCtx: ExecutionContext) : Model<FP16, Float
         override val modules: List<Module<FP16, Float>> = emptyList()
     }
 
-    override fun model(executionContext: ExecutionContext): Module<FP16, Float> = impl
+    // Backwards-compat helper matching tests
+    public fun model(executionContext: ExecutionContext): Module<FP16, Float> = create(executionContext)
+
+    override fun create(executionContext: ExecutionContext): Module<FP16, Float> = impl
+
+    override suspend fun calculate(
+        module: Module<FP16, Float>,
+        inputValue: Tensor<FP16, Float>,
+        executionContext: ExecutionContext,
+        reportProgress: suspend (current: Int, total: Int, message: String?) -> Unit
+    ): Tensor<FP16, Float> {
+        reportProgress(0, 1, "starting rgb2gray-matmul")
+        val out = module.forward(inputValue, executionContext)
+        reportProgress(1, 1, "done")
+        return out
+    }
 
     override fun modelCard(): ModelCard {
         // Minimal model card for a simple color space conversion utility.
@@ -82,12 +97,17 @@ public class Rgb2GrayScaleMatMul(constCtx: ExecutionContext) : Model<FP16, Float
             modelIndex = listOf(
                 ModelIndexEntry(
                     name = "Rgb2GrayScaleMultiply",
-                    results = emptyList()
+                    results = listOf(
+                        ModelResult(
+                            task = Task(type = "image-to-image"),
+                            dataset = Dataset(name = "n/a", type = "synthetic"),
+                            metrics = listOf(Metric(name = "N/A", value = 0.0))
+                        )
+                    )
                 )
             ),
-            intendedUse = "RGB→Grayscale via direct weighted sum (no conv) with weights [0.2989, 0.5870, 0.1140]. Input: (N,3,H,W). Output: (N,3,H,W).",
+            intendedUse = "RGB→Grayscale via direct weighted sum (no conv) with weights [0.2989, 0.5870, 0.1140]. Input: (N,3,H,W). Output: (N,1,H,W).",
             limitations = "Assumes input tensors are normalized appropriately and channel order is RGB. No color profile handling; purely linear weights."
         )
     }
-
 }

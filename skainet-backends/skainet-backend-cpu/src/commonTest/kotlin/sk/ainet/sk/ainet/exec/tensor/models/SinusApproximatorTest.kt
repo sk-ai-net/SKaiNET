@@ -11,6 +11,7 @@ import sk.ainet.lang.tensor.dsl.tensor
 import sk.ainet.lang.tensor.pprint
 import sk.ainet.lang.tensor.relu
 import sk.ainet.lang.types.FP32
+import sk.ainet.lang.nn.Module
 import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.math.abs
@@ -82,6 +83,22 @@ fun createModel(context: ExecutionContext) = definition<FP32, Float> {
     }
 }
 
+
+// Extension function to calculate sine using a Module<FP32, Float>
+fun Module<FP32, Float>.calcSine(ctx: ExecutionContext, angle: Float): Float {
+    val model_: sk.ainet.lang.nn.Module<FP32, kotlin.Float> = this
+    return computation<Float>(ctx) { _ ->
+        model_.forward(data<FP32, Float>(ctx) {
+            tensor<FP32, Float>() {
+                shape(1, 1) {
+                    fromArray(
+                        floatArrayOf(angle)
+                    )
+                }
+            }
+        }, ctx).data[0, 0]
+    }
+}
 
 class SinusApproximatorTest {
 
@@ -162,6 +179,27 @@ class SinusApproximatorTest {
             assertTrue(
                 diff <= maxError,
                 message = "sin approximation error too high for x=$x: predicted=$predicted expected=$expected diff=$diff (max=$maxError)"
+            )
+        }
+    }
+
+    @Test
+    fun testSinusApproximatorExtension() {
+        val ctx = DirectCpuExecutionContext()
+        val model = createModel(ctx)
+
+        val rng = Random(123)
+        val samples = 10
+        val maxError = 0.1f
+
+        repeat(samples) {
+            val x: Float = (rng.nextFloat() * (PI.toFloat() / 2f))
+            val predicted = model.calcSine(ctx, x)
+            val expected = sin(x)
+            val diff = abs(predicted - expected)
+            assertTrue(
+                diff <= maxError,
+                message = "[ext] sin approximation error too high for x=$x: predicted=$predicted expected=$expected diff=$diff (max=$maxError)"
             )
         }
     }

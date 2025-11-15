@@ -6,12 +6,9 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.vanniktech.mavenPublish)
-    alias(libs.plugins.kover)
 }
 
 kotlin {
-    explicitApi()
-
     targets.configureEach {
         compilations.configureEach {
             compileTaskProvider.get().compilerOptions {
@@ -20,22 +17,20 @@ kotlin {
         }
     }
 
+    jvm()
     androidTarget {
+        publishLibraryVariants("release")
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
+            jvmTarget.set(JvmTarget.JVM_1_8)
         }
     }
 
     iosArm64()
     iosSimulatorArm64()
-
     macosArm64()
-
     linuxX64()
     linuxArm64()
-
-    jvm()
 
     js {
         browser()
@@ -46,60 +41,37 @@ kotlin {
         browser()
     }
 
+
     sourceSets {
-        androidMain.dependencies {
-            implementation(libs.ktor.client.android)
-        }
         val commonMain by getting {
             dependencies {
                 implementation(project(":skainet-lang:skainet-lang-core"))
+                implementation(project(":skainet-lang:skainet-lang-models"))
+                implementation(project(":skainet-io:skainet-io-core"))
+                implementation(project(":skainet-io:skainet-io-gguf"))
                 implementation(project(":skainet-data:skainet-data-api"))
-                implementation(libs.kotlinx.serialization.json)
-                implementation(libs.ktor.client.core)
+                implementation(project(":skainet-data:skainet-data-simple"))
+                implementation(libs.kotlinx.io.core)
                 implementation(libs.kotlinx.coroutines)
             }
         }
-
-        jvmMain.dependencies {
-            implementation(libs.ktor.client.cio)
-            implementation(libs.ktor.client.plugins)
-            implementation(libs.ktor.client.logging)
-            implementation(libs.ktor.client.content.negotiation)
-            implementation(libs.kotlinx.coroutines.core.jvm)
-            implementation(libs.logback.classic) // For logging
-        }
-
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
-        }
-        val jsMain by getting {
+        val commonTest by getting {
             dependencies {
-                implementation(libs.ktor.client.js)
+                implementation(libs.kotlin.test)
             }
         }
-        val wasmJsMain by getting {
+        val jvmTest by getting {
             dependencies {
-                implementation(libs.ktor.client.js)
-            }
-        }
-
-        val iosMain by creating {
-            dependencies {
-                implementation(libs.ktor.client.darwin)
+                implementation(libs.junit)
             }
         }
     }
 }
 
 android {
-    namespace = "sk.ainet.core.api"
+    namespace = "sk.ai.net.core"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
-
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
     }
 }
