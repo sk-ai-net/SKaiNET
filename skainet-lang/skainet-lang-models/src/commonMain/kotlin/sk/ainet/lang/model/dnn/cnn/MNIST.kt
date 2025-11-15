@@ -7,7 +7,7 @@ import sk.ainet.lang.nn.Module
 import sk.ainet.lang.nn.definition
 import sk.ainet.lang.nn.dsl.sequential
 import sk.ainet.lang.nn.network
-
+import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.tensor.relu
 import sk.ainet.lang.tensor.softmax
 import sk.ainet.lang.types.FP32
@@ -20,7 +20,7 @@ import sk.ainet.lang.types.FP32
  *
  * The architecture is as follows:
  *
- * - **Stage: "conv1"**
+ * - Stage: "conv1"
  *   - 2D Convolution with:
  *     - 16 output channels
  *     - 5x5 kernel
@@ -29,7 +29,7 @@ import sk.ainet.lang.types.FP32
  *   - ReLU activation
  *   - 2x2 MaxPooling with stride of 2
  *
- * - **Stage: "conv2"**
+ * - Stage: "conv2"
  *   - 2D Convolution with:
  *     - 32 output channels
  *     - 5x5 kernel
@@ -38,22 +38,20 @@ import sk.ainet.lang.types.FP32
  *   - ReLU activation
  *   - 2x2 MaxPooling with stride of 2
  *
- * - **Stage: "flatten"**
+ * - Stage: "flatten"
  *   - Flattens the tensor for dense layer input
  *
- * - **Stage: "dense"**
+ * - Stage: "dense"
  *   - Fully connected layer with 128 units
  *   - ReLU activation
  *
- * - **Stage: "output"**
+ * - Stage: "output"
  *   - Fully connected layer with 10 output units (for 10 MNIST classes)
  *   - Softmax activation over dimension 1 to produce class probabilities
- *
- * @return A [Module] representing the constructed CNN model
  */
-public class MnistCnn : Model<FP32, Float> {
+public class MnistCnn : Model<FP32, Float, Tensor<FP32, Float>, Tensor<FP32, Float>> {
 
-    override fun model(executionContext: ExecutionContext): Module<FP32, Float> = definition<FP32, Float> {
+    private fun buildModel(executionContext: ExecutionContext): Module<FP32, Float> = definition<FP32, Float> {
         network(executionContext) {
             sequential<FP32, Float> {
                 // Stage: "conv1"
@@ -88,6 +86,23 @@ public class MnistCnn : Model<FP32, Float> {
                 }
             }
         }
+    }
+
+    // Backward-compatible helper for old call sites
+    public fun model(executionContext: ExecutionContext): Module<FP32, Float> = create(executionContext)
+
+    override fun create(executionContext: ExecutionContext): Module<FP32, Float> = buildModel(executionContext)
+
+    override suspend fun calculate(
+        module: Module<FP32, Float>,
+        inputValue: Tensor<FP32, Float>,
+        executionContext: ExecutionContext,
+        reportProgress: suspend (current: Int, total: Int, message: String?) -> Unit
+    ): Tensor<FP32, Float> {
+        reportProgress(0, 1, "starting mnist-cnn forward")
+        val out = module.forward(inputValue, executionContext)
+        reportProgress(1, 1, "done")
+        return out
     }
 
     override fun modelCard(): ModelCard {

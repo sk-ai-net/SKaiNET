@@ -3,9 +3,15 @@ package sk.ainet.lang.model.compute
 import sk.ainet.context.ExecutionContext
 import sk.ainet.lang.model.Model
 import sk.ainet.lang.model.ModelCard
+import sk.ainet.lang.model.ModelIndexEntry
+import sk.ainet.lang.model.ModelResult
+import sk.ainet.lang.model.Task
+import sk.ainet.lang.model.Dataset
+import sk.ainet.lang.model.Metric
 import sk.ainet.lang.nn.Module
 import sk.ainet.lang.nn.definition
 import sk.ainet.lang.nn.network
+import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.types.FP32
 
 /**
@@ -21,8 +27,7 @@ import sk.ainet.lang.types.FP32
  * Expected input shape: (N, 3, H, W)
  * Output shape: (N, 1, H, W)
  */
-public class Rgb2GrayScale : Model<FP32, Float> {
-
+public class Rgb2GrayScale : Model<FP32, Float, Tensor<FP32, Float>, Tensor<FP32, Float>> {
 
     private val modelImpl: Module<FP32, Float> = definition {
         network {
@@ -48,16 +53,49 @@ public class Rgb2GrayScale : Model<FP32, Float> {
         }
     }
 
-    override fun model(executionContext: ExecutionContext): Module<FP32, Float> = modelImpl
-    override fun modelCard(): ModelCard {
-        TODO("Not yet implemented")
+    // Keep backward-compatible helper for existing tests/usages
+    public fun model(executionContext: ExecutionContext): Module<FP32, Float> = create(executionContext)
+
+    override fun create(executionContext: ExecutionContext): Module<FP32, Float> = modelImpl
+
+    override suspend fun calculate(
+        module: Module<FP32, Float>,
+        inputValue: Tensor<FP32, Float>,
+        executionContext: ExecutionContext,
+        reportProgress: suspend (current: Int, total: Int, message: String?) -> Unit
+    ): Tensor<FP32, Float> {
+        // trivial pass-through computation; the heavy work is in the module
+        reportProgress(0, 1, "starting rgb2gray")
+        val out = module.forward(inputValue, executionContext)
+        reportProgress(1, 1, "done")
+        return out
     }
 
-
-    /*
-    override fun modelCard(): String =
-        "RGB→Grayscale via fixed 1x1 Conv2D with weights [0.2989, 0.5870, 0.1140] and no bias. " +
-                "Input: (N,3,H,W). Output: (N,1,H,W)."
-
-     */
+    override fun modelCard(): ModelCard {
+        return ModelCard(
+            license = "apache-2.0",
+            libraryName = "skainet",
+            pipelineTag = "image-processing",
+            language = listOf("en"),
+            modalities = listOf("image"),
+            baseModel = "n/a",
+            contextLength = 0,
+            datasets = emptyList(),
+            metrics = listOf("functional-correctness"),
+            modelIndex = listOf(
+                ModelIndexEntry(
+                    name = "Rgb2GrayScale",
+                    results = listOf(
+                        ModelResult(
+                            task = Task(type = "image-to-image"),
+                            dataset = Dataset(name = "n/a", type = "synthetic"),
+                            metrics = listOf(Metric(name = "N/A", value = 0.0))
+                        )
+                    )
+                )
+            ),
+            intendedUse = "RGB→Grayscale via fixed 1x1 Conv2D with weights [0.2989, 0.5870, 0.1140]. Input: (N,3,H,W). Output: (N,1,H,W).",
+            limitations = "Assumes RGB channel order and linear color space; no gamma or color profile handling."
+        )
+    }
 }
