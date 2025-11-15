@@ -22,14 +22,13 @@ class SafeTensorsFormatProvider : FormatReaderProvider {
         return when (source) {
             is TensorSource.Bytes -> probeBytes(source)
             is TensorSource.FilePath -> {
-                val hint = if (source.path.endsWith(".safetensors", ignoreCase = true)) {
-                    ProbeResult.supported(ProbeResult.EXTENSION_HINT, formatId = FORMAT_ID, reason = "extension")
-                } else ProbeResult.unsupported("extension not matching .safetensors", FORMAT_ID)
-                // We can't header-validate portably in common code for files; keep it as hint unsupported to avoid being selected incorrectly
-                // Return unsupported to prevent selection unless bytes are provided or a platform-specific provider enhances this.
-                ProbeResult.unsupported("no header validation for FilePath in common", FORMAT_ID).let { unsupported ->
-                    if (hint.supported) hint else unsupported
-                }
+                // Ask platform to probe (JVM/Android may do header check). Otherwise, rely on extension hint.
+                val platform = SafeTensorsPlatform.probeFilePath(source.path)
+                if (platform != null) return platform
+                if (source.path.endsWith(".safetensors", ignoreCase = true))
+                    return ProbeResult.supported(ProbeResult.EXTENSION_HINT, formatId = FORMAT_ID, reason = "extension")
+                else
+                    return ProbeResult.unsupported("extension not matching .safetensors", FORMAT_ID)
             }
             is TensorSource.Url -> ProbeResult.unsupported("no HTTP support yet", FORMAT_ID)
         }
@@ -57,7 +56,11 @@ class SafeTensorsFormatProvider : FormatReaderProvider {
     override fun open(source: TensorSource): CloseableTensorArchive {
         return when (source) {
             is TensorSource.Bytes -> SafeTensorsArchive.fromBytes(source)
-            else -> throw IllegalArgumentException("SafeTensors: only TensorSource.Bytes supported in common; got ${source::class.simpleName}")
+            is TensorSource.FilePath -> {
+                val bytes = SafeTensorsPlatform.readFileToBytes(source.path)
+                SafeTensorsArchive.fromBytes(TensorSource.Bytes(bytes, source.path))
+            }
+            else -> throw IllegalArgumentException("SafeTensors: unsupported source ${source::class.simpleName}")
         }
     }
 

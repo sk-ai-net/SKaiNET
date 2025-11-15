@@ -1,3 +1,4 @@
+/*
 package sk.ai.net.safetensors
 
 import java.io.File
@@ -279,3 +280,5 @@ private data class MappedTensorMetadata(
     val dataOffset: Long,
     val dataLength: Long
 )
+
+*/
