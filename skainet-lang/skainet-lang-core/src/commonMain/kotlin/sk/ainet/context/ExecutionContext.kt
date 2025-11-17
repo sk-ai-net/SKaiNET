@@ -12,6 +12,12 @@ import kotlin.reflect.KClass
 public interface ExecutionContext {
     public val ops: TensorOps
 
+    // Optional forward hooks for recording or diagnostics (null → disabled)
+    public val hooks: sk.ainet.lang.nn.hooks.ForwardHooks? get() = null
+
+    // Execution phase and convenience training flag
+    public val phase: Phase
+    public val inTraining: Boolean get() = phase == Phase.TRAIN
 
     public val tensorDataFactory: TensorDataFactory
 
@@ -58,6 +64,15 @@ public interface ExecutionContext {
         data: IntArray
     ): Tensor<T, V> {
         val data = tensorDataFactory.fromIntArray<T, V>(shape, dtype, data)
+        return fromData(data, dtype)
+    }
+
+    public fun <T : DType, V> fromByteArray(
+        shape: Shape,
+        dtype: KClass<T>,
+        data: ByteArray
+    ): Tensor<T, V> {
+        val data = tensorDataFactory.fromByteArray<T, V>(shape, dtype, data)
         return fromData(data, dtype)
     }
 

@@ -6,7 +6,9 @@ import sk.ainet.lang.tensor.ops.TensorOps
 import sk.ainet.lang.tensor.ops.VoidTensorOps
 
 public class DefaultDataExecutionContext(
-    override val tensorDataFactory: TensorDataFactory = DenseTensorDataFactory()
+    override val tensorDataFactory: TensorDataFactory = DenseTensorDataFactory(),
+    override val phase: Phase = Phase.EVAL,
+    private val _hooks: sk.ainet.lang.nn.hooks.ForwardHooks? = null
 ) : ExecutionContext {
 
     // class instance of voidOps created only once
@@ -16,6 +18,9 @@ public class DefaultDataExecutionContext(
 
     override val ops: TensorOps
         get() = voidOps
+
+    override val hooks: sk.ainet.lang.nn.hooks.ForwardHooks?
+        get() = _hooks
     
     override val memoryInfo: MemoryInfo
         get() = emptyMemoryInfo()

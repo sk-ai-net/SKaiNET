@@ -45,11 +45,25 @@ public fun <T : DType, V> definition(init: NeuralNetworkExecutionContext.(Neural
  */
 public inline fun <reified T : DType, V> NeuralNetworkExecutionContext.network(
     content: NeuralNetworkDsl<T, V>.() -> Unit
-): Module<T, V> = NeuralNetworkDslImpl<T, V>(DefaultNeuralNetworkExecutionContext(), T::class)
+): Module<T, V> = NeuralNetworkDslImpl<T, V>(this, T::class)
     .apply(content)
     .create()
 
-public class DefaultNeuralNetworkExecutionContext() : NeuralNetworkExecutionContext {
+/**
+ * Extension function to create a network within a NetworkContext.
+ * This bridges the context wrapper with the network DSL using the context's tensor factory.
+ */
+public inline fun <reified T : DType, V> NeuralNetworkExecutionContext.network(
+    executionContext: ExecutionContext,
+    content: NeuralNetworkDsl<T, V>.() -> Unit
+): Module<T, V> = NeuralNetworkDslImpl<T, V>(executionContext, T::class)
+    .apply(content)
+    .create()
+
+
+public class DefaultNeuralNetworkExecutionContext(
+    override val phase: sk.ainet.context.Phase = sk.ainet.context.Phase.EVAL
+) : NeuralNetworkExecutionContext {
 
     private companion object Companion {
         val voidOps = VoidTensorOps()

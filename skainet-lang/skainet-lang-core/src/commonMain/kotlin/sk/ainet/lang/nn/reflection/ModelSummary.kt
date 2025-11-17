@@ -1,5 +1,6 @@
 package sk.ainet.lang.nn.reflection
 
+import sk.ainet.context.ExecutionContext
 import sk.ainet.lang.nn.Module
 import sk.ainet.lang.nn.topology.ModuleParameters
 import sk.ainet.lang.tensor.Shape
@@ -12,7 +13,7 @@ import sk.ainet.lang.utils.table.table
 
 public data class NodeSummary(val name: String, val input: Shape, val output: Shape, val params: Long)
 
-public class Summary<T : DType, V> {
+public class Summary<T : DType, V>(private val ctx: ExecutionContext) {
 
     public val nodes: MutableList<NodeSummary> = mutableListOf<NodeSummary>()
     private val dataFactory = DenseTensorDataFactory()
@@ -41,7 +42,11 @@ public class Summary<T : DType, V> {
     }
 
 
-    private fun traverseModules(module: Module<T, V>, currentInput: Shape, dtypeClass: kotlin.reflect.KClass<T>): List<NodeSummary> {
+    private fun traverseModules(
+        module: Module<T, V>,
+        currentInput: Shape,
+        dtypeClass: kotlin.reflect.KClass<T>
+    ): List<NodeSummary> {
         val result = mutableListOf<NodeSummary>()
         var currentShape = currentInput
 
@@ -51,17 +56,17 @@ public class Summary<T : DType, V> {
                 // Create a dummy input tensor using VoidOpsTensor for shape inference
                 val inputTensorData = dataFactory.zeros<T, V>(currentShape, dtypeClass)
                 val inputTensor: Tensor<T, V> = VoidOpsTensor(inputTensorData, dtypeClass)
-                
+
                 // Use actual forward pass to get proper output shape
-                val outputTensor = module.forward(inputTensor)
+                val outputTensor = module.forward(inputTensor, ctx)
                 val outputShape = outputTensor.shape
-                
+
                 // Only add to summary if module has parameters (to avoid cluttering with activation/flatten layers)
                 if (module is ModuleParameters<*, *> && module.params.isNotEmpty()) {
                     val summary = nodeSummary(module, currentShape, outputShape)
                     result.add(summary)
                 }
-                
+
                 // Update current shape for next module in sequence (important for all modules)
                 currentShape = outputShape
             } catch (e: Exception) {
@@ -88,7 +93,7 @@ public class Summary<T : DType, V> {
             try {
                 val subResults = traverseModules(subModule, currentShape, dtypeClass)
                 result.addAll(subResults)
-                
+
                 // If this submodule produced results, update currentShape to the last output shape
                 if (subResults.isNotEmpty()) {
                     currentShape = subResults.last().output
@@ -115,7 +120,12 @@ public class Summary<T : DType, V> {
         return result
     }
 
-    public fun summary(model: Module<T, V>, input: Shape, dtypeClass: kotlin.reflect.KClass<T>, batch_size: Int = -1): List<NodeSummary> {
+    public fun summary(
+        model: Module<T, V>,
+        input: Shape,
+        dtypeClass: kotlin.reflect.KClass<T>,
+        batch_size: Int = -1
+    ): List<NodeSummary> {
         nodes.clear()
         val summaries = traverseModules(model, input, dtypeClass)
         nodes.addAll(summaries)
@@ -144,8 +154,13 @@ public class Summary<T : DType, V> {
         }.toString()
 }
 
-public fun <T : DType, V> Module<T, V>.describe(input: Shape, dtypeClass: kotlin.reflect.KClass<T>, batch_size: Int = -1): String {
-    val summary = Summary<T, V>()
+public fun <T : DType, V> Module<T, V>.describe(
+    input: Shape,
+    ctx: ExecutionContext,
+    dtypeClass: kotlin.reflect.KClass<T>,
+    batch_size: Int = -1
+): String {
+    val summary = Summary<T, V>(ctx)
     val nodes = summary.summary(this, input, dtypeClass, batch_size)
     return summary.printSummary(nodes)
 }

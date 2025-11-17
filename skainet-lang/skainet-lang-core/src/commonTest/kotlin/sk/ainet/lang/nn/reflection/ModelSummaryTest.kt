@@ -1,5 +1,6 @@
 package sk.ainet.lang.nn.reflection
 
+import sk.ainet.lang.nn.DefaultNeuralNetworkExecutionContext
 import sk.ainet.lang.nn.Linear
 import sk.ainet.lang.nn.topology.MLP
 import sk.ainet.lang.tensor.Shape
@@ -13,6 +14,7 @@ import kotlin.test.assertTrue
 class ModelSummaryTest {
     
     private val dataFactory = DenseTensorDataFactory()
+    private val ctx = DefaultNeuralNetworkExecutionContext()
     
     private fun createTensor(shape: Shape): VoidOpsTensor<FP32, Float> {
         val data = dataFactory.zeros<FP32, Float>(shape, FP32::class)
@@ -38,7 +40,7 @@ class ModelSummaryTest {
         )
         
         // Test the summary
-        val summary = Summary<FP32, Float>()
+        val summary = Summary<FP32, Float>(ctx)
         val nodes = summary.summary(linear, inputShape, FP32::class)
         
         assertEquals(1, nodes.size, "Should have exactly one node for Linear layer")
@@ -83,7 +85,7 @@ class ModelSummaryTest {
         val mlp = MLP<FP32, Float>(layer1, layer2, layer3, name = "TestMLP")
         
         // Test the summary
-        val summary = Summary<FP32, Float>()
+        val summary = Summary<FP32, Float>(ctx)
         val nodes = summary.summary(mlp, inputShape, FP32::class)
         
         // Should have 3 Linear layers (input->hidden1, hidden1->hidden2, hidden2->output)
@@ -121,7 +123,7 @@ class ModelSummaryTest {
             initBias = bias
         )
         
-        val description = linear.describe(inputShape, FP32::class)
+        val description = linear.describe(inputShape, ctx,FP32::class, )
         
         // Verify the description contains expected elements
         assertTrue(description.contains("TestLayer"), "Description should contain layer name")
@@ -148,7 +150,7 @@ class ModelSummaryTest {
             initBias = bias
         )
         
-        val summary = Summary<FP32, Float>()
+        val summary = Summary<FP32, Float>(ctx)
         val nodes = summary.summary(linear, inputShape, FP32::class)
         
         val node = nodes[0]

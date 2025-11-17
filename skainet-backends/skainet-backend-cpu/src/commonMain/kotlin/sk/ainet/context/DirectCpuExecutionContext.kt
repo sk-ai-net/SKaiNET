@@ -1,12 +1,14 @@
 package sk.ainet.context
 
-import sk.ainet.lang.tensor.data.TensorDataFactory
 import sk.ainet.lang.tensor.data.DenseTensorDataFactory
+import sk.ainet.lang.tensor.data.TensorDataFactory
 import sk.ainet.lang.tensor.ops.TensorOps
-import sk.ainet.exec.tensor.ops.DefaultCpuOps
+import sk.ainet.exec.tensor.ops.platformDefaultCpuOpsFactory
 
 public class DirectCpuExecutionContext(
     override val executionStats: ExecutionStats = ExecutionStats(),
+    override val phase: Phase = Phase.EVAL,
+    private val _hooks: sk.ainet.lang.nn.hooks.ForwardHooks? = null,
 ) : ExecutionContext {
     private val _memoryInfo = MemoryInfo(
         totalMemory = 0,
@@ -16,9 +18,13 @@ public class DirectCpuExecutionContext(
     )
 
     override val tensorDataFactory: TensorDataFactory = DenseTensorDataFactory()
+    private val opsFactory = platformDefaultCpuOpsFactory()
     override val memoryInfo: MemoryInfo
         get() = _memoryInfo
 
     override val ops: TensorOps
-        get() = DefaultCpuOps(tensorDataFactory)
+        get() = opsFactory(tensorDataFactory)
+
+    override val hooks: sk.ainet.lang.nn.hooks.ForwardHooks?
+        get() = _hooks
 }

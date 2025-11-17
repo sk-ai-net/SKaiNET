@@ -1,5 +1,6 @@
 package sk.ainet.lang.nn
 
+import sk.ainet.context.ExecutionContext
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.types.DType
 
@@ -10,7 +11,6 @@ public class Input<T : DType, V>(override val name: String = "Input") : Module<T
         get() = emptyList()
 
 
-    override fun forward(input: Tensor<T, V>): Tensor<T, V> {
-        return input
-    }
+    override fun forward(input: Tensor<T, V>, ctx: ExecutionContext): Tensor<T, V> =
+        sk.ainet.lang.nn.hooks.withForwardHooks(ctx, this, input) { input }
 }

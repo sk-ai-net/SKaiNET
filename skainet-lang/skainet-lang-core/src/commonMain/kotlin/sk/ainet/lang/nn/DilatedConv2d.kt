@@ -1,5 +1,6 @@
 package sk.ainet.lang.nn
 
+import sk.ainet.context.ExecutionContext
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.types.DType
 import sk.ainet.lang.nn.topology.ModuleParameter
@@ -83,9 +84,10 @@ public class DilatedConv2d<T : DType, V>(
     override val modules: List<Module<T, V>>
         get() = listOf(conv)
 
-    override fun forward(input: Tensor<T, V>): Tensor<T, V> {
-        return conv.forward(input)
-    }
+    override fun forward(input: Tensor<T, V>, ctx: ExecutionContext): Tensor<T, V> =
+        sk.ainet.lang.nn.hooks.withForwardHooks(ctx, this, input) {
+            conv.forward(input, ctx)
+        }
 
     /**
      * Calculates the output size for a given input size.

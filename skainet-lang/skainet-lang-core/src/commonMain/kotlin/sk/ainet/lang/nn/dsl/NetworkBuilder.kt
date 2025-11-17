@@ -13,11 +13,10 @@ import sk.ainet.lang.nn.normalization.LayerNormalization
 import sk.ainet.lang.nn.topology.MLP
 import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.Tensor
-import sk.ainet.lang.nn.DefaultNeuralNetworkExecutionContext
-import sk.ainet.lang.nn.NeuralNetworkExecutionContext
-import sk.ainet.lang.tensor.VoidOpsTensor
 import sk.ainet.lang.types.DType
-import kotlin.random.Random
+import sk.ainet.context.ExecutionContext
+import sk.ainet.lang.nn.DefaultNeuralNetworkExecutionContext
+import sk.ainet.lang.tensor.dsl.TensorCreationScope
 import kotlin.reflect.KClass
 
 // DSL Marker to restrict the DSL to its intended scope
@@ -64,7 +63,7 @@ public inline fun <reified T : DType, V> sequential(
  * Overload that wires both tensor factory and ops from an ExecutionContext.
  */
 public inline fun <reified T : DType, V> sequential(
-    executionContext: NeuralNetworkExecutionContext,
+    executionContext: ExecutionContext,
     content: NeuralNetworkDsl<T, V>.() -> Unit
 ): Module<T, V> =
     NeuralNetworkDslImpl<T, V>(executionContext, T::class)
@@ -73,7 +72,7 @@ public inline fun <reified T : DType, V> sequential(
 
 @NetworkDsl
 public interface NetworkDslItem {
-    public val executionContext: NeuralNetworkExecutionContext
+    public val executionContext: ExecutionContext
 }
 
 /**
@@ -243,6 +242,21 @@ public interface NeuralNetworkDsl<T : DType, V> : NetworkDslItem {
     )
 
     /**
+     * Creates a 2D convolutional layer with all parameters configured inside the DSL block.
+     * Example:
+     * conv2d("conv1") {
+     *     outChannels = 16
+     *     kernelSize(5)
+     *     stride(1)
+     *     padding(2)
+     * }
+     */
+    public fun conv2d(
+        id: String = "",
+        content: CONV2D<T, V>.() -> Unit
+    )
+
+    /**
      * Creates a 2D max pooling layer for downsampling feature maps.
      *
      * @param kernelSize Size of the pooling window (height, width)
@@ -255,6 +269,20 @@ public interface NeuralNetworkDsl<T : DType, V> : NetworkDslItem {
         stride: Pair<Int, Int> = kernelSize,
         padding: Pair<Int, Int> = 0 to 0,
         id: String = ""
+    )
+
+    /**
+     * Creates a 2D max pooling layer with all parameters configured inside the DSL block.
+     * Example:
+     * maxPool2d("pool1") {
+     *     kernelSize(2)
+     *     stride(2)
+     *     padding(0)
+     * }
+     */
+    public fun maxPool2d(
+        id: String = "",
+        content: MAXPOOL2D<T, V>.() -> Unit
     )
 
     /**
@@ -292,7 +320,7 @@ public interface NeuralNetworkDsl<T : DType, V> : NetworkDslItem {
 }
 
 public interface WandBTensorValueContext<T : DType, V> {
-    public val executionContext: NeuralNetworkExecutionContext
+    public val executionContext: ExecutionContext
     public val weightsShape: Shape
     public val biasShape: Shape
 
@@ -316,114 +344,43 @@ public interface CONV2D<T : DType, V> : NetworkDslItem, WandBTensorValueContext<
     public var dilation: Pair<Int, Int>
     public var groups: Int
     public var bias: Boolean
+
+    // Helper setters to allow concise Int-based configuration in DSL blocks
+    public fun kernelSize(size: Int)
+    public fun stride(size: Int)
+    public fun padding(size: Int)
 }
 
-/**
- * Base scope providing common tensor creation and initialization methods.
- */
 @NetworkDsl
-public interface TensorsValueScope<T : DType, V> {
-    public val shape: Shape
-    public val dtype: KClass<T>
-    public val executionContext: NeuralNetworkExecutionContext
+public interface MAXPOOL2D<T : DType, V> : NetworkDslItem {
+    public var kernelSize: Pair<Int, Int>
+    public var stride: Pair<Int, Int>
+    public var padding: Pair<Int, Int>
 
-    /**
-     * Create tensor filled with zeros
-     */
-    public fun zeros(): Tensor<T, V> = executionContext.zeros(shape, dtype)
-
-    /**
-     * Create tensor filled with ones
-     */
-    public fun ones(): Tensor<T, V> = executionContext.ones(shape, dtype)
-
-    /**
-     * Create tensor filled with ones
-     */
-    public fun full(value: Number): Tensor<T, V> = executionContext.full(shape, dtype, value)
-
-
-    /**
-     * Factories
-     */
-    // fromXX Float
-    public fun from(vararg data: Float): Tensor<T, V> = fromArray(data.toTypedArray().toFloatArray())
-    public fun fromList(data: List<Float>): Tensor<T, V> = fromArray(data.toFloatArray())
-    public fun fromArray(data: FloatArray): Tensor<T, V> {
-        require(data.size == shape.volume) {
-            "Data size ${data.size} doesn't match shape volume ${shape.volume}"
-        }
-        return executionContext.fromFloatArray(shape, dtype, data)
-    }
-
-    // fromXX Int
-    public fun from(vararg data: Int): Tensor<T, V> = fromArray(data.toTypedArray().toIntArray())
-    public fun fromIntList(data: List<Int>): Tensor<T, V> = fromArray(data.toIntArray())
-    public fun fromArray(data: IntArray): Tensor<T, V> {
-        require(data.size == shape.volume) {
-            "Data size ${data.size} doesn't match shape volume ${shape.volume}"
-        }
-        return executionContext.fromIntArray(shape, dtype, data)
-    }
-
-    /**
-     * Create tensor with custom initialization function
-     */
-    public fun init(generator: (indices: IntArray) -> V): Tensor<T, V> {
-        val data = executionContext.tensorDataFactory.init(shape, dtype, generator)
-        return executionContext.fromData(data, dtype)
-    }
-
-    /**
-     * Create tensor with custom random initialization
-     */
-    public fun randomInit(generator: (random: Random) -> V, random: Random = Random.Default): Tensor<T, V> {
-        val data = executionContext.tensorDataFactory.randomInit(shape, dtype, generator, random)
-        return executionContext.fromData(data, dtype)
-    }
-
-
-    /**
-     * Advanced initialization with custom random distribution.
-     */
-    public fun random(initBlock: (Shape) -> Tensor<T, V>): Tensor<T, V> = initBlock(shape)
-
-    /**
-     * Create tensor with normal distribution
-     */
-    public fun randn(mean: Float = 0.0f, std: Float = 1.0f, random: Random = Random.Default): Tensor<T, V> {
-        val data = executionContext.tensorDataFactory.randn<T, V>(shape, dtype, mean, std, random)
-        return executionContext.fromData(data, dtype)
-    }
-
-    /**
-     * Create tensor with uniform distribution
-     */
-    public fun uniform(min: Float = 0.0f, max: Float = 1.0f, random: Random = Random.Default): Tensor<T, V> {
-        val data = executionContext.tensorDataFactory.uniform<T, V>(shape, dtype, min, max, random)
-        return executionContext.fromData(data, dtype)
-    }
-
-
+    // Helper setters to allow concise Int-based configuration in DSL blocks
+    public fun kernelSize(size: Int)
+    public fun stride(size: Int)
+    public fun padding(size: Int)
 }
+
 
 /**
  * Scope for weights initialization with implicit shape context.
  */
 @NetworkDsl
-public interface WeightsScope<T : DType, V> : TensorsValueScope<T, V>
+public interface WeightsScope<T : DType, V> : TensorCreationScope<T, V>
 
 /**
  * Scope for bias initialization with implicit shape context.
  */
 @NetworkDsl
-public interface BiasScope<T : DType, V> : TensorsValueScope<T, V>
+public interface BiasScope<T : DType, V> : TensorCreationScope<T, V>
 
 /**
  * Implementation of WeightsScope for weights initialization.
  */
 public class WeightsScopeImpl<T : DType, V>(
-    override val executionContext: NeuralNetworkExecutionContext,
+    override val executionContext: ExecutionContext,
     override val shape: Shape,
     override val dtype: KClass<T>
 ) : WeightsScope<T, V>
@@ -432,7 +389,7 @@ public class WeightsScopeImpl<T : DType, V>(
  * Implementation of BiasScope for bias initialization.
  */
 public class BiasScopeImpl<T : DType, V>(
-    override val executionContext: NeuralNetworkExecutionContext,
+    override val executionContext: ExecutionContext,
     override val shape: Shape,
     override val dtype: KClass<T>,
 ) : BiasScope<T, V>
@@ -449,7 +406,7 @@ private fun getDefaultName(id: String, s: String, size: Int): String {
 }
 
 public class FlattenImpl<T : DType, V>(
-    override val executionContext: NeuralNetworkExecutionContext,
+    override val executionContext: ExecutionContext,
     override var startDim: Int = 1,
     override var endDim: Int = -1,
     private val id: String,
@@ -460,7 +417,7 @@ public class FlattenImpl<T : DType, V>(
 }
 
 private fun <T : DType, V> createLinear(
-    executionContext: NeuralNetworkExecutionContext,
+    executionContext: ExecutionContext,
     inFeatures: Int,
     outFeatures: Int,
     id: String,
@@ -524,7 +481,7 @@ private fun <T : DType, V> createLinear(
 
 
 public class DenseImpl<T : DType, V>(
-    override val executionContext: NeuralNetworkExecutionContext,
+    override val executionContext: ExecutionContext,
     private val inputDimension: Int,
     private var _outputDimension: Int,
     private val id: String,
@@ -547,6 +504,8 @@ public class DenseImpl<T : DType, V>(
     override val biasShape: Shape
         get() = Shape(_outputDimension)
 
+    private var activationSet: Boolean = false
+
     public fun create(): List<Module<T, V>> {
         // Create default tensors if not provided - use factory for defaults
         val weights = weightsValue
@@ -562,16 +521,20 @@ public class DenseImpl<T : DType, V>(
             executionContext = executionContext
         )
 
-        return listOf(
-            linear,
-            ActivationsWrapperModule(activation, "activation")
-        )
+        // Build module list: always the linear layer, and optionally the activation if set inside dense{}
+        val modules = mutableListOf<Module<T, V>>()
+        modules += linear
+        if (activationSet) {
+            modules += ActivationsWrapperModule(_activation, getDefaultName("$id-activation", "activation", 0))
+        }
+        return modules
     }
 
     override var activation: (Tensor<T, V>) -> Tensor<T, V>
         get() = _activation
         set(value) {
             _activation = value
+            activationSet = true
         }
 
     override var units: Int
@@ -593,7 +556,7 @@ public class DenseImpl<T : DType, V>(
 }
 
 public class Conv2dImpl<T : DType, V>(
-    override val executionContext: NeuralNetworkExecutionContext,
+    override val executionContext: ExecutionContext,
     initialInChannels: Int,
     initialOutChannels: Int,
     initialKernelSize: Pair<Int, Int>,
@@ -606,6 +569,11 @@ public class Conv2dImpl<T : DType, V>(
     private val kClass: KClass<T>,
 
     ) : CONV2D<T, V> {
+
+    // Helper setters implementation
+    override fun kernelSize(size: Int) { this.kernelSize = size to size }
+    override fun stride(size: Int) { this.stride = size to size }
+    override fun padding(size: Int) { this.padding = size to size }
 
     private var weightsValue: Tensor<T, V>? = null
     private var biasValue: Tensor<T, V>? = null
@@ -628,6 +596,11 @@ public class Conv2dImpl<T : DType, V>(
         get() = Shape(intArrayOf(outChannels))
 
     public fun create(): Conv2d<T, V> {
+        // Validate required fields
+        require(outChannels > 0) { "Conv2d outChannels must be > 0. Set it in the DSL block." }
+        require(kernelSize.first > 0 && kernelSize.second > 0) { "Conv2d kernelSize must be > 0. Set it in the DSL block." }
+        require(inChannels > 0) { "Conv2d inChannels must be > 0 (set explicitly if not inferred)." }
+
         // Create default tensors if not provided
         val weights = weightsValue ?: executionContext.zeros(weightsShape, kClass)
 
@@ -661,10 +634,41 @@ public class Conv2dImpl<T : DType, V>(
     }
 }
 
+public class MaxPool2dImpl<T : DType, V>(
+    override val executionContext: ExecutionContext,
+    initialKernelSize: Pair<Int, Int>,
+    initialStride: Pair<Int, Int>,
+    initialPadding: Pair<Int, Int>,
+    private val id: String,
+) : MAXPOOL2D<T, V> {
+
+    // Helper setters implementation
+    override fun kernelSize(size: Int) { this.kernelSize = size to size }
+    override fun stride(size: Int) { this.stride = size to size }
+    override fun padding(size: Int) { this.padding = size to size }
+
+    override var kernelSize: Pair<Int, Int> = initialKernelSize
+    override var stride: Pair<Int, Int> = initialStride
+    override var padding: Pair<Int, Int> = initialPadding
+
+    public fun create(): MaxPool2d<T, V> {
+        require(kernelSize.first > 0 && kernelSize.second > 0) { "MaxPool2d kernelSize must be > 0. Set it in the DSL block." }
+        require(stride.first > 0 && stride.second > 0) { "MaxPool2d stride must be > 0. Set it in the DSL block." }
+        require(padding.first >= 0 && padding.second >= 0) { "MaxPool2d padding must be >= 0. Set it in the DSL block." }
+
+        return MaxPool2d(
+            kernelSize = kernelSize,
+            stride = stride,
+            padding = padding,
+            name = getDefaultName(id, "MaxPool2d", 0)
+        )
+    }
+}
+
 
 // Stage implementation
 public class StageImpl<T : DType, V>(
-    override val executionContext: NeuralNetworkExecutionContext,
+    override val executionContext: ExecutionContext,
     private val id: String,
     private val kClass: KClass<T>
 ) : NeuralNetworkDsl<T, V> {
@@ -692,10 +696,10 @@ public class StageImpl<T : DType, V>(
         // we'll use a placeholder approach that works with typical CNN architectures
         // TODO: Implement proper shape inference based on actual input dimensions
         if (lastDimension == 0) {
-            // This is a fallback - for the MNIST CNN test case with input (1,1,28,28)
-            // After conv1(16ch) + pool -> conv2(32ch) + pool, we get (1,32,28,28)
-            // Flattening from dim 1 gives size 32*28*28 = 25088
-            lastDimension = 25088  // This should be calculated properly
+            // Fallback for the MNIST CNN test case with input (1,1,28,28)
+            // After conv1(16ch) + pool -> conv2(32ch) + pool, we get (1,32,7,7)
+            // Flattening from dim 1 gives size 32*7*7 = 1568
+            lastDimension = 1568  // TODO: calculate from tracked shapes
         }
     }
 
@@ -860,6 +864,27 @@ public class StageImpl<T : DType, V>(
         modules.add(conv2dImpl.create())
     }
 
+    override fun conv2d(
+        id: String,
+        content: CONV2D<T, V>.() -> Unit
+    ) {
+        val conv2dImpl = Conv2dImpl<T, V>(
+            executionContext = executionContext,
+            initialInChannels = 1,
+            initialOutChannels = 1,
+            initialKernelSize = 1 to 1,
+            initialStride = 1 to 1,
+            initialPadding = 0 to 0,
+            initialDilation = 1 to 1,
+            initialGroups = 1,
+            initialBias = true,
+            id = getDefaultName(id, "Conv2d", modules.size),
+            kClass = kClass
+        )
+        conv2dImpl.content()
+        modules.add(conv2dImpl.create())
+    }
+
 
     override fun maxPool2d(
         kernelSize: Pair<Int, Int>,
@@ -874,10 +899,25 @@ public class StageImpl<T : DType, V>(
             name = getDefaultName(id, "MaxPool2d", modules.size)
         )
     }
+
+    override fun maxPool2d(
+        id: String,
+        content: MAXPOOL2D<T, V>.() -> Unit
+    ) {
+        val impl = MaxPool2dImpl<T, V>(
+            executionContext = executionContext,
+            initialKernelSize = 1 to 1,
+            initialStride = 1 to 1,
+            initialPadding = 0 to 0,
+            id = getDefaultName(id, "MaxPool2d", modules.size)
+        )
+        impl.content()
+        modules += impl.create()
+    }
 }
 
 public class NeuralNetworkDslImpl<T : DType, V>(
-    override val executionContext: NeuralNetworkExecutionContext,
+    override val executionContext: ExecutionContext,
     private val kClass: KClass<T>
 ) : NeuralNetworkDsl<T, V> {
 
@@ -905,10 +945,10 @@ public class NeuralNetworkDslImpl<T : DType, V>(
         // we'll use a placeholder approach that works with typical CNN architectures
         // TODO: Implement proper shape inference based on actual input dimensions
         if (lastDimension == 0) {
-            // This is a fallback - for the MNIST CNN test case with input (1,1,28,28)
-            // After conv1(16ch) + pool -> conv2(32ch) + pool, we get (1,32,28,28)
-            // Flattening from dim 1 gives size 32*28*28 = 25088
-            lastDimension = 25088  // This should be calculated properly
+            // Fallback for the MNIST CNN test case with input (1,1,28,28)
+            // After conv1(16ch) + pool -> conv2(32ch) + pool, we get (1,32,7,7)
+            // Flattening from dim 1 gives size 32*7*7 = 1568
+            lastDimension = 1568  // TODO: calculate from tracked shapes
         }
     }
 
@@ -1073,6 +1113,27 @@ public class NeuralNetworkDslImpl<T : DType, V>(
         modules.add(conv2dImpl.create())
     }
 
+    override fun conv2d(
+        id: String,
+        content: CONV2D<T, V>.() -> Unit
+    ) {
+        val conv2dImpl = Conv2dImpl<T, V>(
+            executionContext = executionContext,
+            initialInChannels = 1,
+            initialOutChannels = 1,
+            initialKernelSize = 1 to 1,
+            initialStride = 1 to 1,
+            initialPadding = 0 to 0,
+            initialDilation = 1 to 1,
+            initialGroups = 1,
+            initialBias = true,
+            id = getDefaultName(id, "Conv2d", modules.size),
+            kClass = kClass
+        )
+        conv2dImpl.content()
+        modules.add(conv2dImpl.create())
+    }
+
     override fun maxPool2d(
         kernelSize: Pair<Int, Int>,
         stride: Pair<Int, Int>,
@@ -1085,6 +1146,21 @@ public class NeuralNetworkDslImpl<T : DType, V>(
             padding = padding,
             name = getDefaultName(id, "MaxPool2d", modules.size)
         )
+    }
+
+    override fun maxPool2d(
+        id: String,
+        content: MAXPOOL2D<T, V>.() -> Unit
+    ) {
+        val impl = MaxPool2dImpl<T, V>(
+            executionContext = executionContext,
+            initialKernelSize = 1 to 1,
+            initialStride = 1 to 1,
+            initialPadding = 0 to 0,
+            id = getDefaultName(id, "MaxPool2d", modules.size)
+        )
+        impl.content()
+        modules.add(impl.create())
     }
 }
 

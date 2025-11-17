@@ -34,13 +34,21 @@ class DefaultCpuOpsExecutionDslTest {
 
             assertEquals(Shape(3), add.shape)
             // add -> [5,8,11]
-            assertEquals(5f, add.data[0]); assertEquals(8f, add.data[1]); assertEquals(11f, add.data[2])
+            assertFloatEquals(5f, add.data[0])
+            assertFloatEquals(8f, add.data[1])
+            assertFloatEquals(11f, add.data[2])
             // subtract -> [3,4,5]
-            assertEquals(3f, sub.data[0]); assertEquals(4f, sub.data[1]); assertEquals(5f, sub.data[2])
+            assertFloatEquals(3f, sub.data[0])
+            assertFloatEquals(4f, sub.data[1])
+            assertFloatEquals(5f, sub.data[2])
             // multiply -> [4,12,24]
-            assertEquals(4f, mul.data[0]); assertEquals(12f, mul.data[1]); assertEquals(24f, mul.data[2])
+            assertFloatEquals(4f, mul.data[0])
+            assertFloatEquals(12f, mul.data[1])
+            assertFloatEquals(24f, mul.data[2])
             // divide -> [4/1, 6/2, 8/3]
-            assertEquals(4f, div.data[0]); assertEquals(3f, div.data[1]); assertEquals(8f / 3f, div.data[2])
+            assertFloatEquals(4f, div.data[0])
+            assertFloatEquals(3f, div.data[1])
+            assertFloatEquals(8f / 3f, div.data[2])
         }
     }
 
@@ -53,10 +61,10 @@ class DefaultCpuOpsExecutionDslTest {
             val vec = tensor<FP32, Float> { shape(4) { init { i -> (i[0] + 1).toFloat() } } } // [1,2,3,4]
             val r1 = scalar * vec
             assertEquals(Shape(4), r1.shape)
-            assertEquals(1f, r1.data[0]); assertEquals(2f, r1.data[1]); assertEquals(3f, r1.data[2]); assertEquals(
-            4f,
-            r1.data[3]
-        )
+            assertFloatEquals(1f, r1.data[0])
+            assertFloatEquals(2f, r1.data[1])
+            assertFloatEquals(3f, r1.data[2])
+            assertFloatEquals(4f, r1.data[3])
 
             // vector + matrix (broadcast along rows)
             val mat = tensor<FP32, Float> {
@@ -70,8 +78,12 @@ class DefaultCpuOpsExecutionDslTest {
             println("=")
             println(r2.pprint())
             // Row 0 -> [11,11,11], Row 1 -> [14,14,14]
-            assertEquals(11f, r2.data[0, 0]); assertEquals(11f, r2.data[0, 1]); assertEquals(11f, r2.data[0, 2])
-            assertEquals(14f, r2.data[1, 0]); assertEquals(14f, r2.data[1, 1]); assertEquals(14f, r2.data[1, 2])
+            assertFloatEquals(11f, r2.data[0, 0])
+            assertFloatEquals(11f, r2.data[0, 1])
+            assertFloatEquals(11f, r2.data[0, 2])
+            assertFloatEquals(14f, r2.data[1, 0])
+            assertFloatEquals(14f, r2.data[1, 1])
+            assertFloatEquals(14f, r2.data[1, 2])
         }
     }
 
@@ -91,25 +103,25 @@ class DefaultCpuOpsExecutionDslTest {
 
             // Assertions
             // rAdd -> ones
-            assertEquals(1f, rAdd.data[0, 0]); assertEquals(1f, rAdd.data[0, 1]); assertEquals(
-            1f,
-            rAdd.data[1, 0]
-        ); assertEquals(1f, rAdd.data[1, 1])
+            assertFloatEquals(1f, rAdd.data[0, 0])
+            assertFloatEquals(1f, rAdd.data[0, 1])
+            assertFloatEquals(1f, rAdd.data[1, 0])
+            assertFloatEquals(1f, rAdd.data[1, 1])
             // rSub -> ones
-            assertEquals(1f, rSub.data[0, 0]); assertEquals(1f, rSub.data[0, 1]); assertEquals(
-            1f,
-            rSub.data[1, 0]
-        ); assertEquals(1f, rSub.data[1, 1])
+            assertFloatEquals(1f, rSub.data[0, 0])
+            assertFloatEquals(1f, rSub.data[0, 1])
+            assertFloatEquals(1f, rSub.data[1, 0])
+            assertFloatEquals(1f, rSub.data[1, 1])
             // rMul -> zeros
-            assertEquals(0f, rMul.data[0, 0]); assertEquals(0f, rMul.data[0, 1]); assertEquals(
-            0f,
-            rMul.data[1, 0]
-        ); assertEquals(0f, rMul.data[1, 1])
+            assertFloatEquals(0f, rMul.data[0, 0])
+            assertFloatEquals(0f, rMul.data[0, 1])
+            assertFloatEquals(0f, rMul.data[1, 0])
+            assertFloatEquals(0f, rMul.data[1, 1])
             // rDiv -> three
-            assertEquals(3f, rDiv.data[0, 0]); assertEquals(3f, rDiv.data[0, 1]); assertEquals(
-            3f,
-            rDiv.data[1, 0]
-        ); assertEquals(3f, rDiv.data[1, 1])
+            assertFloatEquals(3f, rDiv.data[0, 0])
+            assertFloatEquals(3f, rDiv.data[0, 1])
+            assertFloatEquals(3f, rDiv.data[1, 0])
+            assertFloatEquals(3f, rDiv.data[1, 1])
         }
     }
 
@@ -157,5 +169,60 @@ class DefaultCpuOpsExecutionDslTest {
             assertEquals(0, r.data[1]) // div by zero -> 0 (per implementation)
             assertEquals(15, r.data[2]) // 30/2
         }
+    }
+
+    @Test
+    fun fp32_broadcast_vector_3_to_1_3_1_1_and_multiply() {
+        val ctx = DirectCpuExecutionContext()
+        computation(ctx) {
+            // Input x of shape (N=2, C=3, H=2, W=2), values depend only on channel: [1,2,3]
+            val x = tensor<FP32, Float> {
+                shape(2, 3, 2, 2) { init { idx -> (idx[1] + 1).toFloat() } }
+            }
+            // Factors of shape (3): [0.1, 0.2, 0.3]
+            val factors = tensor<FP32, Float> { shape(1,3) { init { i -> ((i[1] + 1) * 0.1f) } } }
+
+            // Reshape like PyTorch view(1,3,1,1)
+            val factors4311 = ctx.ops.reshape(factors, Shape(1, 3, 1, 1))
+
+            println(factors.shape)
+            println("*")
+            println(factors4311.shape)
+
+            // Multiply with broadcasting over N,H,W
+            val scaled = x * factors4311
+
+            println(scaled.shape)
+
+            // Result shape follows broadcasting to the common shape of operands: (2,3,2,2)
+            assertEquals(Shape(2, 3, 2, 2), scaled.shape)
+
+
+
+            // Check some positions: channel 0 scaled by 0.1, ch1 by 0.2, ch2 by 0.3
+            // Batch 0
+            assertFloatEquals(1f * 0.1f, scaled.data[0, 0, 0, 0])
+            assertFloatEquals(2f * 0.2f, scaled.data[0, 1, 1, 1])
+            assertFloatEquals(3f * 0.3f, scaled.data[0, 2, 0, 1])
+            // Batch 1
+            assertFloatEquals(1f * 0.1f, scaled.data[1, 0, 1, 0])
+            assertFloatEquals(2f * 0.2f, scaled.data[1, 1, 0, 1])
+            assertFloatEquals(3f * 0.3f, scaled.data[1, 2, 1, 1])
+
+            // Also verify constructing (1,3,1,1) via chained unsqueeze yields same result
+            val u = ctx.ops.unsqueeze(ctx.ops.unsqueeze(factors, 2), 3)
+            val scaledU = x * u
+            assertEquals(scaled.shape, scaledU.shape)
+            // Spot check equality
+            assertFloatEquals(scaled.data[1, 2, 1, 0], scaledU.data[1, 2, 1, 0])
+        }
+    }
+
+    private fun assertFloatEquals(expected: Float, actual: Float, message: String? = null) {
+        assertEquals(expected, actual, FLOAT_TOLERANCE, message)
+    }
+
+    private companion object {
+        private const val FLOAT_TOLERANCE = 1e-6f
     }
 }
