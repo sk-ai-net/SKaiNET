@@ -1,89 +1,105 @@
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENCE)
 [![Maven Central](https://img.shields.io/maven-central/v/sk.ainet.core/skainet-lang-core.svg)](https://central.sonatype.com/artifact/sk.ainet.core/skainet-lang-core)
 
 # SKaiNET
 
-**SKaiNET** is an open-source deep learning framework written in Kotlin, designed with developers in mind to enable the creation modern AI powered applications with ease.
+**SKaiNET** is an open-source deep learning framework written in Kotlin Mutliplatform, designed with developers in mind to enable the creation modern AI powered applications with ease.
 
-## Quick example: training/eval phases with context wrappers
+## Use it
 
-SKaiNET provides small helper scopes to override the execution phase for a given call without mutating your base context:
+- From Kotlin code in apps, libraries, CLIs
+- In Kotlin Notebooks for quick exploration
+- With sample projects to learn patterns
 
-- train(ctx) { ... } — runs the block with phase = TRAIN
-- eval(ctx) { ... } — runs the block with phase = EVAL
+See also CHANGELOG for what’s new in 0.2.0.
 
-This is useful for modules that behave differently in training vs evaluation (e.g., Dropout, BatchNorm).
+## Quick start
 
-Kotlin
+Gradle (Kotlin DSL):
 
-import sk.ainet.context.train
-import sk.ainet.context.eval
-import sk.ainet.lang.nn.DefaultNeuralNetworkExecutionContext
-// import your model class that defines forward(x, ctx)
-
-val base = DefaultNeuralNetworkExecutionContext() // default phase is EVAL
-val x = /* prepare your input tensor */
-val model = /* construct your model */
-
-// Force TRAIN phase for this call only
-val yTrain = train(base) { ctx ->
-    model.forward(x, ctx)
+```kotlin
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+    }
 }
 
-// Force EVAL phase for this call only
-val yEval = eval(base) { ctx ->
-    model.forward(x, ctx)
+dependencies {
+    // minimal dependency with simple CPU backend
+    implementation("sk.ainet.core:skainet-lang-core:0.2.0")
+    implementation("sk.ainet.core:skainet-backend-cpu:0.2.0")
+    
+    // simple model zoo
+    implementation("sk.ainet.core:skainet-lang-models:0.2.0")
+    
+    // Optional I/O (e.g., GGUF loader, JSON)
+    implementation("sk.ainet.core:skainet-io-core:0.2.0")
+    implementation("sk.ainet.core:skainet-io-gguf:0.2.0")
 }
+```
 
-// You can still call with the base context directly (uses its phase)
-val yBase = model.forward(x, base)
+Maven:
 
-## Development Practices
+```xml
+<dependency>
+  <groupId>sk.ainet.core</groupId>
+  <artifactId>skainet-lang-core</artifactId>
+  <version>0.2.0</version>
+</dependency>
+```
 
-This project follows established development practices for maintaining code quality and release management:
+## Samples and notebooks
 
-* **Branching Model**: We use [GitFlow](https://nvie.com/posts/a-successful-git-branching-model/) as our branching strategy for managing feature development, releases, and hotfixes.
-* **Versioning**: We follow [Semantic Versioning (SemVer)](https://semver.org/) for all releases, ensuring predictable version numbering based on the nature of changes.
+- Sample app: https://github.com/sk-ai-net/skainet-samples/tree/feature/MNIST/SinusApproximator
+- Kotlin Notebook: https://github.com/sk-ai-net/skainet-notebook
 
-## Reflective Documentation (short overview)
 
-SKaiNET includes a reflective documentation system that keeps docs in sync with the code. During the build, a KSP processor extracts operator metadata (signatures, parameters, backend availability, implementation status) into a JSON file. A small DocGen tool then converts this JSON into AsciiDoc fragments and pages.
+## 0.2.0 highlights (with tiny snippets)
 
-- Source of truth (generated): skainet-lang/skainet-lang-core/build/generated/ksp/metadata/commonMain/resources/operators.json
-- Generated docs output: docs/modules/operators/_generated_/
-- Asciidoctor site output: build/docs/asciidoc/ (if you run an Asciidoctor task locally)
+- Training/Eval phases made easy
 
-### Quick start: generate reflective docs
+```kotlin
+val base = DefaultNeuralNetworkExecutionContext() // default = EVAL
+val yTrain = train(base) { ctx -> model.forward(x, ctx) }
+val yEval  = eval(base)  { ctx -> model.forward(x, ctx) }
+```
 
-Use any of the following Gradle tasks from the project root:
+- Dropout and BatchNorm layers
 
-1) Full pipeline (recommended)
-   ./gradlew generateDocs
-   - Runs KSP to produce operators.json (if needed)
-   - Generates AsciiDoc files under docs/modules/operators/_generated_
-   - Optionally, you can run an Asciidoctor task to build an HTML site locally (output under build/docs/asciidoc)
+```kotlin
+val y = x
+    .let { dropout(p = 0.1).forward(it, ctx) }
+    .let { batchNorm(numFeatures = 64).forward(it, ctx) }
+```
 
-2) Operators documentation only
-   ./gradlew generateOperatorDocs
-   - Depends on KSP; runs the built-in generateDocs task and then Asciidoctor
+- Conv2D + MaxPool in the NN DSL
 
-Open the generated AsciiDoc sources in docs/modules/operators/_generated_ with your preferred AsciiDoc viewer. If you build an HTML site locally with Asciidoctor, open build/docs/asciidoc.
+```kotlin
+val model = nn {
+    conv2d(outChannels = 16, kernel = 3)
+    maxPool2d(kernel = 2)
+    dense(out = 10)
+}
+```
 
-### Documentation tooling
+- Data API with MNIST loader and JSON dataset support
 
-We now use the Gradle plugin (buildSrc) only. The former skainet-lang-export-ops module has been removed. All everyday workflows are covered by:
-- generateDocs — converts KSP JSON to AsciiDoc
-- validateOperatorSchema — validates generated operators.json against the JSON schema
+```kotlin
+val ds = MNIST.load(train = true) // platform-aware loader
+val (batchX, batchY) = ds.nextBatch(64)
+```
 
-Run from the project root, for example:
-- ./gradlew generateDocs
-- ./gradlew validateOperatorSchema
+- GGUF model loading (initial)
 
----
+```kotlin
+val gguf = GGUF.read("/path/to/model.gguf")
+println("Tensors: ${gguf.tensors.size}")
+```
 
-## Development Practices
+- SIMD/Vector API acceleration on JVM; MatMul, tril, pooling ops; forward hooks and simple tape recording; unified tensor creation contexts; nested data blocks returning tensors.
 
-This project follows established development practices for maintaining code quality and release management:
+See CHANGELOG.md for the full list.
 
-* Branching Model: We use GitFlow as our branching strategy for managing feature development, releases, and hotfixes.
-* Versioning: We follow Semantic Versioning (SemVer) for all releases, ensuring predictable version numbering based on the nature of changes.
+## License
+
+MIT — see LICENSE.
