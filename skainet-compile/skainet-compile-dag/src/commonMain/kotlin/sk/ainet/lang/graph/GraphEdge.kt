@@ -1,5 +1,7 @@
 package sk.ainet.lang.graph
 
+import sk.ainet.lang.tensor.ops.TensorSpec
+
 /**
  * Represents an edge in the computational graph, connecting two nodes
  * and representing tensor flow between operations.
@@ -9,32 +11,32 @@ public data class GraphEdge(
      * Unique identifier for this edge
      */
     public val id: String,
-    
+
     /**
      * The source node (producer of the tensor)
      */
     public val source: GraphNode,
-    
+
     /**
      * The destination node (consumer of the tensor)
      */
     public val destination: GraphNode,
-    
+
     /**
      * Index of the output from the source node (for multi-output operations)
      */
     public val sourceOutputIndex: Int = 0,
-    
+
     /**
      * Index of the input to the destination node (for multi-input operations)
      */
     public val destinationInputIndex: Int = 0,
-    
+
     /**
      * Specification of the tensor flowing through this edge
      */
     public val tensorSpec: TensorSpec,
-    
+
     /**
      * Additional metadata for this edge
      */

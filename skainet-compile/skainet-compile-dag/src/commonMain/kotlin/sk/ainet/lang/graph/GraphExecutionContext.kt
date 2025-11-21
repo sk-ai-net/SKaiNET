@@ -7,7 +7,7 @@ import sk.ainet.lang.graph.TapeStack
  * Context for managing execution state, including mode switching,
  * device management, and memory management.
  */
-public interface GraphExecutionContext<V> : ExecutionContext<V> {
+public interface GraphExecutionContext : ExecutionContext {
 
 
     /**
@@ -27,19 +27,9 @@ public interface GraphExecutionContext<V> : ExecutionContext<V> {
 
 
     /**
-     * Get memory usage information
-     */
-    public fun getMemoryInfo(): MemoryInfo
-
-    /**
      * Force garbage collection
      */
     public fun collectGarbage()
-
-    /**
-     * Get execution statistics
-     */
-    public fun getExecutionStats(): ExecutionStats
 
     /**
      * Reset execution statistics

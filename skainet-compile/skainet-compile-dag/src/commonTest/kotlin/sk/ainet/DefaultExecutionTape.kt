@@ -1,14 +1,15 @@
 package sk.ainet
 
+import sk.ainet.lang.graph.ComputeGraph
 import sk.ainet.lang.graph.ExecutionTape
 import sk.ainet.lang.graph.GradientTape
 import sk.ainet.lang.graph.GraphEdge
 import sk.ainet.lang.graph.GraphNode
-import sk.ainet.lang.graph.Operation
 import sk.ainet.lang.graph.RecordedOperation
 import sk.ainet.lang.graph.TapeStack
-import sk.ainet.lang.graph.TensorSpec
 import sk.ainet.lang.tensor.Tensor
+import sk.ainet.lang.tensor.ops.Operation
+import sk.ainet.lang.tensor.ops.TensorSpec
 import sk.ainet.lang.types.DType
 
 /**

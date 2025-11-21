@@ -1,6 +1,8 @@
 package sk.ainet.lang.graph
 
 import sk.ainet.lang.tensor.Tensor
+import sk.ainet.lang.tensor.ops.Operation
+import sk.ainet.lang.tensor.ops.TensorSpec
 import sk.ainet.lang.types.DType
 
 /**
@@ -77,22 +79,22 @@ public data class RecordedOperation(
      * The operation that was performed
      */
     public val operation: Operation,
-    
+
     /**
      * Input tensor specifications
      */
     public val inputs: List<TensorSpec>,
-    
+
     /**
      * Output tensor specifications
      */
     public val outputs: List<TensorSpec>,
-    
+
     /**
      * Timestamp when the operation was recorded (sequential counter)
      */
     public val timestamp: Long = 0L,
-    
+
     /**
      * Additional metadata for this recorded operation
      */

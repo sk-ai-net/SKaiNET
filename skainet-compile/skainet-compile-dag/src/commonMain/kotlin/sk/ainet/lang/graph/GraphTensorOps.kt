@@ -1,20 +1,20 @@
-package sk.ainet.lang.tensor.ops
+package sk.ainet.lang.graph
 
 import sk.ainet.context.GraphExecutionContext
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.types.DType
-import sk.ainet.lang.graph.*
+import sk.ainet.lang.tensor.ops.*
 
 /**
  * Graph-aware implementation of TensorOps that records operations as graph nodes.
  * This implementation extends the base TensorOps interface with graph node creation methods.
  */
-public class GraphTensorOps<V>(
-    private val baseOps: TensorOps<V>,
+public class GraphTensorOps(
+    private val baseOps: TensorOps,
     private val graph: ComputeGraph,
-    private val executionContext: GraphExecutionContext<V>
-) : TensorOps<V> {
+    private val executionContext: GraphExecutionContext
+) : TensorOps {
 
     private var nodeCounter = 0L
     
@@ -22,7 +22,7 @@ public class GraphTensorOps<V>(
         return "${operationName}_${++nodeCounter}"
     }
     
-    private fun createTensorSpec(tensor: Tensor<*, V>, name: String): TensorSpec {
+    private fun createTensorSpec(tensor: Tensor<*, *>, name: String): TensorSpec {
         return TensorSpec(
             name = name,
             shape = tensor.shape.dimensions.toList(),
@@ -32,7 +32,7 @@ public class GraphTensorOps<V>(
         )
     }
 
-    private fun <T : DType> ensureInputNode(tensor: Tensor<T, V>, inputName: String): GraphNode {
+    private fun <T : DType, V> ensureInputNode(tensor: Tensor<T, V>, inputName: String): GraphNode {
         // Check if a node for this tensor already exists
         val existingNode = graph.nodes.find { 
             it.operation.type == "input" && it.outputs.any { spec -> spec.name == inputName }
@@ -59,7 +59,7 @@ public class GraphTensorOps<V>(
     }
 
     // Basic mathematical operations
-    override fun <T : DType> add(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> add(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
         val result = baseOps.add(a, b)
         
         if (executionContext.isRecording) {
@@ -87,7 +87,7 @@ public class GraphTensorOps<V>(
         return result
     }
 
-    override fun <T : DType> subtract(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> subtract(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
         val result = baseOps.subtract(a, b)
         
         if (executionContext.isRecording) {
@@ -106,7 +106,7 @@ public class GraphTensorOps<V>(
         return result
     }
 
-    override fun <T : DType> multiply(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> multiply(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
         val result = baseOps.multiply(a, b)
         
         if (executionContext.isRecording) {
@@ -125,7 +125,7 @@ public class GraphTensorOps<V>(
         return result
     }
 
-    override fun <T : DType> divide(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> divide(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
         val result = baseOps.divide(a, b)
         
         if (executionContext.isRecording) {
@@ -145,7 +145,7 @@ public class GraphTensorOps<V>(
     }
 
     // Linear algebra operations
-    override fun <T : DType> matmul(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> matmul(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
         val result = baseOps.matmul(a, b)
         
         if (executionContext.isRecording) {
@@ -164,7 +164,7 @@ public class GraphTensorOps<V>(
         return result
     }
 
-    override fun <T : DType> transpose(tensor: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> transpose(tensor: Tensor<T, V>): Tensor<T, V> {
         val result = baseOps.transpose(tensor)
         
         if (executionContext.isRecording) {
@@ -181,7 +181,7 @@ public class GraphTensorOps<V>(
     }
 
     // Convolutional operations
-    override fun <T : DType> conv2d(
+    override fun <T : DType, V> conv2d(
         input: Tensor<T, V>,
         weight: Tensor<T, V>,
         bias: Tensor<T, V>?,
@@ -219,7 +219,7 @@ public class GraphTensorOps<V>(
     }
 
     // Pooling operations
-    override fun <T : DType> maxPool2d(
+    override fun <T : DType, V> maxPool2d(
         input: Tensor<T, V>,
         kernelSize: Pair<Int, Int>,
         stride: Pair<Int, Int>,
@@ -246,7 +246,7 @@ public class GraphTensorOps<V>(
     }
 
     // Shape operations
-    override fun <T : DType> reshape(tensor: Tensor<T, V>, newShape: Shape): Tensor<T, V> {
+    override fun <T : DType, V> reshape(tensor: Tensor<T, V>, newShape: Shape): Tensor<T, V> {
         val result = baseOps.reshape(tensor, newShape)
         
         if (executionContext.isRecording) {
@@ -263,7 +263,7 @@ public class GraphTensorOps<V>(
         return result
     }
 
-    override fun <T : DType> flatten(tensor: Tensor<T, V>, startDim: Int, endDim: Int): Tensor<T, V> {
+    override fun <T : DType, V> flatten(tensor: Tensor<T, V>, startDim: Int, endDim: Int): Tensor<T, V> {
         val result = baseOps.flatten(tensor, startDim, endDim)
         
         if (executionContext.isRecording) {
@@ -284,7 +284,7 @@ public class GraphTensorOps<V>(
     }
 
     // Activation functions
-    override fun <T : DType> relu(tensor: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> relu(tensor: Tensor<T, V>): Tensor<T, V> {
         val result = baseOps.relu(tensor)
         
         if (executionContext.isRecording) {
@@ -300,7 +300,7 @@ public class GraphTensorOps<V>(
         return result
     }
 
-    override fun <T : DType> softmax(tensor: Tensor<T, V>, dim: Int): Tensor<T, V> {
+    override fun <T : DType, V> softmax(tensor: Tensor<T, V>, dim: Int): Tensor<T, V> {
         val result = baseOps.softmax(tensor, dim)
         
         if (executionContext.isRecording) {
@@ -317,7 +317,7 @@ public class GraphTensorOps<V>(
         return result
     }
 
-    override fun <T : DType> sigmoid(tensor: Tensor<T, V>): Tensor<T, V> {
+    override fun <T : DType, V> sigmoid(tensor: Tensor<T, V>): Tensor<T, V> {
         val result = baseOps.sigmoid(tensor)
         
         if (executionContext.isRecording) {
@@ -334,7 +334,7 @@ public class GraphTensorOps<V>(
     }
 
     // Enhanced shape operations with graph recording
-    override fun <T : DType> squeeze(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> {
+    override fun <T : DType, V> squeeze(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> {
         val result = baseOps.squeeze(tensor, dim)
         
         if (executionContext.isRecording) {
@@ -351,7 +351,7 @@ public class GraphTensorOps<V>(
         return result
     }
 
-    override fun <T : DType> unsqueeze(tensor: Tensor<T, V>, dim: Int): Tensor<T, V> {
+    override fun <T : DType, V> unsqueeze(tensor: Tensor<T, V>, dim: Int): Tensor<T, V> {
         val result = baseOps.unsqueeze(tensor, dim)
         
         if (executionContext.isRecording) {
@@ -369,13 +369,15 @@ public class GraphTensorOps<V>(
     }
 
     // Delegate remaining operations to base implementation
-    override fun <T : DType> concat(tensors: List<Tensor<T, V>>, dim: Int): Tensor<T, V> = baseOps.concat(tensors, dim)
-    override fun <T : DType> split(tensor: Tensor<T, V>, splitSize: Int, dim: Int): List<Tensor<T, V>> = baseOps.split(tensor, splitSize, dim)
-    override fun <T : DType> silu(tensor: Tensor<T, V>): Tensor<T, V> = baseOps.silu(tensor)
-    override fun <T : DType> gelu(tensor: Tensor<T, V>): Tensor<T, V> = baseOps.gelu(tensor)
-    override fun <T : DType> sum(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> = baseOps.sum(tensor, dim)
-    override fun <T : DType> mean(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> = baseOps.mean(tensor, dim)
-    override fun <T : DType> variance(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> = baseOps.variance(tensor, dim)
-    override fun <T : DType> sqrt(tensor: Tensor<T, V>): Tensor<T, V> = baseOps.sqrt(tensor)
-    override fun <TFrom : DType, TTo : DType> convert(tensor: Tensor<TFrom, V>, targetType: TTo): Tensor<TTo, V> = baseOps.convert(tensor, targetType)
+    override fun <T : DType, V> concat(tensors: List<Tensor<T, V>>, dim: Int): Tensor<T, V> = baseOps.concat(tensors, dim)
+    override fun <T : DType, V> split(tensor: Tensor<T, V>, splitSize: Int, dim: Int): List<Tensor<T, V>> = baseOps.split(tensor, splitSize, dim)
+    override fun <T : DType, V> silu(tensor: Tensor<T, V>): Tensor<T, V> = baseOps.silu(tensor)
+    override fun <T : DType, V> gelu(tensor: Tensor<T, V>): Tensor<T, V> = baseOps.gelu(tensor)
+    override fun <T : DType, V> sum(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> = baseOps.sum(tensor, dim)
+    override fun <T : DType, V> mean(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> = baseOps.mean(tensor, dim)
+    override fun <T : DType, V> variance(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> = baseOps.variance(tensor, dim)
+    override fun <T : DType, V> sqrt(tensor: Tensor<T, V>): Tensor<T, V> = baseOps.sqrt(tensor)
+    override fun <T : DType, TTo : DType, V> convert(tensor: Tensor<T, V>, targetType: TTo): Tensor<TTo, V> = baseOps.convert(tensor, targetType)
+
+    override fun <T : DType, V> tril(tensor: Tensor<T, V>, k: Int): Tensor<T, V> = baseOps.tril(tensor, k)
 }

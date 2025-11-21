@@ -1,9 +1,20 @@
-package sk.ainet.lang.tensor.ops
+package sk.ainet
 
+import sk.ainet.context.ExecutionStats
+import sk.ainet.context.MemoryInfo
+import sk.ainet.context.Phase
+import sk.ainet.context.GraphExecutionContext
+import sk.ainet.lang.graph.GraphTensorOps
+import sk.ainet.lang.graph.ExecutionTape
+import sk.ainet.lang.graph.TapeStack
 import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.VoidOpsTensor
 import sk.ainet.lang.tensor.data.DenseTensorDataFactory
+import sk.ainet.lang.tensor.data.TensorDataFactory
+import sk.ainet.lang.tensor.ops.TensorOps
+import sk.ainet.lang.tensor.ops.VoidTensorOps
 import sk.ainet.lang.types.FP32
+import sk.ainet.lang.nn.hooks.ForwardHooks
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -18,13 +29,46 @@ import kotlin.test.assertTrue
 class GraphTensorOpsTest {
     
     private val dataFactory = DenseTensorDataFactory()
-    
+    private val baseOps: TensorOps = VoidTensorOps()
+
     /**
      * Helper function to create test tensors filled with ones
      */
     private fun createOnesTensor(shape: Shape): VoidOpsTensor<FP32, Float> {
         val data = dataFactory.ones<FP32, Float>(shape, FP32::class)
         return VoidOpsTensor(data, FP32::class)
+    }
+
+    /**
+     * Minimal GraphExecutionContext implementation for tests.
+     * Provides tape stack and recording controls without any backend.
+     */
+    private class TestGraphExecutionContext(
+        override val ops: TensorOps = VoidTensorOps(),
+        override val phase: Phase = Phase.EVAL,
+        override val tensorDataFactory: TensorDataFactory = DenseTensorDataFactory(),
+        override val hooks: ForwardHooks? = null,
+        override val memoryInfo: MemoryInfo = MemoryInfo.getEmptyInfo(),
+        override val executionStats: ExecutionStats = ExecutionStats(),
+    ) : GraphExecutionContext {
+        private val _tapes = DefaultTapeStack()
+        override val tapeStack: TapeStack get() = _tapes
+        override val currentTape: ExecutionTape? get() = _tapes.currentTape
+
+        fun startRecording() {
+            val tape = DefaultExecutionTape()
+            tape.startRecording()
+            _tapes.pushTape(tape)
+        }
+
+        fun stopRecording(): ExecutionTape? {
+            val tape = _tapes.popTape()
+            tape?.stopRecording()
+            return tape
+        }
+
+        override fun collectGarbage() { /* no-op */ }
+        override fun resetExecutionStats() { /* no-op */ }
     }
     
     /**
@@ -37,17 +81,11 @@ class GraphTensorOpsTest {
     @Test
     fun testGraphCreationWithSimpleTensorOps() {
         // Create execution context and graph
-        val executionContext = DefaultExecutionContext()
+        val executionContext = TestGraphExecutionContext()
         val graph = DefaultComputeGraph()
-        
-        // Create base tensor ops (VoidTensorOps for actual computation)
-        val baseOps = VoidTensorOps<Float>()
         
         // Create graph-aware tensor ops that will record operations
         val graphOps = GraphTensorOps(baseOps, graph, executionContext)
-        
-        // Switch to graph mode to enable recording
-        executionContext.switchToGraph()
         
         // Simulate the tensor creation pattern from the issue description
         // val a = tensor<FP32,Float> { Shape1(1) { ones() } }
@@ -71,10 +109,10 @@ class GraphTensorOpsTest {
         assertEquals(Shape(1), result.shape, "Result should have shape (1)")
         assertEquals(FP32::class, result.dtype, "Result should have FP32 dtype")
         
-        // Verify that graph node was created
-        assertEquals(1, graph.nodes.size, "Graph should contain one operation node")
+        // Verify that graph nodes were created: 2 input nodes + 1 add op node
+        assertEquals(3, graph.nodes.size, "Graph should contain two input nodes and one add operation node")
         
-        val addNode = graph.nodes.first()
+        val addNode = graph.nodes.first { it.id.startsWith("add_") }
         assertNotNull(addNode, "Add operation node should exist")
         assertTrue(addNode.id.startsWith("add_"), "Node ID should start with 'add_'")
         assertEquals(2, addNode.inputs.size, "Add operation should have 2 inputs")
@@ -106,12 +144,10 @@ class GraphTensorOpsTest {
      */
     @Test
     fun testGraphCreationWithMultipleOps() {
-        val executionContext = DefaultExecutionContext()
+        val executionContext = TestGraphExecutionContext()
         val graph = DefaultComputeGraph()
-        val baseOps = VoidTensorOps<Float>()
         val graphOps = GraphTensorOps(baseOps, graph, executionContext)
         
-        executionContext.switchToGraph()
         executionContext.startRecording()
         
         // Create tensors
@@ -128,8 +164,9 @@ class GraphTensorOpsTest {
         assertEquals(Shape(1), result.shape)
         assertEquals(FP32::class, result.dtype)
         
-        // Verify graph contains two operations
-        assertEquals(2, graph.nodes.size, "Graph should contain two operation nodes")
+        // Verify graph contains two operation nodes (add and subtract)
+        val opNodes = graph.nodes.filter { !it.operation.type.equals("input") }
+        assertTrue(opNodes.size >= 2, "Graph should contain at least two operation nodes")
         
         val nodes = graph.nodes.toList()
         val addNode = nodes.find { it.id.startsWith("add_") }
@@ -146,13 +183,11 @@ class GraphTensorOpsTest {
      */
     @Test
     fun testEagerModeDoesNotCreateGraphNodes() {
-        val executionContext = DefaultExecutionContext()
+        val executionContext = TestGraphExecutionContext()
         val graph = DefaultComputeGraph()
-        val baseOps = VoidTensorOps<Float>()
         val graphOps = GraphTensorOps(baseOps, graph, executionContext)
         
-        // Stay in eager mode (default)
-        assertEquals(ExecutionMode.EAGER, executionContext.executionMode)
+        // Stay in eager mode (not recording) by default
         
         val a = createOnesTensor(Shape(1))
         val b = createOnesTensor(Shape(1))

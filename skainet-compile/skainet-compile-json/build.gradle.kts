@@ -1,5 +1,3 @@
-import org.gradle.kotlin.dsl.implementation
-import org.gradle.kotlin.dsl.project
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -8,8 +6,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.vanniktech.mavenPublish)
-    alias(libs.plugins.kover)
-    alias(libs.plugins.binary.compatibility.validator)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 kotlin {
@@ -24,29 +21,30 @@ kotlin {
 
     iosArm64()
     iosSimulatorArm64()
-    macosArm64 ()
-    linuxX64 ()
-    linuxArm64 ()
+    macosArm64()
+    linuxX64()
+    linuxArm64()
 
     jvm()
+
+    js {
+        browser()
+    }
 
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser()
-        binaries.executable()
     }
 
     sourceSets {
         commonMain.dependencies {
-            api(project(":skainet-lang:skainet-lang-core"))
-            api(project(":skainet-compile:skainet-compile-core"))
+            implementation(project(":skainet-lang:skainet-lang-core"))
+            implementation(project(":skainet-lang:skainet-compile-core"))
+            implementation(libs.kotlinx.serialization.json)
         }
 
         commonTest.dependencies {
             implementation(libs.kotlin.test)
-            implementation(project(":skainet-backends:skainet-backend-cpu"))
-            implementation(project(":skainet-lang:skainet-lang-models"))
-
         }
     }
 }

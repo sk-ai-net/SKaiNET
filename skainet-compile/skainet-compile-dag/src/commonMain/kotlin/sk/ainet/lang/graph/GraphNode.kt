@@ -1,5 +1,8 @@
 package sk.ainet.lang.graph
 
+import sk.ainet.lang.tensor.ops.Operation
+import sk.ainet.lang.tensor.ops.TensorSpec
+
 /**
  * Represents a node in the computational graph containing operation metadata.
  * Each node represents a single operation with its inputs, outputs, and parameters.
@@ -9,22 +12,22 @@ public data class GraphNode(
      * Unique identifier for this node
      */
     public val id: String,
-    
+
     /**
      * The operation this node represents
      */
     public val operation: Operation,
-    
+
     /**
      * Metadata about inputs to this operation
      */
     public val inputs: List<TensorSpec>,
-    
+
     /**
      * Metadata about outputs from this operation
      */
     public val outputs: List<TensorSpec>,
-    
+
     /**
      * Additional metadata for this node
      */

@@ -1,5 +1,7 @@
 package sk.ainet.lang.graph
 
+import sk.ainet.lang.tensor.ops.ValidationResult
+
 /**
  * Interface for managing a computational graph with nodes and edges.
  * This represents the core data structure for graph-based model execution.

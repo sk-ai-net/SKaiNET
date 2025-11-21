@@ -1,10 +1,8 @@
 package sk.ainet.lang.graph
 
-import sk.ainet.context.ExecutionStats
 import sk.ainet.context.GraphExecutionContext
 import sk.ainet.lang.tensor.data.TensorDataFactory
 import sk.ainet.lang.tensor.data.DenseTensorDataFactory
-import sk.ainet.lang.types.DType
 
 /**
  * Result of graph execution containing the computed result and execution metadata
@@ -36,7 +34,7 @@ public data class GraphExecutionResult<V>(
  */
 public fun <V, R> exec(
     dataFactory: TensorDataFactory = DenseTensorDataFactory(),
-    block: GraphExecutionContext<V>.() -> R
+    block: GraphExecutionContext.() -> R
 ) {//}: GraphExecutionResult<V> {
     /*
 

@@ -1,7 +1,9 @@
 package sk.ainet
 
+import sk.ainet.lang.graph.ComputeGraph
 import sk.ainet.lang.graph.GraphEdge
 import sk.ainet.lang.graph.GraphNode
+import sk.ainet.lang.tensor.ops.ValidationResult
 
 /**
  * Default implementation of ComputeGraph with topological sorting and validation
