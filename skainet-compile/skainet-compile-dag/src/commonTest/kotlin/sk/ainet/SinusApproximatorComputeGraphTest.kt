@@ -1,7 +1,16 @@
-package sk.ainet.lang.nn.mlp
+package sk.ainet
 
+import sk.ainet.context.DirectCpuExecutionContext
+import sk.ainet.lang.graph.GraphNode
+import sk.ainet.lang.graph.GraphEdge
+import sk.ainet.lang.model.dnn.mlp.SinusApproximator
 import sk.ainet.lang.nn.reflection.describe
 import sk.ainet.lang.tensor.Shape
+import sk.ainet.lang.tensor.Tensor
+import sk.ainet.lang.tensor.ops.TensorSpec
+import sk.ainet.lang.tensor.ops.Operation
+import sk.ainet.lang.tensor.ops.ValidationResult
+import sk.ainet.lang.types.DType
 import sk.ainet.lang.types.FP32
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -16,11 +25,13 @@ class SinusApproximatorComputeGraphTest {
     @Test
     fun testSinusApproximatorToComputeGraph() {
         println("[DEBUG_LOG] Starting SinusApproximator to ComputeGraph conversion test")
+
+        val ctx = DirectCpuExecutionContext()
         
         // Create the SinusApproximator model
         val sinusModel = SinusApproximator()
 
-        print(sinusModel.model<FP32,Float>().describe(Shape(1, 1), FP32::class))
+        print(sinusModel.model(ctx).describe(Shape(1, 1), ctx, FP32::class))
 
         
         // Create a compute graph to represent the model
@@ -132,12 +143,13 @@ class SinusApproximatorComputeGraphTest {
         
         println("[DEBUG_LOG] Topological order: ${topologicalOrder.map { it.id }}")
         
-        // Test model description
+        // Test model card basics
         val modelCard = sinusModel.modelCard()
         assertNotNull(modelCard, "Model card should not be null")
-        assertTrue(modelCard.isNotEmpty(), "Model card should not be empty")
+        assertTrue(modelCard.license.isNotBlank(), "Model card license should be set")
+        assertTrue(modelCard.modelIndex.isNotEmpty(), "Model card should contain model index entries")
         
-        println("[DEBUG_LOG] Model card length: ${modelCard.length}")
+        println("[DEBUG_LOG] Model card: license=${modelCard.license}, library=${modelCard.libraryName}, entries=${modelCard.modelIndex.size}")
         println("[DEBUG_LOG] SinusApproximator to ComputeGraph conversion test completed successfully")
     }
     
@@ -172,9 +184,9 @@ class TestNeuralNetworkOperation(
     override val parameters: Map<String, Any> = emptyMap()
 ) : Operation {
     
-    override fun <T : sk.ainet.lang.types.DType, V> execute(
-        inputs: List<sk.ainet.lang.tensor.Tensor<T, V>>
-    ): List<sk.ainet.lang.tensor.Tensor<T, V>> {
+    override fun <T : DType, V> execute(
+        inputs: List<Tensor<T, V>>
+    ): List<Tensor<T, V>> {
         // Mock implementation - just return the inputs
         return inputs
     }

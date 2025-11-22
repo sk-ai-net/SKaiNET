@@ -17,6 +17,7 @@ import sk.ainet.lang.types.DType
 import sk.ainet.context.ExecutionContext
 import sk.ainet.lang.nn.DefaultNeuralNetworkExecutionContext
 import sk.ainet.lang.tensor.dsl.TensorCreationScope
+import sk.ainet.lang.nn.activations.Softmax
 import kotlin.reflect.KClass
 
 // DSL Marker to restrict the DSL to its intended scope
@@ -163,6 +164,14 @@ public interface NeuralNetworkDsl<T : DType, V> : NetworkDslItem {
      * @param activation Function that transforms tensor values (e.g., ReLU, Sigmoid)
      */
     public fun activation(id: String = "", activation: (Tensor<T, V>) -> Tensor<T, V>)
+
+    /**
+     * Applies a Softmax activation as a separate layer.
+     *
+     * @param dim Dimension along which softmax will be computed. Supports negative indexing.
+     * @param id Optional identifier for the layer
+     */
+    public fun softmax(dim: Int = -1, id: String = "")
 
     /**
      * Creates a batch normalization layer for training stability and performance.
@@ -914,6 +923,11 @@ public class StageImpl<T : DType, V>(
         impl.content()
         modules += impl.create()
     }
+
+    override fun softmax(dim: Int, id: String) {
+        modules += Softmax<T, V>(dim, getDefaultName(id, "Softmax", modules.size))
+        // Softmax does not change feature dimension
+    }
 }
 
 public class NeuralNetworkDslImpl<T : DType, V>(
@@ -1161,6 +1175,11 @@ public class NeuralNetworkDslImpl<T : DType, V>(
         )
         impl.content()
         modules.add(impl.create())
+    }
+
+    override fun softmax(dim: Int, id: String) {
+        modules += Softmax<T, V>(dim, getDefaultName(id, "Softmax", modules.size))
+        // Softmax does not change feature dimension
     }
 }
 
