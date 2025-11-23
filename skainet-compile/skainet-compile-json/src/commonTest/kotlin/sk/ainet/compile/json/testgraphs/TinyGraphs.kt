@@ -32,25 +32,25 @@ public object TinyGraphs {
         // Nodes
         val inputNode = GraphNode(
             id = "input",
-            operation = InputOperation(),
+            operation = InputOperation<sk.ainet.lang.types.DType, Any>(),
             inputs = emptyList(),
             outputs = listOf(inSpec)
         )
         val biasNode = GraphNode(
             id = "bias",
-            operation = InputOperation(),
+            operation = InputOperation<sk.ainet.lang.types.DType, Any>(),
             inputs = emptyList(),
             outputs = listOf(biasSpec)
         )
         val addNode = GraphNode(
             id = "add",
-            operation = AddOperation(),
+            operation = AddOperation<sk.ainet.lang.types.DType, Any>(),
             inputs = listOf(inSpec, biasSpec),
             outputs = listOf(addOutSpec)
         )
         val reluNode = GraphNode(
             id = "relu",
-            operation = ReluOperation(),
+            operation = ReluOperation<sk.ainet.lang.types.DType, Any>(),
             inputs = listOf(addOutSpec),
             outputs = listOf(reluOutSpec)
         )

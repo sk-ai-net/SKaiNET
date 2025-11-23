@@ -17,7 +17,7 @@ import sk.ainet.lang.tensor.ops.TensorSpec
  *  --output=path/to/file.json (optional; if omitted, prints to stdout)
  *  --label=custom_label (optional; default: "tiny_graph")
  */
-public fun main(args: Array<String>) = runBlocking {
+public fun main(args: Array<String>): Unit = runBlocking {
     val params = args.associate { arg ->
         val idx = arg.indexOf('=')
         if (idx > 0) arg.substring(0, idx) to arg.substring(idx + 1) else arg to ""
@@ -48,25 +48,25 @@ private fun buildTinyGraph(): ComputeGraph {
 
     val inputNode = GraphNode(
         id = "input",
-        operation = InputOperation(),
+        operation = InputOperation<sk.ainet.lang.types.DType, Any>(),
         inputs = emptyList(),
         outputs = listOf(inSpec)
     )
     val biasNode = GraphNode(
         id = "bias",
-        operation = InputOperation(),
+        operation = InputOperation<sk.ainet.lang.types.DType, Any>(),
         inputs = emptyList(),
         outputs = listOf(biasSpec)
     )
     val addNode = GraphNode(
         id = "add",
-        operation = AddOperation(),
+        operation = AddOperation<sk.ainet.lang.types.DType, Any>(),
         inputs = listOf(inSpec, biasSpec),
         outputs = listOf(addOutSpec)
     )
     val reluNode = GraphNode(
         id = "relu",
-        operation = ReluOperation(),
+        operation = ReluOperation<sk.ainet.lang.types.DType, Any>(),
         inputs = listOf(addOutSpec),
         outputs = listOf(reluOutSpec)
     )

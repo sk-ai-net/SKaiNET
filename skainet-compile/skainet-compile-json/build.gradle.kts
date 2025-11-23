@@ -39,9 +39,11 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":skainet-lang:skainet-lang-core"))
-            implementation(project(":skainet-lang:skainet-compile-core"))
+            implementation(project(":skainet-compile:skainet-compile-core"))
             implementation(project(":skainet-compile:skainet-compile-dag"))
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.coroutines)
+
         }
 
         commonTest.dependencies {

@@ -10,19 +10,19 @@ import kotlinx.serialization.json.JsonElement
  */
 
 @Serializable
-data class SkainetModelJson(
+public data class SkainetModelJson(
     val label: String,
     val graphs: List<SkainetGraphJson>
 )
 
 @Serializable
-data class SkainetGraphJson(
+public data class SkainetGraphJson(
     val id: String,
     val nodes: List<SkainetNodeJson>
 )
 
 @Serializable
-data class SkainetNodeJson(
+public data class SkainetNodeJson(
     val id: String,
     val label: String,
     val namespace: String = "",
@@ -36,20 +36,20 @@ data class SkainetNodeJson(
 )
 
 @Serializable
-data class SkainetAttrJson(
+public data class SkainetAttrJson(
     val key: String,
     val value: String
 )
 
 @Serializable
-data class SkainetEdgeJson(
+public data class SkainetEdgeJson(
     val sourceNodeId: String,
     val sourceNodeOutputId: String,
     val targetNodeInputId: String
 )
 
 @Serializable
-data class SkainetPortMetadataJson(
+public data class SkainetPortMetadataJson(
     val id: String,
     val attrs: List<SkainetAttrJson> = emptyList()
 )
