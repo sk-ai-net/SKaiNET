@@ -56,7 +56,7 @@ kotlin {
 }
 
 android {
-    namespace = "sk.ainet.compilie.core"
+    namespace = "sk.ainet.compilie.dag"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

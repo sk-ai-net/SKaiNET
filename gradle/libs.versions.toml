@@ -20,7 +20,7 @@ kotlin-compile-testing = "1.6.0"
 asciidoctorj = "3.0.1"
 dokka = "2.1.0"
 kotlinxCli = "0.3.6"
-kotlinxIo = "0.8.0"
+kotlinxIo = "0.8.2"
 
 [libraries]
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jacksonDatabind" }

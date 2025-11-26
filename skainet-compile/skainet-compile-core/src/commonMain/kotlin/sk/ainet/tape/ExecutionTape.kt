@@ -1,4 +1,4 @@
-package sk.ainet.lang.graph
+package sk.ainet.tape
 
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.tensor.ops.Operation
@@ -10,7 +10,7 @@ import sk.ainet.lang.types.DType
  * The tape captures operations as they are performed, allowing for later replay or optimization.
  */
 public interface ExecutionTape {
-    
+
     /**
      * Whether this tape is currently recording operations
      */
@@ -64,11 +64,6 @@ public interface ExecutionTape {
      * Prune unnecessary operations from the tape
      */
     public fun prune(keepOutputs: Set<String> = emptySet()): ExecutionTape
-    
-    /**
-     * Convert the tape to a compute graph
-     */
-    public fun toComputeGraph(): ComputeGraph
 }
 
 /**

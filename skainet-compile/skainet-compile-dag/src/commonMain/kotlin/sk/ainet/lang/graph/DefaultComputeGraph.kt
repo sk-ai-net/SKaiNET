@@ -1,8 +1,5 @@
-package sk.ainet
+package sk.ainet.lang.graph
 
-import sk.ainet.lang.graph.ComputeGraph
-import sk.ainet.lang.graph.GraphEdge
-import sk.ainet.lang.graph.GraphNode
 import sk.ainet.lang.tensor.ops.ValidationResult
 
 /**
@@ -152,6 +149,18 @@ public class DefaultComputeGraph : ComputeGraph {
             getTopologicalOrder()
         } catch (_: IllegalStateException) {
             errors.add("Graph contains cycles")
+        }
+
+        // Check that edge indices are within bounds of node specs
+        _edges.forEach { edge ->
+            val srcOutCount = edge.source.outputs.size
+            val dstInCount = edge.destination.inputs.size
+            if (edge.sourceOutputIndex < 0 || edge.sourceOutputIndex >= srcOutCount) {
+                errors.add("Edge '${edge.id}' has invalid sourceOutputIndex=${edge.sourceOutputIndex}; source '${edge.source.id}' provides $srcOutCount outputs")
+            }
+            if (edge.destinationInputIndex < 0 || edge.destinationInputIndex >= dstInCount) {
+                errors.add("Edge '${edge.id}' has invalid destinationInputIndex=${edge.destinationInputIndex}; destination '${edge.destination.id}' expects $dstInCount inputs")
+            }
         }
 
         // Check for orphaned nodes (nodes with no connections)

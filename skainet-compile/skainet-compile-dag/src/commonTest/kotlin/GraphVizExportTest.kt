@@ -1,5 +1,6 @@
 package sk.ainet
 
+import sk.ainet.lang.graph.DefaultComputeGraph
 import sk.ainet.lang.graph.GraphEdge
 import sk.ainet.lang.graph.GraphNode
 import sk.ainet.lang.graph.utils.drawDot

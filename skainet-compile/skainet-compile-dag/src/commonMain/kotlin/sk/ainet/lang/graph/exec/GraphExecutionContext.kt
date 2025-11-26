@@ -1,13 +1,19 @@
-package sk.ainet.context
+package sk.ainet.lang.graph.exec
 
-import sk.ainet.lang.graph.ExecutionTape
-import sk.ainet.lang.graph.TapeStack
+import sk.ainet.context.ExecutionContext
+import sk.ainet.tape.ExecutionTape
+import sk.ainet.tape.TapeStack
+import sk.ainet.lang.tensor.ops.TensorOps
 
 /**
  * Context for managing execution state, including mode switching,
  * device management, and memory management.
  */
 public interface GraphExecutionContext : ExecutionContext {
+
+    public val baseOps: TensorOps
+
+    public val createTapeFactory: (executionContext: GraphExecutionContext) -> ExecutionTape
 
 
     /**

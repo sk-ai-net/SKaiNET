@@ -8,6 +8,9 @@ import sk.ainet.lang.graph.ComputeGraph
  */
 public data class DotGraph(val content: String)
 
+/** Convenience extension to get Graphviz DOT text directly from a ComputeGraph. */
+public fun ComputeGraph.toGraphviz(rankdir: String = "LR"): String = drawDot(this, rankdir).content
+
 /**
  * Traces the compute graph starting from output nodes to collect all nodes and dependencies
  */
