@@ -100,6 +100,35 @@ println("Tensors: ${gguf.tensors.size}")
 
 See CHANGELOG.md for the full list.
 
+## Experimental: Kolmogorov–Arnold Networks (KAN)
+
+SKaiNET includes an initial KAN layer implementation that you can wire into the NN DSL. A KAN layer expands each input feature by a learnable grid of basis coefficients and then mixes them with a linear projection, with optional bias and residual connection.
+
+- Current status: experimental/preview. API and behavior may change.
+- Forward path uses broadcasted basis expansion and a matmul mixing step.
+- `gridSize`, `useBias`, `useResidual`, and a custom `baseActivation` are supported. The `degree` parameter is reserved for future spline/basis functions and is not yet used.
+
+Quick usage example:
+
+```kotlin
+val model = nn {
+    input(64)
+    dense(out = 64)
+    // Add a KAN layer that keeps the same dimensionality and uses a residual connection
+    kanLayer(outputDim = 64, gridSize = 16, useResidual = true)
+    dense(out = 10)
+}
+```
+
+Notes and limitations:
+- Works with the default CPU backend; performance tuning and specialized kernels may arrive later.
+- Residuals are applied only when `outputDim == inputDim`.
+- You can customize initializers for the mixing weights, basis, and bias via the DSL block.
+
+See source for details:
+- skainet-lang/skainet-kan/src/commonMain/kotlin/sk/ainet/lang/kan/KanDsl.kt
+- skainet-lang/skainet-kan/src/commonMain/kotlin/sk/ainet/lang/kan/KanLayer.kt
+
 ## License
 
 MIT — see LICENSE.

@@ -25,6 +25,7 @@ include("skainet-lang:skainet-lang-core")
 include("skainet-lang:skainet-lang-models")
 include("skainet-lang:skainet-lang-ksp-annotations")
 include("skainet-lang:skainet-lang-ksp-processor")
+include("skainet-lang:skainet-kan")
 
 
 // ====== COMPILE
@@ -47,4 +48,3 @@ include("skainet-io:skainet-io-gguf")
 
 // ====== APPS
 //include("skainet-apps:skainet-KGPChat")
-
