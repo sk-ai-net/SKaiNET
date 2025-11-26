@@ -1,0 +1,148 @@
+{
+  "label": "tiny_add_relu",
+  "graphs": [
+    {
+      "id": "main_graph",
+      "nodes": [
+        {
+          "id": "input",
+          "label": "input",
+          "outputsMetadata": [
+            {
+              "id": "0",
+              "attrs": [
+                {
+                  "key": "__tensor_tag",
+                  "value": "input_out"
+                },
+                {
+                  "key": "tensor_shape",
+                  "value": "FP32[1, 4]"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "bias",
+          "label": "input",
+          "outputsMetadata": [
+            {
+              "id": "0",
+              "attrs": [
+                {
+                  "key": "__tensor_tag",
+                  "value": "bias_out"
+                },
+                {
+                  "key": "tensor_shape",
+                  "value": "FP32[1, 4]"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "add",
+          "label": "add",
+          "incomingEdges": [
+            {
+              "sourceNodeId": "input",
+              "sourceNodeOutputId": "0",
+              "targetNodeInputId": "0"
+            },
+            {
+              "sourceNodeId": "bias",
+              "sourceNodeOutputId": "0",
+              "targetNodeInputId": "1"
+            }
+          ],
+          "outputsMetadata": [
+            {
+              "id": "0",
+              "attrs": [
+                {
+                  "key": "__tensor_tag",
+                  "value": "add_out"
+                },
+                {
+                  "key": "tensor_shape",
+                  "value": "FP32[1, 4]"
+                }
+              ]
+            }
+          ],
+          "inputsMetadata": [
+            {
+              "id": "0",
+              "attrs": [
+                {
+                  "key": "__tensor_tag",
+                  "value": "input_out"
+                },
+                {
+                  "key": "tensor_shape",
+                  "value": "FP32[1, 4]"
+                }
+              ]
+            },
+            {
+              "id": "1",
+              "attrs": [
+                {
+                  "key": "__tensor_tag",
+                  "value": "bias_out"
+                },
+                {
+                  "key": "tensor_shape",
+                  "value": "FP32[1, 4]"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "relu",
+          "label": "relu",
+          "incomingEdges": [
+            {
+              "sourceNodeId": "add",
+              "sourceNodeOutputId": "0",
+              "targetNodeInputId": "0"
+            }
+          ],
+          "outputsMetadata": [
+            {
+              "id": "0",
+              "attrs": [
+                {
+                  "key": "__tensor_tag",
+                  "value": "relu_out"
+                },
+                {
+                  "key": "tensor_shape",
+                  "value": "FP32[1, 4]"
+                }
+              ]
+            }
+          ],
+          "inputsMetadata": [
+            {
+              "id": "0",
+              "attrs": [
+                {
+                  "key": "__tensor_tag",
+                  "value": "add_out"
+                },
+                {
+                  "key": "tensor_shape",
+                  "value": "FP32[1, 4]"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

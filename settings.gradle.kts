@@ -30,6 +30,8 @@ include("skainet-lang:skainet-kan")
 
 // ====== COMPILE
 include("skainet-compile:skainet-compile-core")
+include("skainet-compile:skainet-compile-dag")
+include("skainet-compile:skainet-compile-json")
 
 // ====== BACKENDS
 include("skainet-backends:skainet-backend-cpu")
