@@ -1,12 +1,13 @@
 package sk.ainet.compile.json
 
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import sk.ainet.compile.json.model.SkJsonExport
 
 // Shared Json configuration for exports
 internal fun exportJson(pretty: Boolean): Json = Json {
     prettyPrint = pretty
+    // Match golden fixtures which use 2-space indentation
+    if (pretty) prettyPrintIndent = "  "
     encodeDefaults = false
 }
 
@@ -14,7 +15,11 @@ internal fun exportJson(pretty: Boolean): Json = Json {
  * Serialize this export to a JSON string.
  */
 public fun SkJsonExport.toJsonString(pretty: Boolean = true): String {
-    return exportJson(pretty).encodeToString(this)
+    val s = exportJson(pretty).encodeToString(this)
+    // Golden fixtures are checked in as text files that end with a newline.
+    // Ensure our pretty output matches that convention to make string
+    // comparison stable across platforms/editors.
+    return if (pretty && !s.endsWith("\n")) s + "\n" else s
 }
 
 /**
