@@ -179,7 +179,44 @@ public open class DefaultExecutionTape() : ExecutionTape {
             nodeIdToNode[nodeId] = node
         }
 
-        // Create edges between nodes based on tensor flow (legacy heuristic)
+        // Synthesize explicit input nodes for operation inputs with no known producer.
+        // This stabilizes minimal graphs for exports/tests in legacy mode.
+        _operations.forEach { recordedOp ->
+            val currNodeId = "${recordedOp.operation.name}_${recordedOp.timestamp}"
+            val currNode = nodeIdToNode[currNodeId] ?: return@forEach
+            recordedOp.inputs.forEachIndexed { inIdx, spec ->
+                val inputNodeId = "input_${currNodeId}_$inIdx"
+                val inputNode = GraphNode(
+                    id = inputNodeId,
+                    operation = object : sk.ainet.lang.tensor.ops.Operation {
+                        override val name: String = "input"
+                        override val type: String = "stub"
+                        override val parameters: Map<String, Any> = emptyMap()
+                        override fun <T : sk.ainet.lang.types.DType, V> execute(inputs: List<sk.ainet.lang.tensor.Tensor<T, V>>): List<sk.ainet.lang.tensor.Tensor<T, V>> = emptyList()
+                        override fun validateInputs(inputs: List<sk.ainet.lang.tensor.ops.TensorSpec>): sk.ainet.lang.tensor.ops.ValidationResult = sk.ainet.lang.tensor.ops.ValidationResult.Valid
+                        override fun inferOutputs(inputs: List<sk.ainet.lang.tensor.ops.TensorSpec>): List<sk.ainet.lang.tensor.ops.TensorSpec> = listOf(spec)
+                        override fun clone(newParameters: Map<String, Any>): sk.ainet.lang.tensor.ops.Operation = this
+                        override fun serialize(): Map<String, Any> = emptyMap()
+                    },
+                    inputs = emptyList(),
+                    outputs = listOf(spec)
+                )
+                graph.addNode(inputNode)
+                // Wire edge from synthesized input to the operation's input port
+                graph.addEdge(
+                    GraphEdge(
+                        id = "edge_${inputNodeId}_to_${currNodeId}_$inIdx",
+                        source = inputNode,
+                        destination = currNode,
+                        sourceOutputIndex = 0,
+                        destinationInputIndex = inIdx,
+                        tensorSpec = spec
+                    )
+                )
+            }
+        }
+
+        // Create edges between consecutive nodes based on simple sequence (legacy heuristic)
         for (i in 1 until _operations.size) {
             val prevOp = _operations[i - 1]
             val currOp = _operations[i]

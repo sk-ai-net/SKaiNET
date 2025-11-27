@@ -1,10 +1,9 @@
 package sk.ainet.compile.json
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlinx.serialization.decodeFromString
 import sk.ainet.compile.json.model.SkJsonExport
 import sk.ainet.compile.json.testgraphs.TinyGraphs
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class GoldenJsonTest {
 

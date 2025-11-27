@@ -1,12 +1,9 @@
-package sk.ainet.compile.json.integration
-
+import sk.ainet.compile.json.exportGraphToJson
+import sk.ainet.context.DirectCpuExecutionContext
+import sk.ainet.lang.model.dnn.mlp.SinusApproximator
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import sk.ainet.compile.json.exportGraphToJson
-import sk.ainet.compile.json.testgraphs.TinyGraphs
-import sk.ainet.context.DirectCpuExecutionContext
-import sk.ainet.lang.model.dnn.mlp.SinusApproximator
 
 /**
  * Integration smoke tests to ensure we can:

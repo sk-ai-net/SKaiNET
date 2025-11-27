@@ -52,10 +52,25 @@ public fun <T : Any> exportModelToJson(
     // If caller passed a graph as model, keep the fast path
     if (model is ComputeGraph) return exportGraphToJson(model, label)
 
-    // Record a single forward pass under the new graph/tape execution context
-    val ctx = DefaultGraphExecutionContext.tape()
+    // Record a single forward pass under the new graph/tape execution context.
+    // Bridge this context's tape to the global Execution.tapeStack so callers using
+    // Execution.recordingOps(baseOps) will record into the same tape.
+    // Use a functional baseOps for tracing so relu/sigmoid/etc. execute and produce traces
+    val ctx = DefaultGraphExecutionContext.tape(baseOps = sk.ainet.lang.tensor.ops.VoidTensorOps())
     val (tape, _) = ctx.record {
-        forwardPass()
+        // Push the current tape into the global stack for the duration of forwardPass
+        val globalStack = sk.ainet.tape.Execution.tapeStack
+        val pushed = ctx.currentTape
+        if (pushed != null) {
+            globalStack.pushTape(pushed)
+        }
+        try {
+            forwardPass()
+        } finally {
+            if (pushed != null) {
+                globalStack.popTape()
+            }
+        }
     }
     // Prefer DefaultExecutionTape.toComputeGraph() which builds a real graph from traces/ops.
     val graph = when (tape) {

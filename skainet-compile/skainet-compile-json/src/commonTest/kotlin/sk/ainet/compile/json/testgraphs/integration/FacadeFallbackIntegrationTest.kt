@@ -1,4 +1,4 @@
-package sk.ainet.compile.json.integration
+package sk.ainet.compile.json.testgraphs.integration
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

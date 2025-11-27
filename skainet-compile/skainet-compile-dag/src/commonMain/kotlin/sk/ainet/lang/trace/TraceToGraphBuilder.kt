@@ -18,8 +18,9 @@ import sk.ainet.lang.tensor.ops.ValidationResult
  *   "e_<srcNodeId>_<srcOut>__<dstNodeId>_<dstIn>"
  *   Example: e_n0_Add_0__n1_Relu_0. This is deterministic given the node IDs and wiring.
  *
- * As a result, building the graph online (GraphSink) or offline (tape->graph) produces stable,
- * reproducible identifiers for nodes and edges provided the trace sequence is the same.
+ * Note: This builder does NOT synthesize explicit "input" placeholder nodes for tensors without a
+ * known producer. Only real operation nodes are created, and edges are added solely between such
+ * nodes when a producer is known. This matches the expectations of TracingAcceptanceTest.
  */
 public class TraceToGraphBuilder(private val graph: ComputeGraph) {
 
@@ -37,6 +38,8 @@ public class TraceToGraphBuilder(private val graph: ComputeGraph) {
 
         val inputSpecs = buildInputSpecs(trace)
         val outputSpecs = buildOutputSpecs(trace)
+
+        // Do not synthesize placeholder input nodes; leave unknown producers unresolved.
 
         val nodeId = "n${nextNodeId++}_${trace.opType}"
         val node = GraphNode(

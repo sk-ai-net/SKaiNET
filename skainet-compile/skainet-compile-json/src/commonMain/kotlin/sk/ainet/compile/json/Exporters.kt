@@ -139,9 +139,13 @@ private fun GraphNode.toJsonAttrs(): List<SkJsonAttr> {
 }
 
 private fun GraphNode.kernelShapeFromWeight(): String? {
-    // Find input spec named exactly "weight" (as recorded by GraphTensorOps)
-    val weight = inputs.firstOrNull { it.name == "weight" }
-    val shape = weight?.shape
+    // Prefer semantic name 'weight' when available
+    val byName = inputs.firstOrNull { it.name == "weight" }?.shape
+    val shape = byName ?: run {
+        // Fallback: conv2d signature is (input, weight, [bias]). If semantic names are missing
+        // (e.g., when built from OpTrace without port names), infer from position 1.
+        inputs.getOrNull(1)?.shape
+    }
     if (shape == null || shape.size < 4) return null
     val kH = shape[shape.size - 2]
     val kW = shape[shape.size - 1]
