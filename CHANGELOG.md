@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.3.0] - 2025-11-27
+
+### Added
+- Kolmogorov–Arnold Network (KAN/AKN) module and DSL support, including public factory and aliases for direct construction. Introduces `Akn`/`AknConfig` and `createAkn` mirroring DSL defaults.
+- Example KAN models and graphs (e.g., Sine function examples and pretrained variant) with tests and Graphviz export.
+- Additional NN DSL conveniences around initialization scopes (weights/basis/bias) and activation hooks used by KAN.
+
+### Changed
+- Minor API refinements in lang/nn DSL to better align with execution context usage for new KAN modules.
+
+### Fixed
+- Stabilized integration tests for KAN modules and examples.
+
+### Performance
+- Minor initialization performance tweaks for new modules.
+
+### Docs
+- Updated docs and samples to include KAN usage and references.
+
+
+
 ## [0.2.0] - 2025-11-16
 
 ### Added
