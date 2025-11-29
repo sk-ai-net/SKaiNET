@@ -45,8 +45,26 @@ public fun <T : DType, V> TensorData<T, V>.pprint(): String {
         }
 
         else -> {
-            // Higher rank tensors - use toString
-            this.toString()
+            // Higher-rank tensors: recursively pretty-print as nested arrays in row-major order
+            val sb = StringBuilder()
+            fun recurse(dim: Int, indexPrefix: IntArray) {
+                if (dim == this.shape.rank) {
+                    // Print element
+                    sb.append(this.get(*indexPrefix).toString())
+                    return
+                }
+                sb.append("[")
+                val size = this.shape[dim]
+                for (i in 0 until size) {
+                    if (i > 0) {
+                        sb.append(", ")
+                    }
+                    recurse(dim + 1, indexPrefix + i)
+                }
+                sb.append("]")
+            }
+            recurse(0, IntArray(0))
+            sb.toString()
         }
     }
 }

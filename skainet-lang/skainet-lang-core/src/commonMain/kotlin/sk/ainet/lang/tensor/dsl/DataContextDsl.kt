@@ -16,6 +16,13 @@ public interface DataContextDsl : ContextDslItem {
     public val executionContext: ExecutionContext
 
     // The core method uses an explicit dtype to avoid reified-in-interface
+    public fun <T : DType, V> scalar(
+        value: V,
+        dtype: KClass<T>,
+    ): Tensor<T, V>
+
+
+    // The core method uses an explicit dtype to avoid reified-in-interface
     public fun <T : DType, V> vector(
         length: Long,
         dtype: KClass<T>,
@@ -46,6 +53,10 @@ public interface DataContextDsl : ContextDslItem {
     ): Tensor<T, V>
 }
 
+// Reified convenience for scalar with implicit dtype (untyped base DSL)
+public inline fun <reified T : DType, V> DataContextDsl.scalar(value: V): Tensor<T, V> =
+    scalar(value, T::class)
+
 // Reified convenience for tensor with implicit dtype
 public inline fun <reified T : DType, V> DataContextDsl.tensor(
     noinline content: TensorFactoryContext<T, V>.() -> Tensor<T, V>
@@ -72,6 +83,9 @@ public inline fun <reified T : DType, V> DataContextDsl.matrix(
 @ContextDsl
 public interface TypedDataContextDsl<T : DType, V> : DataContextDsl {
     public val defaultDType: KClass<T>
+
+    // No-dtype overload for scalar using the default dtype of this typed DSL
+    public fun scalar(value: V): Tensor<T, V>
 
     public fun vector(
         length: Long,
@@ -102,6 +116,19 @@ internal class DataDefinitionContextDslImpl(
 
     // Keeps all named tensors created within the block; names must be unique in this context
     internal val tensorsByName: LinkedHashMap<String, Tensor<*, *>> = LinkedHashMap()
+
+    // The core method uses an explicit dtype to avoid reified-in-interface
+    override  fun <T : DType, V> scalar(
+        value: V,
+        dtype: KClass<T>,
+    ): Tensor<T, V> {
+        // Create a rank-0 (scalar) tensor using the generic initializer to support any V
+        val shape = Shape()
+        val data = executionContext.tensorDataFactory.init(shape, dtype) { _ -> value }
+        val t = executionContext.fromData(data, dtype)
+        createdTensorsCount++
+        return t
+     }
 
     override fun <T : DType, V> vector(
         length: Long,
@@ -159,6 +186,15 @@ public class TypedDataContextDslImpl<T : DType, V>(
     private val base: DataDefinitionContextDslImpl = DataDefinitionContextDslImpl(baseExecutionContext)
 
     override val executionContext: ExecutionContext get() = base.executionContext
+    override fun <T : DType, V> scalar(
+        value: V,
+        dtype: KClass<T>
+    ): Tensor<T, V> {
+        return base.scalar(value, dtype)
+    }
+
+    // No-dtype overloads use defaultDType
+    override fun scalar(value: V): Tensor<T, V> = base.scalar(value, defaultDType)
 
     // Delegate core DataContextDsl methods to base
     override fun <T2 : DType, V2> vector(
@@ -185,7 +221,6 @@ public class TypedDataContextDslImpl<T : DType, V>(
         content: TensorFactoryContext<T2, V2>.() -> Tensor<T2, V2>
     ): Tensor<T2, V2> = base.tensor(dtype, name, content)
 
-    // No-dtype overloads use defaultDType
     override fun vector(
         length: Long,
         content: TensorCreationScope<T, V>.() -> Tensor<T, V>
