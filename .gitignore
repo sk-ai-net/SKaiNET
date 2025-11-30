@@ -9,6 +9,10 @@ build/
 _public
 .cache
 
+### MNIST data
+
+*ubyte*
+
 ### IntelliJ IDEA ###
 .idea
 *.iws
