@@ -24,6 +24,56 @@ public class GraphTensorOps(
         return result
     }
 
+    // Scalar elementwise operations (broadcast Number across tensor)
+    override fun <T : DType, V> addScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> {
+        val out = baseOps.addScalar(a, b)
+        if (executionContext.isRecording) {
+            executionContext.currentTape?.recordOperation(AddOperation<T, V>(), listOf(a), listOf(out))
+        }
+        return out
+    }
+
+    override fun <T : DType, V> subScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> {
+        val out = baseOps.subScalar(a, b)
+        if (executionContext.isRecording) {
+            executionContext.currentTape?.recordOperation(SubtractOperation<T, V>(), listOf(a), listOf(out))
+        }
+        return out
+    }
+
+    override fun <T : DType, V> mulScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> {
+        val out = baseOps.mulScalar(a, b)
+        if (executionContext.isRecording) {
+            executionContext.currentTape?.recordOperation(MultiplyOperation<T, V>(), listOf(a), listOf(out))
+        }
+        return out
+    }
+
+    override fun <T : DType, V> divScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> {
+        val out = baseOps.divScalar(a, b)
+        if (executionContext.isRecording) {
+            executionContext.currentTape?.recordOperation(DivideOperation<T, V>(), listOf(a), listOf(out))
+        }
+        return out
+    }
+
+    // Reversed scalar ops (Number op Tensor)
+    override fun <T : DType, V> rsubScalar(a: Number, b: Tensor<T, V>): Tensor<T, V> {
+        val out = baseOps.rsubScalar(a, b)
+        if (executionContext.isRecording) {
+            executionContext.currentTape?.recordOperation(SubtractOperation<T, V>(), listOf(b), listOf(out))
+        }
+        return out
+    }
+
+    override fun <T : DType, V> rdivScalar(a: Number, b: Tensor<T, V>): Tensor<T, V> {
+        val out = baseOps.rdivScalar(a, b)
+        if (executionContext.isRecording) {
+            executionContext.currentTape?.recordOperation(DivideOperation<T, V>(), listOf(b), listOf(out))
+        }
+        return out
+    }
+
     override fun <T : DType, V> subtract(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> = baseOps.subtract(a, b)
     override fun <T : DType, V> multiply(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> = baseOps.multiply(a, b)
     override fun <T : DType, V> divide(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> = baseOps.divide(a, b)
