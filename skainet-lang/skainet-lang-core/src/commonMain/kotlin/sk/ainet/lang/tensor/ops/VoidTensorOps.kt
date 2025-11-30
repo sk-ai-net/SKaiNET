@@ -103,6 +103,37 @@ public class VoidTensorOps : TensorOps {
         return VoidOpsTensor(resultData, a.dtype)
     }
 
+    // Scalar operations: return zero tensors with the same shape as the tensor operand
+    override fun <T : DType, V> addScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> {
+        val resultData = dataFactory.zeros<T, V>(a.shape, a.dtype)
+        return VoidOpsTensor(resultData, a.dtype)
+    }
+
+    override fun <T : DType, V> subScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> {
+        val resultData = dataFactory.zeros<T, V>(a.shape, a.dtype)
+        return VoidOpsTensor(resultData, a.dtype)
+    }
+
+    override fun <T : DType, V> mulScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> {
+        val resultData = dataFactory.zeros<T, V>(a.shape, a.dtype)
+        return VoidOpsTensor(resultData, a.dtype)
+    }
+
+    override fun <T : DType, V> divScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> {
+        val resultData = dataFactory.zeros<T, V>(a.shape, a.dtype)
+        return VoidOpsTensor(resultData, a.dtype)
+    }
+
+    override fun <T : DType, V> rsubScalar(a: Number, b: Tensor<T, V>): Tensor<T, V> {
+        val resultData = dataFactory.zeros<T, V>(b.shape, b.dtype)
+        return VoidOpsTensor(resultData, b.dtype)
+    }
+
+    override fun <T : DType, V> rdivScalar(a: Number, b: Tensor<T, V>): Tensor<T, V> {
+        val resultData = dataFactory.zeros<T, V>(b.shape, b.dtype)
+        return VoidOpsTensor(resultData, b.dtype)
+    }
+
     @InProgress("Metal", owner="ops-team", issue="GH-1234")
     override fun <T : DType, V> matmul(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
         validateMatmulShapes(a.shape, b.shape)

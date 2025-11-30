@@ -184,6 +184,43 @@ internal class RecordingTensorOpsDecorator(private val base: TensorOps) : Tensor
         return out
     }
 
+    // --- Scalar ops ---
+    override fun <T : DType, V> addScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> {
+        val out = base.addScalar(a, b)
+        record(AddOperation<T, V>(), listOf(a), listOf(out))
+        return out
+    }
+
+    override fun <T : DType, V> subScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> {
+        val out = base.subScalar(a, b)
+        record(SubtractOperation<T, V>(), listOf(a), listOf(out))
+        return out
+    }
+
+    override fun <T : DType, V> mulScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> {
+        val out = base.mulScalar(a, b)
+        record(MultiplyOperation<T, V>(), listOf(a), listOf(out))
+        return out
+    }
+
+    override fun <T : DType, V> divScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> {
+        val out = base.divScalar(a, b)
+        record(DivideOperation<T, V>(), listOf(a), listOf(out))
+        return out
+    }
+
+    override fun <T : DType, V> rsubScalar(a: Number, b: Tensor<T, V>): Tensor<T, V> {
+        val out = base.rsubScalar(a, b)
+        record(SubtractOperation<T, V>(), listOf(b), listOf(out))
+        return out
+    }
+
+    override fun <T : DType, V> rdivScalar(a: Number, b: Tensor<T, V>): Tensor<T, V> {
+        val out = base.rdivScalar(a, b)
+        record(DivideOperation<T, V>(), listOf(b), listOf(out))
+        return out
+    }
+
     // --- Linalg ---
     override fun <T : DType, V> matmul(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
         val out = base.matmul(a, b)

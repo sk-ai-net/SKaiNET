@@ -51,7 +51,7 @@ import sk.ainet.lang.types.FP32
  */
 public class MnistCnn : Model<FP32, Float, Tensor<FP32, Float>, Tensor<FP32, Float>> {
 
-    private fun buildModel(executionContext: ExecutionContext): Module<FP32, Float> = definition<FP32, Float> {
+    private fun buildModel(executionContext: ExecutionContext): Module<FP32, Float> = definition {
         network(executionContext) {
             sequential<FP32, Float> {
                 // Stage: "conv1"
