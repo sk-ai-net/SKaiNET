@@ -7,6 +7,7 @@ import sk.ainet.lang.types.DType
 import sk.ainet.lang.ops.TensorOp
 import sk.ainet.lang.ops.InProgress
 import sk.ainet.lang.tensor.data.TensorDataFactory
+import sk.ainet.lang.tensor.ops.UpsampleMode
 
 @InProgress("cpu", owner = "team:cpu", issue = "task-ops.md#defaultcpuops")
 public open class DefaultCpuOpsBase(protected val dataFactory: TensorDataFactory) : TensorOps {
@@ -532,6 +533,37 @@ public open class DefaultCpuOpsBase(protected val dataFactory: TensorDataFactory
                 }
                 else -> throw IllegalArgumentException("Unsupported dtype for conv2d: ${input.dtype}")
             }
+        }
+        return CpuTensor(outData, this, input.dtype)
+    }
+
+    @TensorOp()
+    @InProgress("cpu", owner = "team:cpu", issue = "task-ops.md#op-upsample2d")
+    override fun <T : DType, V> upsample2d(
+        input: Tensor<T, V>,
+        scale: Pair<Int, Int>,
+        mode: UpsampleMode,
+        alignCorners: Boolean
+    ): Tensor<T, V> {
+        require(input.rank == 4) { "upsample2d: input must be 4D (N, C, H, W)" }
+        val (scaleH, scaleW) = scale
+        require(scaleH > 0 && scaleW > 0) { "upsample2d: scale factors must be positive" }
+        require(mode == UpsampleMode.Nearest) { "upsample2d: only Nearest mode is implemented on CPU backend" }
+
+        val n = input.shape[0]
+        val c = input.shape[1]
+        val inH = input.shape[2]
+        val inW = input.shape[3]
+        val outH = inH * scaleH
+        val outW = inW * scaleW
+        val outShape = Shape(n, c, outH, outW)
+
+        val outData = dataFactory.init<T, V>(outShape, input.dtype) { idx ->
+            val oh = idx[2]
+            val ow = idx[3]
+            val ih = oh / scaleH
+            val iw = ow / scaleW
+            input.data.get(idx[0], idx[1], ih, iw)
         }
         return CpuTensor(outData, this, input.dtype)
     }

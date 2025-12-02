@@ -3,6 +3,7 @@ package sk.ainet.lang.trace
 import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.tensor.ops.TensorOps
+import sk.ainet.lang.tensor.ops.UpsampleMode
 import sk.ainet.lang.types.DType
 
 /**
@@ -77,12 +78,49 @@ public class TracingTensorOps(
         kernelSize: Pair<Int, Int>,
         stride: Pair<Int, Int>,
         padding: Pair<Int, Int>
-    ): Tensor<T, V> = base.maxPool2d(input, kernelSize, stride, padding)
+    ): Tensor<T, V> {
+        val out = base.maxPool2d(input, kernelSize, stride, padding)
+        val attrs = mapOf("kernel" to kernelSize, "stride" to stride, "padding" to padding)
+        sink.onOpExecuted(
+            OpTrace(
+                opType = "maxPool2d",
+                inputs = listOf(session.refOf(input)),
+                outputs = listOf(session.refOf(out)),
+                attributes = attrs
+            )
+        )
+        return out
+    }
+
+    override fun <T : DType, V> upsample2d(
+        input: Tensor<T, V>,
+        scale: Pair<Int, Int>,
+        mode: UpsampleMode,
+        alignCorners: Boolean
+    ): Tensor<T, V> {
+        val out = base.upsample2d(input, scale, mode, alignCorners)
+        val inputs = listOf(session.refOf(input))
+        val outputs = listOf(session.refOf(out))
+        val attrs = OpAttributeFactory.shapesAndDTypes(listOf(input), listOf(out)) + mapOf(
+            "scale" to listOf(scale.first, scale.second),
+            "mode" to mode.name,
+            "alignCorners" to alignCorners
+        )
+        sink.onOpExecuted(OpTrace(opType = "upsample2d", inputs = inputs, outputs = outputs, attributes = attrs))
+        return out
+    }
 
     // ---- Shape ops ----
     override fun <T : DType, V> reshape(tensor: Tensor<T, V>, newShape: Shape): Tensor<T, V> = base.reshape(tensor, newShape)
     override fun <T : DType, V> flatten(tensor: Tensor<T, V>, startDim: Int, endDim: Int): Tensor<T, V> = base.flatten(tensor, startDim, endDim)
-    override fun <T : DType, V> concat(tensors: List<Tensor<T, V>>, dim: Int): Tensor<T, V> = base.concat(tensors, dim)
+    override fun <T : DType, V> concat(tensors: List<Tensor<T, V>>, dim: Int): Tensor<T, V> {
+        val out = base.concat(tensors, dim)
+        val inputs = tensors.map { session.refOf(it) }
+        val outputs = listOf(session.refOf(out))
+        val attrs = mapOf("dim" to dim, "count" to tensors.size)
+        sink.onOpExecuted(OpTrace(opType = "concat", inputs = inputs, outputs = outputs, attributes = attrs))
+        return out
+    }
     override fun <T : DType, V> split(tensor: Tensor<T, V>, splitSize: Int, dim: Int): List<Tensor<T, V>> = base.split(tensor, splitSize, dim)
     override fun <T : DType, V> squeeze(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> = base.squeeze(tensor, dim)
     override fun <T : DType, V> unsqueeze(tensor: Tensor<T, V>, dim: Int): Tensor<T, V> = base.unsqueeze(tensor, dim)
@@ -94,6 +132,15 @@ public class TracingTensorOps(
         val outputs = listOf(session.refOf(out))
         val attrs = OpAttributeFactory.unary(tensor, out)
         sink.onOpExecuted(OpTrace(opType = "relu", inputs = inputs, outputs = outputs, attributes = attrs))
+        return out
+    }
+
+    override fun <T : DType, V> silu(tensor: Tensor<T, V>): Tensor<T, V> {
+        val out = base.silu(tensor)
+        val inputs = listOf(session.refOf(tensor))
+        val outputs = listOf(session.refOf(out))
+        val attrs = OpAttributeFactory.unary(tensor, out)
+        sink.onOpExecuted(OpTrace(opType = "silu", inputs = inputs, outputs = outputs, attributes = attrs))
         return out
     }
 
@@ -114,7 +161,6 @@ public class TracingTensorOps(
         sink.onOpExecuted(OpTrace(opType = "sigmoid", inputs = inputs, outputs = outputs, attributes = attrs))
         return out
     }
-    override fun <T : DType, V> silu(tensor: Tensor<T, V>): Tensor<T, V> = base.silu(tensor)
     override fun <T : DType, V> gelu(tensor: Tensor<T, V>): Tensor<T, V> = base.gelu(tensor)
 
     // ---- Reductions ----
