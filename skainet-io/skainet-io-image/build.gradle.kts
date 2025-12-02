@@ -29,6 +29,23 @@ kotlin {
         }
     }
 
+    iosArm64()
+    iosSimulatorArm64()
+    macosArm64 ()
+    linuxX64 ()
+    linuxArm64 ()
+
+    js {
+        browser()
+    }
+
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
+    }
+
+
+
     sourceSets {
         val commonMain by getting {
             dependencies {

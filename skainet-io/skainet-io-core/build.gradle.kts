@@ -47,8 +47,6 @@ kotlin {
         browser()
     }
 
-    linuxX64 ()
-
     sourceSets {
         val commonMain by getting {
             dependencies {
