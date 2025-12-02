@@ -46,6 +46,10 @@ include("skainet-data:skainet-data-simple")
 // ====== IO
 include("skainet-io:skainet-io-core")
 include("skainet-io:skainet-io-gguf")
+include("skainet-io:skainet-io-image")
+
+// ====== models
+include("skainet-models:skainet-model-yolo")
 
 // ====== Integrations
 include("skainet-integrations:skainet-simple-cpu")
