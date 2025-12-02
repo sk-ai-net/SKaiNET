@@ -7,12 +7,14 @@ import sk.ainet.lang.nn.Input
 import sk.ainet.lang.nn.Linear
 import sk.ainet.lang.nn.MaxPool2d
 import sk.ainet.lang.nn.Module
+import sk.ainet.lang.nn.Upsample2d
 import sk.ainet.lang.nn.normalization.BatchNormalization
 import sk.ainet.lang.nn.normalization.GroupNormalization
 import sk.ainet.lang.nn.normalization.LayerNormalization
 import sk.ainet.lang.nn.topology.MLP
 import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.Tensor
+import sk.ainet.lang.tensor.ops.UpsampleMode
 import sk.ainet.lang.types.DType
 import sk.ainet.context.ExecutionContext
 import sk.ainet.lang.nn.DefaultNeuralNetworkExecutionContext
@@ -295,6 +297,29 @@ public interface NeuralNetworkDsl<T : DType, V> : NetworkDslItem {
     )
 
     /**
+     * Creates a 2D upsampling layer for increasing spatial resolution.
+     *
+     * @param scale Upsampling factors for height and width
+     * @param mode Interpolation mode (nearest default)
+     * @param alignCorners Alignment flag for bilinear mode (ignored for nearest)
+     * @param id Optional identifier for the layer
+     */
+    public fun upsample2d(
+        scale: Pair<Int, Int> = 2 to 2,
+        mode: UpsampleMode = UpsampleMode.Nearest,
+        alignCorners: Boolean = false,
+        id: String = ""
+    )
+
+    /**
+     * Creates a 2D upsampling layer with parameters configured in the DSL block.
+     */
+    public fun upsample2d(
+        id: String = "",
+        content: UPSAMPLE2D<T, V>.() -> Unit
+    )
+
+    /**
      * Groups layers into a sequential block for better organization.
      *
      * @param content DSL block containing the sequence of layers
@@ -370,6 +395,16 @@ public interface MAXPOOL2D<T : DType, V> : NetworkDslItem {
     public fun kernelSize(size: Int)
     public fun stride(size: Int)
     public fun padding(size: Int)
+}
+
+@NetworkDsl
+public interface UPSAMPLE2D<T : DType, V> : NetworkDslItem {
+    public var scale: Pair<Int, Int>
+    public var mode: UpsampleMode
+    public var alignCorners: Boolean
+
+    // Helper setter to allow concise Int-based configuration in DSL blocks
+    public fun scale(factor: Int)
 }
 
 
@@ -674,6 +709,33 @@ public class MaxPool2dImpl<T : DType, V>(
     }
 }
 
+public class Upsample2dImpl<T : DType, V>(
+    override val executionContext: ExecutionContext,
+    initialScale: Pair<Int, Int>,
+    initialMode: UpsampleMode,
+    initialAlignCorners: Boolean,
+    private val id: String,
+) : UPSAMPLE2D<T, V> {
+
+    override var scale: Pair<Int, Int> = initialScale
+    override var mode: UpsampleMode = initialMode
+    override var alignCorners: Boolean = initialAlignCorners
+
+    override fun scale(factor: Int) {
+        this.scale = factor to factor
+    }
+
+    public fun create(): Upsample2d<T, V> {
+        require(scale.first > 0 && scale.second > 0) { "Upsample2d scale must be > 0. Set it in the DSL block." }
+        return Upsample2d(
+            scale = scale,
+            mode = mode,
+            alignCorners = alignCorners,
+            name = getDefaultName(id, "Upsample2d", 0)
+        )
+    }
+}
+
 
 // Stage implementation
 public class StageImpl<T : DType, V>(
@@ -919,6 +981,32 @@ public class StageImpl<T : DType, V>(
             initialStride = 1 to 1,
             initialPadding = 0 to 0,
             id = getDefaultName(id, "MaxPool2d", modules.size)
+        )
+        impl.content()
+        modules += impl.create()
+    }
+
+    override fun upsample2d(
+        scale: Pair<Int, Int>,
+        mode: UpsampleMode,
+        alignCorners: Boolean,
+        id: String
+    ) {
+        modules += Upsample2d(
+            scale = scale,
+            mode = mode,
+            alignCorners = alignCorners,
+            name = getDefaultName(id, "Upsample2d", modules.size)
+        )
+    }
+
+    override fun upsample2d(id: String, content: UPSAMPLE2D<T, V>.() -> Unit) {
+        val impl = Upsample2dImpl<T, V>(
+            executionContext = executionContext,
+            initialScale = 2 to 2,
+            initialMode = UpsampleMode.Nearest,
+            initialAlignCorners = false,
+            id = getDefaultName(id, "Upsample2d", modules.size)
         )
         impl.content()
         modules += impl.create()
@@ -1172,6 +1260,35 @@ public class NeuralNetworkDslImpl<T : DType, V>(
             initialStride = 1 to 1,
             initialPadding = 0 to 0,
             id = getDefaultName(id, "MaxPool2d", modules.size)
+        )
+        impl.content()
+        modules.add(impl.create())
+    }
+
+    override fun upsample2d(
+        scale: Pair<Int, Int>,
+        mode: UpsampleMode,
+        alignCorners: Boolean,
+        id: String
+    ) {
+        modules += Upsample2d(
+            scale = scale,
+            mode = mode,
+            alignCorners = alignCorners,
+            name = getDefaultName(id, "Upsample2d", modules.size)
+        )
+    }
+
+    override fun upsample2d(
+        id: String,
+        content: UPSAMPLE2D<T, V>.() -> Unit
+    ) {
+        val impl = Upsample2dImpl<T, V>(
+            executionContext = executionContext,
+            initialScale = 2 to 2,
+            initialMode = UpsampleMode.Nearest,
+            initialAlignCorners = false,
+            id = getDefaultName(id, "Upsample2d", modules.size)
         )
         impl.content()
         modules.add(impl.create())

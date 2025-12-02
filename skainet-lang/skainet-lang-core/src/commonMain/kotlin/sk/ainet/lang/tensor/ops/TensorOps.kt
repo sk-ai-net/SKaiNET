@@ -44,6 +44,12 @@ public interface TensorOps {
         stride: Pair<Int, Int> = kernelSize,
         padding: Pair<Int, Int> = 0 to 0
     ): Tensor<T, V>
+    public fun <T : DType, V> upsample2d(
+        input: Tensor<T, V>,
+        scale: Pair<Int, Int>,
+        mode: UpsampleMode = UpsampleMode.Nearest,
+        alignCorners: Boolean = false
+    ): Tensor<T, V>
 
     // Shape operations
     public fun <T : DType, V> reshape(tensor: Tensor<T, V>, newShape: Shape): Tensor<T, V>

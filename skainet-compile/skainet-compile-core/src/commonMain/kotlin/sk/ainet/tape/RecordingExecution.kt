@@ -276,6 +276,38 @@ internal class RecordingTensorOpsDecorator(private val base: TensorOps) : Tensor
         return out
     }
 
+    override fun <T : DType, V> upsample2d(
+        input: Tensor<T, V>,
+        scale: Pair<Int, Int>,
+        mode: UpsampleMode,
+        alignCorners: Boolean
+    ): Tensor<T, V> {
+        val out = base.upsample2d(input, scale, mode, alignCorners)
+        val params = mapOf(
+            "scale" to scale.toList(),
+            "mode" to mode.name,
+            "alignCorners" to alignCorners
+        )
+        record(Upsample2dOperation<T, V>(params), listOf(input), listOf(out))
+        return out
+    }
+
+    override fun <T : DType, V> concat(tensors: List<Tensor<T, V>>, dim: Int): Tensor<T, V> {
+        val out = base.concat(tensors, dim)
+        record(
+            ConcatRecordingOperation(mapOf("dim" to dim, "count" to tensors.size)),
+            tensors,
+            listOf(out)
+        )
+        return out
+    }
+
+    override fun <T : DType, V> silu(tensor: Tensor<T, V>): Tensor<T, V> {
+        val out = base.silu(tensor)
+        record(SimpleActivationOperation("silu"), listOf(tensor), listOf(out))
+        return out
+    }
+
     // --- Shape ops ---
     override fun <T : DType, V> reshape(tensor: Tensor<T, V>, newShape: Shape): Tensor<T, V> {
         val out = base.reshape(tensor, newShape)
@@ -322,9 +354,7 @@ internal class RecordingTensorOpsDecorator(private val base: TensorOps) : Tensor
     }
 
     // Delegations for unrecorded/less critical ops
-    override fun <T : DType, V> concat(tensors: List<Tensor<T, V>>, dim: Int): Tensor<T, V> = base.concat(tensors, dim)
     override fun <T : DType, V> split(tensor: Tensor<T, V>, splitSize: Int, dim: Int): List<Tensor<T, V>> = base.split(tensor, splitSize, dim)
-    override fun <T : DType, V> silu(tensor: Tensor<T, V>): Tensor<T, V> = base.silu(tensor)
     override fun <T : DType, V> gelu(tensor: Tensor<T, V>): Tensor<T, V> = base.gelu(tensor)
     override fun <T : DType, V> sum(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> = base.sum(tensor, dim)
     override fun <T : DType, V> mean(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> = base.mean(tensor, dim)
@@ -332,4 +362,52 @@ internal class RecordingTensorOpsDecorator(private val base: TensorOps) : Tensor
     override fun <T : DType, V> sqrt(tensor: Tensor<T, V>): Tensor<T, V> = base.sqrt(tensor)
     override fun <T : DType, TTo : DType, V> convert(tensor: Tensor<T, V>, targetType: TTo): Tensor<TTo, V> = base.convert(tensor, targetType)
     override fun <T : DType, V> tril(tensor: Tensor<T, V>, k: Int): Tensor<T, V> = base.tril(tensor, k)
+}
+
+private class ConcatRecordingOperation(
+    override val parameters: Map<String, Any> = emptyMap()
+) : BaseOperation("concat", "shape", parameters) {
+    override fun <T : DType, V> execute(inputs: List<Tensor<T, V>>): List<Tensor<T, V>> =
+        throw UnsupportedOperationException("execute not supported in recording op")
+
+    override fun validateInputs(inputs: List<TensorSpec>): ValidationResult =
+        if (inputs.size < 2) ValidationResult.Invalid(listOf("concat requires at least 2 inputs")) else ValidationResult.Valid
+
+    override fun inferOutputs(inputs: List<TensorSpec>): List<TensorSpec> {
+        // validateInputs ensures at least 2 inputs, so first() is safe
+        val first = inputs.first()
+        return listOf(
+            TensorSpec(
+                name = "concat_output",
+                shape = first.shape,
+                dtype = first.dtype,
+                requiresGrad = inputs.any { it.requiresGrad }
+            )
+        )
+    }
+
+    override fun clone(newParameters: Map<String, Any>): Operation = ConcatRecordingOperation(newParameters)
+}
+
+private class SimpleActivationOperation(
+    activationName: String
+) : BaseOperation(activationName, "activation", emptyMap()) {
+    override fun <T : DType, V> execute(inputs: List<Tensor<T, V>>): List<Tensor<T, V>> =
+        throw UnsupportedOperationException("execute not supported in recording op")
+
+    override fun validateInputs(inputs: List<TensorSpec>): ValidationResult =
+        if (inputs.size != 1) ValidationResult.Invalid(listOf("Activation requires 1 input")) else ValidationResult.Valid
+
+    override fun inferOutputs(inputs: List<TensorSpec>): List<TensorSpec> =
+        listOf(
+            TensorSpec(
+                name = "activation_output",
+                // validateInputs ensures exactly 1 input, so first() is safe
+                shape = inputs.first().shape,
+                dtype = inputs.first().dtype,
+                requiresGrad = inputs.any { it.requiresGrad }
+            )
+        )
+
+    override fun clone(newParameters: Map<String, Any>): Operation = SimpleActivationOperation(name)
 }

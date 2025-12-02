@@ -1,6 +1,7 @@
 package sk.ainet.lang.tensor
 
 import sk.ainet.lang.types.DType
+import sk.ainet.lang.tensor.ops.UpsampleMode
 
 // Tensor extension functions that delegate to the ops component
 public fun <T : DType, V> Tensor<T, V>.t(): Tensor<T, V> = ops.transpose(this)
@@ -38,5 +39,10 @@ public fun <T : DType, V> Tensor<T, V>.mean(dim: Int? = null): Tensor<T, V> = op
 public fun <T : DType, V> Tensor<T, V>.variance(dim: Int? = null): Tensor<T, V> = ops.variance(this, dim)
 public fun <T : DType, V> Tensor<T, V>.sqrt(): Tensor<T, V> = ops.sqrt(this)
 public fun <T : DType, V> Tensor<T, V>.tril(k: Int = 0): Tensor<T, V> = ops.tril(this, k)
+public fun <T : DType, V> Tensor<T, V>.upsample2d(
+    scale: Pair<Int, Int> = 2 to 2,
+    mode: UpsampleMode = UpsampleMode.Nearest,
+    alignCorners: Boolean = false
+): Tensor<T, V> = ops.upsample2d(this, scale, mode, alignCorners)
 
 // Global matmul function for the Linear layer usage pattern (removed due to duplicate with extension function)

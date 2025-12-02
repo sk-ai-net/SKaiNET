@@ -5,6 +5,7 @@ import sk.ainet.lang.tensor.Shape
 import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.tensor.VoidOpsTensor
 import sk.ainet.lang.tensor.data.DenseTensorDataFactory
+import sk.ainet.lang.tensor.ops.UpsampleMode
 import sk.ainet.lang.types.DType
 import sk.ainet.lang.tensor.data.views.UnsqueezedTensorData
 
@@ -170,6 +171,17 @@ public class VoidTensorOps : TensorOps {
         padding: Pair<Int, Int>
     ): Tensor<T, V> {
         val resultShape = calculateMaxPool2dShape(input.shape, kernelSize, stride, padding)
+        val resultData = dataFactory.zeros<T, V>(resultShape, input.dtype)
+        return VoidOpsTensor(resultData, input.dtype)
+    }
+
+    override fun <T : DType, V> upsample2d(
+        input: Tensor<T, V>,
+        scale: Pair<Int, Int>,
+        mode: UpsampleMode,
+        alignCorners: Boolean
+    ): Tensor<T, V> {
+        val resultShape = calculateUpsample2dShape(input.shape, scale)
         val resultData = dataFactory.zeros<T, V>(resultShape, input.dtype)
         return VoidOpsTensor(resultData, input.dtype)
     }
@@ -667,6 +679,21 @@ public class VoidTensorOps : TensorOps {
             Shape(dims)
         }
         return result
+    }
+
+    /**
+     * Calculates the result shape for 2D upsampling.
+     */
+    private fun calculateUpsample2dShape(shape: Shape, scale: Pair<Int, Int>): Shape {
+        require(shape.rank == 4) {
+            "Upsample2d expects 4D input (N, C, H, W), got ${shape.dimensions.contentToString()}"
+        }
+        val (scaleH, scaleW) = scale
+        require(scaleH > 0 && scaleW > 0) { "Upsample2d scale factors must be positive" }
+        val dims = shape.dimensions.copyOf()
+        dims[2] = dims[2] * scaleH
+        dims[3] = dims[3] * scaleW
+        return Shape(dims)
     }
 
     /**

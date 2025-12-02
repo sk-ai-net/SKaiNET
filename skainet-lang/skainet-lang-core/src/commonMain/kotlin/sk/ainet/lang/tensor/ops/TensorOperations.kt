@@ -315,6 +315,49 @@ public class MaxPool2dOperation<T : DType, V>(
     override fun clone(newParameters: Map<String, Any>): Operation = MaxPool2dOperation<T, V>(newParameters)
 }
 
+public class Upsample2dOperation<T : DType, V>(
+    parameters: Map<String, Any> = emptyMap()
+) : BaseOperation("upsample2d", "nn", parameters) {
+
+    override fun <T2 : DType, V2> execute(inputs: List<Tensor<T2, V2>>): List<Tensor<T2, V2>> {
+        require(inputs.size == 1) { "Upsample2d operation requires exactly 1 input" }
+        throw UnsupportedOperationException("Direct execution not supported in graph mode")
+    }
+
+    override fun validateInputs(inputs: List<TensorSpec>): ValidationResult {
+        if (inputs.size != 1) {
+            return ValidationResult.Invalid(listOf("Upsample2d operation requires exactly 1 input, got ${inputs.size}"))
+        }
+        return ValidationResult.Valid
+    }
+
+    override fun inferOutputs(inputs: List<TensorSpec>): List<TensorSpec> {
+        require(inputs.size == 1) { "Upsample2d operation requires exactly 1 input" }
+        val inputShape = inputs[0].shape
+        val scale = (parameters["scale"] as? List<*>)?.mapNotNull { (it as? Number)?.toInt() }
+        val outputShape = if (inputShape != null && inputShape.size == 4 && scale != null && scale.size == 2) {
+            listOf(
+                inputShape[0],
+                inputShape[1],
+                inputShape[2] * scale[0],
+                inputShape[3] * scale[1]
+            )
+        } else {
+            inputShape
+        }
+        return listOf(
+            TensorSpec(
+                name = "upsample2d_output",
+                shape = outputShape,
+                dtype = inputs[0].dtype,
+                requiresGrad = inputs[0].requiresGrad
+            )
+        )
+    }
+
+    override fun clone(newParameters: Map<String, Any>): Operation = Upsample2dOperation<T, V>(newParameters)
+}
+
 /**
  * Shape operations
  */
