@@ -288,7 +288,7 @@ internal class C2f(
     }
 }
 
-internal data class HeadOutputs(
+public data class HeadOutputs(
     val small: Tensor<FP32, Float>,
     val medium: Tensor<FP32, Float>,
     val large: Tensor<FP32, Float>

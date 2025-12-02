@@ -82,7 +82,7 @@ public class Yolo8(
 
 private class Yolo8Module(
     private val executionContext: ExecutionContext,
-    private val config: YoloConfig
+    private val config: YoloConfig, override val name: String = "Yolo8"
 ) : Module<FP32, Float>() {
 
     private val graph = Yolo8Graph(executionContext, config)

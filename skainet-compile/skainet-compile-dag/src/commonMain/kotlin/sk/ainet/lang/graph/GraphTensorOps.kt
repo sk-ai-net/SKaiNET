@@ -19,7 +19,7 @@ public class GraphTensorOps(
     override fun <T : DType, V> add(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
         val result = baseOps.add(a, b)
         if (executionContext.isRecording) {
-            executionContext.currentTape?.recordOperation(AddOperation<T,V>(), listOf(a, b), listOf(result))
+            executionContext.currentTape?.recordOperation(AddOperation<T, V>(), listOf(a, b), listOf(result))
         }
         return result
     }
@@ -48,8 +48,18 @@ public class GraphTensorOps(
         padding: Pair<Int, Int>
     ): Tensor<T, V> = baseOps.maxPool2d(input, kernelSize, stride, padding)
 
-    override fun <T : DType, V> reshape(tensor: Tensor<T, V>, newShape: Shape): Tensor<T, V> = baseOps.reshape(tensor, newShape)
-    override fun <T : DType, V> flatten(tensor: Tensor<T, V>, startDim: Int, endDim: Int): Tensor<T, V> = baseOps.flatten(tensor, startDim, endDim)
+    override fun <T : DType, V> upsample2d(
+        input: Tensor<T, V>,
+        scale: Pair<Int, Int>,
+        mode: UpsampleMode,
+        alignCorners: Boolean
+    ): Tensor<T, V> = baseOps.upsample2d<T, V>(input, scale, mode, alignCorners)
+
+    override fun <T : DType, V> reshape(tensor: Tensor<T, V>, newShape: Shape): Tensor<T, V> =
+        baseOps.reshape(tensor, newShape)
+
+    override fun <T : DType, V> flatten(tensor: Tensor<T, V>, startDim: Int, endDim: Int): Tensor<T, V> =
+        baseOps.flatten(tensor, startDim, endDim)
 
     override fun <T : DType, V> relu(tensor: Tensor<T, V>): Tensor<T, V> = baseOps.relu(tensor)
     override fun <T : DType, V> softmax(tensor: Tensor<T, V>, dim: Int): Tensor<T, V> = baseOps.softmax(tensor, dim)
@@ -57,8 +67,12 @@ public class GraphTensorOps(
     override fun <T : DType, V> silu(tensor: Tensor<T, V>): Tensor<T, V> = baseOps.silu(tensor)
     override fun <T : DType, V> gelu(tensor: Tensor<T, V>): Tensor<T, V> = baseOps.gelu(tensor)
 
-    override fun <T : DType, V> concat(tensors: List<Tensor<T, V>>, dim: Int): Tensor<T, V> = baseOps.concat(tensors, dim)
-    override fun <T : DType, V> split(tensor: Tensor<T, V>, splitSize: Int, dim: Int): List<Tensor<T, V>> = baseOps.split(tensor, splitSize, dim)
+    override fun <T : DType, V> concat(tensors: List<Tensor<T, V>>, dim: Int): Tensor<T, V> =
+        baseOps.concat(tensors, dim)
+
+    override fun <T : DType, V> split(tensor: Tensor<T, V>, splitSize: Int, dim: Int): List<Tensor<T, V>> =
+        baseOps.split(tensor, splitSize, dim)
+
     override fun <T : DType, V> squeeze(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> = baseOps.squeeze(tensor, dim)
     override fun <T : DType, V> unsqueeze(tensor: Tensor<T, V>, dim: Int): Tensor<T, V> = baseOps.unsqueeze(tensor, dim)
 
@@ -66,6 +80,8 @@ public class GraphTensorOps(
     override fun <T : DType, V> mean(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> = baseOps.mean(tensor, dim)
     override fun <T : DType, V> variance(tensor: Tensor<T, V>, dim: Int?): Tensor<T, V> = baseOps.variance(tensor, dim)
     override fun <T : DType, V> sqrt(tensor: Tensor<T, V>): Tensor<T, V> = baseOps.sqrt(tensor)
-    override fun <TFrom : DType, TTo : DType, V> convert(tensor: Tensor<TFrom, V>, targetType: TTo): Tensor<TTo, V> = baseOps.convert(tensor, targetType)
+    override fun <TFrom : DType, TTo : DType, V> convert(tensor: Tensor<TFrom, V>, targetType: TTo): Tensor<TTo, V> =
+        baseOps.convert(tensor, targetType)
+
     override fun <T : DType, V> tril(tensor: Tensor<T, V>, k: Int): Tensor<T, V> = baseOps.tril(tensor, k)
 }
