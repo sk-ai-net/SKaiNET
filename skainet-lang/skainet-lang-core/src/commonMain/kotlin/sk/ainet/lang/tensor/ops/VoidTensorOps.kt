@@ -6,6 +6,7 @@ import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.tensor.VoidOpsTensor
 import sk.ainet.lang.tensor.data.DenseTensorDataFactory
 import sk.ainet.lang.types.DType
+import sk.ainet.lang.tensor.data.views.UnsqueezedTensorData
 
 public class VoidTensorOps : TensorOps {
     
@@ -102,6 +103,37 @@ public class VoidTensorOps : TensorOps {
         return VoidOpsTensor(resultData, a.dtype)
     }
 
+    // Scalar operations: return zero tensors with the same shape as the tensor operand
+    override fun <T : DType, V> addScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> {
+        val resultData = dataFactory.zeros<T, V>(a.shape, a.dtype)
+        return VoidOpsTensor(resultData, a.dtype)
+    }
+
+    override fun <T : DType, V> subScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> {
+        val resultData = dataFactory.zeros<T, V>(a.shape, a.dtype)
+        return VoidOpsTensor(resultData, a.dtype)
+    }
+
+    override fun <T : DType, V> mulScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> {
+        val resultData = dataFactory.zeros<T, V>(a.shape, a.dtype)
+        return VoidOpsTensor(resultData, a.dtype)
+    }
+
+    override fun <T : DType, V> divScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> {
+        val resultData = dataFactory.zeros<T, V>(a.shape, a.dtype)
+        return VoidOpsTensor(resultData, a.dtype)
+    }
+
+    override fun <T : DType, V> rsubScalar(a: Number, b: Tensor<T, V>): Tensor<T, V> {
+        val resultData = dataFactory.zeros<T, V>(b.shape, b.dtype)
+        return VoidOpsTensor(resultData, b.dtype)
+    }
+
+    override fun <T : DType, V> rdivScalar(a: Number, b: Tensor<T, V>): Tensor<T, V> {
+        val resultData = dataFactory.zeros<T, V>(b.shape, b.dtype)
+        return VoidOpsTensor(resultData, b.dtype)
+    }
+
     @InProgress("Metal", owner="ops-team", issue="GH-1234")
     override fun <T : DType, V> matmul(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
         validateMatmulShapes(a.shape, b.shape)
@@ -175,9 +207,9 @@ public class VoidTensorOps : TensorOps {
     }
 
     override fun <T : DType, V> unsqueeze(tensor: Tensor<T, V>, dim: Int): Tensor<T, V> {
-        val resultShape = calculateUnsqueezeShape(tensor.shape, dim)
-        val resultData = dataFactory.zeros<T, V>(resultShape, tensor.dtype)
-        return VoidOpsTensor(resultData, tensor.dtype)
+        // Preserve underlying data; return a view with an inserted size-1 dimension
+        val newData: sk.ainet.lang.tensor.data.TensorData<T, V> = UnsqueezedTensorData(tensor.data, normalizeUnsqueezeDim(tensor.shape, dim))
+        return VoidOpsTensor(newData, tensor.dtype)
     }
 
     override fun <T : DType, V> relu(tensor: Tensor<T, V>): Tensor<T, V> {
@@ -696,5 +728,17 @@ public class VoidTensorOps : TensorOps {
         }
         
         return Shape(resultDims)
+    }
+
+    /**
+     * Normalizes an unsqueeze dim possibly negative to the actual index after insertion.
+     */
+    private fun normalizeUnsqueezeDim(shape: Shape, dim: Int): Int {
+        val newRank = shape.rank + 1
+        val actualDim = if (dim < 0) newRank + dim else dim
+        if (actualDim < 0 || actualDim >= newRank) {
+            throw IllegalArgumentException("Unsqueeze dimension $dim is out of bounds for new tensor with $newRank dimensions")
+        }
+        return actualDim
     }
 }

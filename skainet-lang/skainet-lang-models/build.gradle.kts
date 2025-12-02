@@ -46,6 +46,8 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(project(":skainet-backends:skainet-backend-cpu"))
+            implementation(project(":skainet-compile:skainet-compile-dag"))
+            implementation(project(":skainet-compile:skainet-compile-json"))
 
         }
     }

@@ -12,6 +12,16 @@ public interface TensorOps {
     public fun <T : DType, V> multiply(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V>
     public fun <T : DType, V> divide(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V>
 
+    // Scalar elementwise operations (broadcast a Number across the tensor)
+    public fun <T : DType, V> addScalar(a: Tensor<T, V>, b: Number): Tensor<T, V>
+    public fun <T : DType, V> subScalar(a: Tensor<T, V>, b: Number): Tensor<T, V>
+    public fun <T : DType, V> mulScalar(a: Tensor<T, V>, b: Number): Tensor<T, V>
+    public fun <T : DType, V> divScalar(a: Tensor<T, V>, b: Number): Tensor<T, V>
+
+    // Reversed scalar operations (Number op Tensor)
+    public fun <T : DType, V> rsubScalar(a: Number, b: Tensor<T, V>): Tensor<T, V>
+    public fun <T : DType, V> rdivScalar(a: Number, b: Tensor<T, V>): Tensor<T, V>
+
     // Linear algebra operations
     public fun <T : DType, V> matmul(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V>
     public fun <T : DType, V> transpose(tensor: Tensor<T, V>): Tensor<T, V>

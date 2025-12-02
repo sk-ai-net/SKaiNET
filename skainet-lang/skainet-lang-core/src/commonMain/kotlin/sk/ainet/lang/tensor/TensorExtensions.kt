@@ -14,6 +14,18 @@ public operator fun <T : DType, V> Tensor<T, V>.minus(other: Tensor<T, V>): Tens
 public operator fun <T : DType, V> Tensor<T, V>.times(other: Tensor<T, V>): Tensor<T, V> = ops.multiply(this, other)
 public operator fun <T : DType, V> Tensor<T, V>.div(other: Tensor<T, V>): Tensor<T, V> = ops.divide(this, other)
 
+// Tensor op Number (scalar) overloads
+public operator fun <T : DType, V> Tensor<T, V>.plus(v: Number): Tensor<T, V> = ops.addScalar(this, v)
+public operator fun <T : DType, V> Tensor<T, V>.minus(v: Number): Tensor<T, V> = ops.subScalar(this, v)
+public operator fun <T : DType, V> Tensor<T, V>.times(v: Number): Tensor<T, V> = ops.mulScalar(this, v)
+public operator fun <T : DType, V> Tensor<T, V>.div(v: Number): Tensor<T, V> = ops.divScalar(this, v)
+
+// Number (scalar) op Tensor overloads
+public operator fun <T : DType, V> Number.plus(t: Tensor<T, V>): Tensor<T, V> = t.ops.addScalar(t, this)
+public operator fun <T : DType, V> Number.minus(t: Tensor<T, V>): Tensor<T, V> = t.ops.rsubScalar(this, t)
+public operator fun <T : DType, V> Number.times(t: Tensor<T, V>): Tensor<T, V> = t.ops.mulScalar(t, this)
+public operator fun <T : DType, V> Number.div(t: Tensor<T, V>): Tensor<T, V> = t.ops.rdivScalar(this, t)
+
 // Additional convenience functions
 public fun <T : DType, V> Tensor<T, V>.reshape(newShape: Shape): Tensor<T, V> = ops.reshape(this, newShape)
 public fun <T : DType, V> Tensor<T, V>.relu(): Tensor<T, V> = ops.relu(this)

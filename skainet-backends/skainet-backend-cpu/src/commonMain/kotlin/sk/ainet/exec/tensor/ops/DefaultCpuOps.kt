@@ -77,6 +77,61 @@ public open class DefaultCpuOpsBase(protected val dataFactory: TensorDataFactory
         return CpuTensor(outData, this, a.dtype)
     }
 
+    // Scalar ops implemented via materializing a full-like tensor and delegating to elementwise ops
+    override fun <T : DType, V> addScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> {
+        val sb = CpuTensor(
+            dataFactory.full<T, V>(a.shape, a.dtype, b),
+            this,
+            a.dtype
+        )
+        return add(a, sb)
+    }
+
+    override fun <T : DType, V> subScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> {
+        val sb = CpuTensor(
+            dataFactory.full<T, V>(a.shape, a.dtype, b),
+            this,
+            a.dtype
+        )
+        return subtract(a, sb)
+    }
+
+    override fun <T : DType, V> mulScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> {
+        val sb = CpuTensor(
+            dataFactory.full<T, V>(a.shape, a.dtype, b),
+            this,
+            a.dtype
+        )
+        return multiply(a, sb)
+    }
+
+    override fun <T : DType, V> divScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> {
+        val sb = CpuTensor(
+            dataFactory.full<T, V>(a.shape, a.dtype, b),
+            this,
+            a.dtype
+        )
+        return divide(a, sb)
+    }
+
+    override fun <T : DType, V> rsubScalar(a: Number, b: Tensor<T, V>): Tensor<T, V> {
+        val ta = CpuTensor(
+            dataFactory.full<T, V>(b.shape, b.dtype, a),
+            this,
+            b.dtype
+        )
+        return subtract(ta, b)
+    }
+
+    override fun <T : DType, V> rdivScalar(a: Number, b: Tensor<T, V>): Tensor<T, V> {
+        val ta = CpuTensor(
+            dataFactory.full<T, V>(b.shape, b.dtype, a),
+            this,
+            b.dtype
+        )
+        return divide(ta, b)
+    }
+
     @TensorOp()
     @InProgress("cpu", owner = "team:cpu", issue = "task-ops.md#op-add")
     override fun <T : DType, V> add(

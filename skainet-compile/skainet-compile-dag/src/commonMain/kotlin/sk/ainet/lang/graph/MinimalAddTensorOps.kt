@@ -32,6 +32,12 @@ public class MinimalAddTensorOps : TensorOps {
     }
 
     // Delegate all remaining operations to VoidTensorOps
+    override fun <T : DType, V> addScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> = delegate.addScalar(a, b)
+    override fun <T : DType, V> subScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> = delegate.subScalar(a, b)
+    override fun <T : DType, V> mulScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> = delegate.mulScalar(a, b)
+    override fun <T : DType, V> divScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> = delegate.divScalar(a, b)
+    override fun <T : DType, V> rsubScalar(a: Number, b: Tensor<T, V>): Tensor<T, V> = delegate.rsubScalar(a, b)
+    override fun <T : DType, V> rdivScalar(a: Number, b: Tensor<T, V>): Tensor<T, V> = delegate.rdivScalar(a, b)
     override fun <T : DType, V> subtract(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> = delegate.subtract(a, b)
     override fun <T : DType, V> multiply(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> = delegate.multiply(a, b)
     override fun <T : DType, V> divide(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> = delegate.divide(a, b)

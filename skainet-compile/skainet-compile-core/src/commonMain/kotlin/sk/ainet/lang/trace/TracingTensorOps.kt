@@ -38,6 +38,14 @@ public class TracingTensorOps(
     }
     override fun <T : DType, V> divide(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> = base.divide(a, b)
 
+    // ---- Scalar ops ----
+    override fun <T : DType, V> addScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> = base.addScalar(a, b)
+    override fun <T : DType, V> subScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> = base.subScalar(a, b)
+    override fun <T : DType, V> mulScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> = base.mulScalar(a, b)
+    override fun <T : DType, V> divScalar(a: Tensor<T, V>, b: Number): Tensor<T, V> = base.divScalar(a, b)
+    override fun <T : DType, V> rsubScalar(a: Number, b: Tensor<T, V>): Tensor<T, V> = base.rsubScalar(a, b)
+    override fun <T : DType, V> rdivScalar(a: Number, b: Tensor<T, V>): Tensor<T, V> = base.rdivScalar(a, b)
+
     // ---- Linear algebra ----
     override fun <T : DType, V> matmul(a: Tensor<T, V>, b: Tensor<T, V>): Tensor<T, V> {
         val out = base.matmul(a, b)
