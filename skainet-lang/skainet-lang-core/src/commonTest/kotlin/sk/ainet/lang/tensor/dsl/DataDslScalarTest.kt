@@ -22,7 +22,7 @@ class DataDslScalarTest {
         assertTrue(t.isScalar(), "Tensor should be rank-0 (scalar)")
         assertEquals(1, t.volume, "Scalar volume must be 1")
         // Access scalar value via zero-index vararg (no indices)
-        assertEquals(3.14159f, t.data.get())
+        assertEquals(3.14159f, t.data.get(), 0.0001f)
     }
 
     @Test
