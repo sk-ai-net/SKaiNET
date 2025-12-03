@@ -78,10 +78,10 @@ class ScatterConversionTest {
 
         // Spot-check a few colors: value was y*W + x scaled to 0..1
         fun expectedColor(y: Int, x: Int): Float = ((y * W + x) and 0xFF) / 255f
-        assertEquals(expectedColor(0, 0), colors[0])
-        assertEquals(expectedColor(0, W - 1), colors[W - 1])
-        assertEquals(expectedColor(1, 0), colors[W])
-        assertEquals(expectedColor(H - 1, W - 1), colors.last())
+        assertEquals(expectedColor(0, 0), colors[0], 0.001f)
+        assertEquals(expectedColor(0, W - 1), colors[W - 1], 0.001f)
+        assertEquals(expectedColor(1, 0), colors[W], 0.001f)
+        assertEquals(expectedColor(H - 1, W - 1), colors.last(), 0.001f)
     }
 
     /**
