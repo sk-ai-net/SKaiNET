@@ -53,6 +53,9 @@ Maven:
 - Sample app: https://github.com/sk-ai-net/skainet-samples/tree/feature/MNIST/SinusApproximator
 - Kotlin Notebook: https://github.com/sk-ai-net/skainet-notebook
 
+## Architecture
+
+![Screenshot of a comment on a GitHub issue showing an image, added in the Markdown, of an Octocat smiling and raising a tentacle.](docs//SKaiNET-compiler.svg)
 
 ## 0.2.0 highlights (with tiny snippets)
 
