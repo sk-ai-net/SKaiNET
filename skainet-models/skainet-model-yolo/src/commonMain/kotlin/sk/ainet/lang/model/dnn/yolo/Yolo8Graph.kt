@@ -28,7 +28,7 @@ internal class Yolo8Graph(private val executionContext: ExecutionContext, privat
     private val c5 = base * 16
 
     private fun scaleDepth(baseCount: Int): Int =
-        kotlin.math.max(1, kotlin.math.round(baseCount * config.depthMultiple).toInt())
+        kotlin.math.max(1, round(baseCount * config.depthMultiple).toInt())
 
     private val stem = ConvSiLU(
         inChannels = 3,
@@ -310,7 +310,7 @@ internal class ConvSiLU(
 internal class C2f(
     private val inChannels: Int,
     private val outChannels: Int,
-    private val bottlenecks: Int,
+    bottlenecks: Int,
     override val name: String,
     private val executionContext: ExecutionContext
 ) : Module<FP32, Float>() {
@@ -361,7 +361,7 @@ internal class C2f(
 }
 
 private class Bottleneck(
-    private val channels: Int,
+    channels: Int,
     override val name: String,
     private val executionContext: ExecutionContext
 ) : Module<FP32, Float>() {
@@ -406,7 +406,7 @@ public data class HeadOutputs(
 )
 
 internal class Sppf(
-    private val channels: Int,
+    channels: Int,
     override val name: String,
     private val executionContext: ExecutionContext
 ) : Module<FP32, Float>() {
@@ -493,7 +493,7 @@ internal class DecoupledDetectHead(
     // Holder for DFL projection weights so the ONNX initializer maps cleanly.
     private val dfl = DflProjection(regMax, name = "$name.dfl", executionContext = executionContext)
 
-    override val modules: List<Module<FP32, Float>> = buildList<Module<FP32, Float>> {
+    override val modules: List<Module<FP32, Float>> = buildList {
         addAll(regBranches)
         addAll(clsBranches)
         add(dfl)
@@ -518,9 +518,9 @@ internal class DecoupledDetectHead(
 
 private class DecoupledBranch(
     private val inChannels: Int,
-    private val midChannels: Int,
+    midChannels: Int,
     private val outChannels: Int,
-    private val baseName: String,
+    baseName: String,
     private val executionContext: ExecutionContext
 ) : Module<FP32, Float>() {
     override val name: String = baseName

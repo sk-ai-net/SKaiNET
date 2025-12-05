@@ -5,7 +5,6 @@ import kotlinx.cli.ArgType
 import kotlinx.cli.default
 import kotlinx.cli.required
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import onnx.ModelProto
 import onnx.TensorProto
@@ -19,7 +18,7 @@ import kotlin.io.path.isRegularFile
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.pathString
 
-public fun main(args: Array<String>) {
+fun main(args: Array<String>) {
     val parser = ArgParser("skainet-onnx-tools")
     val inputPath by parser.option(
         ArgType.String,
@@ -69,7 +68,7 @@ public fun main(args: Array<String>) {
             ExportedTensor(
                 name = tensor.name.ifBlank { "tensor_$idx" },
                 kind = tensor.parameterKind(),
-                dtype = TensorProto.DataType.fromValue(tensor.dataType)?.name ?: tensor.dataType.toString(),
+                dtype = TensorProto.DataType.fromValue(tensor.dataType).name ?: tensor.dataType.toString(),
                 shape = tensor.dims,
                 values = values
             )

@@ -11,7 +11,7 @@ android-compileSdk = "36"
 kotlinxSerializationJson = "1.9.0"
 ktorClientCore = "3.3.3"
 ktorClientPlugins = "3.1.1"
-logbackClassic = "1.5.20"
+logbackClassic = "1.5.21"
 kover = "0.9.3"
 binaryCompatibilityValidator = "0.18.1"
 ksp = "2.2.21-2.0.4"
@@ -21,6 +21,7 @@ asciidoctorj = "3.0.1"
 dokka = "2.1.0"
 kotlinxCli = "0.3.6"
 kotlinxIo = "0.8.2"
+pbandk = "0.16.0"
 
 [libraries]
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jacksonDatabind" }
@@ -62,6 +63,7 @@ dokka-test-utils = { module = "org.jetbrains.dokka:dokka-test-utils", version.re
 
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logbackClassic" }
 optimumcode-json-schema-validator = { module = "io.github.optimumcode:json-schema-validator", version.ref = "jsonSchemaValidatorVersion" }
+pbandk-runtime = { module = "pro.streem.pbandk:pbandk-runtime", version.ref = "pbandk" }
 
 
 [plugins]

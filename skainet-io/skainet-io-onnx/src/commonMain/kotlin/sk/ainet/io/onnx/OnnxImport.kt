@@ -331,7 +331,7 @@ public fun ModelProto.toGraphView(): OnnxGraphView {
 private fun TensorProto.toTensorSpec(): TensorSpec = TensorSpec(
     name = name,
     shape = dims.map { it.toSafeInt() },
-    dtype = onnx.TensorProto.DataType.fromValue(dataType).name ?: dataType.toString(),
+    dtype = TensorProto.DataType.fromValue(dataType).name ?: dataType.toString(),
     metadata = mapOf("initializer" to true)
 )
 
@@ -398,7 +398,7 @@ private fun ValueInfoProto.toView(): OnnxValueInfoView = OnnxValueInfoView(
     shape = type?.tensorType?.shape?.dim?.mapNotNull { dim ->
         dim.dimValue?.toSafeInt()
     },
-    dtype = type?.tensorType?.elemType?.let { onnx.TensorProto.DataType.fromValue(it).name }
+    dtype = type?.tensorType?.elemType?.let { TensorProto.DataType.fromValue(it).name }
 )
 
 private fun Long.toSafeInt(): Int = when {

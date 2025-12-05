@@ -4,7 +4,7 @@ package onnx
 
 @pbandk.Export
 public sealed class Version(override val value: Int, override val name: String? = null) : pbandk.Message.Enum {
-    override fun equals(other: kotlin.Any?): Boolean = other is onnx.Version && other.value == value
+    override fun equals(other: kotlin.Any?): Boolean = other is Version && other.value == value
     override fun hashCode(): Int = value.hashCode()
     override fun toString(): String = "Version.${name ?: "UNRECOGNIZED"}(value=$value)"
 
@@ -24,16 +24,16 @@ public sealed class Version(override val value: Int, override val name: String? 
     public object IR_VERSION : Version(13, "IR_VERSION")
     public class UNRECOGNIZED(value: Int) : Version(value)
 
-    public companion object : pbandk.Message.Enum.Companion<onnx.Version> {
-        public val values: List<onnx.Version> by lazy { listOf(_START_VERSION, IR_VERSION_2017_10_10, IR_VERSION_2017_10_30, IR_VERSION_2017_11_3, IR_VERSION_2019_1_22, IR_VERSION_2019_3_18, IR_VERSION_2019_9_19, IR_VERSION_2020_5_8, IR_VERSION_2021_7_30, IR_VERSION_2023_5_5, IR_VERSION_2024_3_25, IR_VERSION_2025_05_12, IR_VERSION_2025_08_26, IR_VERSION) }
-        override fun fromValue(value: Int): onnx.Version = values.firstOrNull { it.value == value } ?: UNRECOGNIZED(value)
-        override fun fromName(name: String): onnx.Version = values.firstOrNull { it.name == name } ?: throw IllegalArgumentException("No Version with name: $name")
+    public companion object : pbandk.Message.Enum.Companion<Version> {
+        public val values: List<Version> by lazy { listOf(_START_VERSION, IR_VERSION_2017_10_10, IR_VERSION_2017_10_30, IR_VERSION_2017_11_3, IR_VERSION_2019_1_22, IR_VERSION_2019_3_18, IR_VERSION_2019_9_19, IR_VERSION_2020_5_8, IR_VERSION_2021_7_30, IR_VERSION_2023_5_5, IR_VERSION_2024_3_25, IR_VERSION_2025_05_12, IR_VERSION_2025_08_26, IR_VERSION) }
+        override fun fromValue(value: Int): Version = values.firstOrNull { it.value == value } ?: UNRECOGNIZED(value)
+        override fun fromName(name: String): Version = values.firstOrNull { it.name == name } ?: throw IllegalArgumentException("No Version with name: $name")
     }
 }
 
 @pbandk.Export
 public sealed class OperatorStatus(override val value: Int, override val name: String? = null) : pbandk.Message.Enum {
-    override fun equals(other: kotlin.Any?): Boolean = other is onnx.OperatorStatus && other.value == value
+    override fun equals(other: kotlin.Any?): Boolean = other is OperatorStatus && other.value == value
     override fun hashCode(): Int = value.hashCode()
     override fun toString(): String = "OperatorStatus.${name ?: "UNRECOGNIZED"}(value=$value)"
 
@@ -41,10 +41,10 @@ public sealed class OperatorStatus(override val value: Int, override val name: S
     public object STABLE : OperatorStatus(1, "STABLE")
     public class UNRECOGNIZED(value: Int) : OperatorStatus(value)
 
-    public companion object : pbandk.Message.Enum.Companion<onnx.OperatorStatus> {
-        public val values: List<onnx.OperatorStatus> by lazy { listOf(EXPERIMENTAL, STABLE) }
-        override fun fromValue(value: Int): onnx.OperatorStatus = values.firstOrNull { it.value == value } ?: UNRECOGNIZED(value)
-        override fun fromName(name: String): onnx.OperatorStatus = values.firstOrNull { it.name == name } ?: throw IllegalArgumentException("No OperatorStatus with name: $name")
+    public companion object : pbandk.Message.Enum.Companion<OperatorStatus> {
+        public val values: List<OperatorStatus> by lazy { listOf(EXPERIMENTAL, STABLE) }
+        override fun fromValue(value: Int): OperatorStatus = values.firstOrNull { it.value == value } ?: UNRECOGNIZED(value)
+        override fun fromName(name: String): OperatorStatus = values.firstOrNull { it.name == name } ?: throw IllegalArgumentException("No OperatorStatus with name: $name")
     }
 }
 
@@ -53,33 +53,33 @@ public data class AttributeProto(
     val name: String = "",
     val refAttrName: String = "",
     val docString: String = "",
-    val type: onnx.AttributeProto.AttributeType = onnx.AttributeProto.AttributeType.fromValue(0),
+    val type: AttributeProto.AttributeType = AttributeProto.AttributeType.fromValue(0),
     val f: Float = 0.0F,
     val i: Long = 0L,
     val s: pbandk.ByteArr = pbandk.ByteArr.empty,
-    val t: onnx.TensorProto? = null,
-    val g: onnx.GraphProto? = null,
-    val sparseTensor: onnx.SparseTensorProto? = null,
-    val tp: onnx.TypeProto? = null,
+    val t: TensorProto? = null,
+    val g: GraphProto? = null,
+    val sparseTensor: SparseTensorProto? = null,
+    val tp: TypeProto? = null,
     val floats: List<Float> = emptyList(),
     val ints: List<Long> = emptyList(),
     val strings: List<pbandk.ByteArr> = emptyList(),
-    val tensors: List<onnx.TensorProto> = emptyList(),
-    val graphs: List<onnx.GraphProto> = emptyList(),
-    val sparseTensors: List<onnx.SparseTensorProto> = emptyList(),
-    val typeProtos: List<onnx.TypeProto> = emptyList(),
+    val tensors: List<TensorProto> = emptyList(),
+    val graphs: List<GraphProto> = emptyList(),
+    val sparseTensors: List<SparseTensorProto> = emptyList(),
+    val typeProtos: List<TypeProto> = emptyList(),
     override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
 ) : pbandk.Message {
-    override operator fun plus(other: pbandk.Message?): onnx.AttributeProto = protoMergeImpl(other)
-    override val descriptor: pbandk.MessageDescriptor<onnx.AttributeProto> get() = Companion.descriptor
+    override operator fun plus(other: pbandk.Message?): AttributeProto = protoMergeImpl(other)
+    override val descriptor: pbandk.MessageDescriptor<AttributeProto> get() = Companion.descriptor
     override val protoSize: Int by lazy { super.protoSize }
-    public companion object : pbandk.Message.Companion<onnx.AttributeProto> {
-        public val defaultInstance: onnx.AttributeProto by lazy { onnx.AttributeProto() }
-        override fun decodeWith(u: pbandk.MessageDecoder): onnx.AttributeProto = onnx.AttributeProto.decodeWithImpl(u)
+    public companion object : pbandk.Message.Companion<AttributeProto> {
+        public val defaultInstance: AttributeProto by lazy { AttributeProto() }
+        override fun decodeWith(u: pbandk.MessageDecoder): AttributeProto = AttributeProto.decodeWithImpl(u)
 
-        override val descriptor: pbandk.MessageDescriptor<onnx.AttributeProto> = pbandk.MessageDescriptor(
-            fullName = "onnx.AttributeProto",
-            messageClass = onnx.AttributeProto::class,
+        override val descriptor: pbandk.MessageDescriptor<AttributeProto> = pbandk.MessageDescriptor(
+            fullName = "AttributeProto",
+            messageClass = AttributeProto::class,
             messageCompanion = this,
             fields = buildList(18) {
                 add(
@@ -89,7 +89,7 @@ public data class AttributeProto(
                         number = 1,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "name",
-                        value = onnx.AttributeProto::name
+                        value = AttributeProto::name
                     )
                 )
                 add(
@@ -99,7 +99,7 @@ public data class AttributeProto(
                         number = 2,
                         type = pbandk.FieldDescriptor.Type.Primitive.Float(),
                         jsonName = "f",
-                        value = onnx.AttributeProto::f
+                        value = AttributeProto::f
                     )
                 )
                 add(
@@ -109,7 +109,7 @@ public data class AttributeProto(
                         number = 3,
                         type = pbandk.FieldDescriptor.Type.Primitive.Int64(),
                         jsonName = "i",
-                        value = onnx.AttributeProto::i
+                        value = AttributeProto::i
                     )
                 )
                 add(
@@ -119,7 +119,7 @@ public data class AttributeProto(
                         number = 4,
                         type = pbandk.FieldDescriptor.Type.Primitive.Bytes(),
                         jsonName = "s",
-                        value = onnx.AttributeProto::s
+                        value = AttributeProto::s
                     )
                 )
                 add(
@@ -127,9 +127,9 @@ public data class AttributeProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "t",
                         number = 5,
-                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.TensorProto.Companion),
+                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = TensorProto.Companion),
                         jsonName = "t",
-                        value = onnx.AttributeProto::t
+                        value = AttributeProto::t
                     )
                 )
                 add(
@@ -137,9 +137,9 @@ public data class AttributeProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "g",
                         number = 6,
-                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.GraphProto.Companion),
+                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = GraphProto.Companion),
                         jsonName = "g",
-                        value = onnx.AttributeProto::g
+                        value = AttributeProto::g
                     )
                 )
                 add(
@@ -149,7 +149,7 @@ public data class AttributeProto(
                         number = 7,
                         type = pbandk.FieldDescriptor.Type.Repeated<Float>(valueType = pbandk.FieldDescriptor.Type.Primitive.Float(), packed = true),
                         jsonName = "floats",
-                        value = onnx.AttributeProto::floats
+                        value = AttributeProto::floats
                     )
                 )
                 add(
@@ -159,7 +159,7 @@ public data class AttributeProto(
                         number = 8,
                         type = pbandk.FieldDescriptor.Type.Repeated<Long>(valueType = pbandk.FieldDescriptor.Type.Primitive.Int64(), packed = true),
                         jsonName = "ints",
-                        value = onnx.AttributeProto::ints
+                        value = AttributeProto::ints
                     )
                 )
                 add(
@@ -169,7 +169,7 @@ public data class AttributeProto(
                         number = 9,
                         type = pbandk.FieldDescriptor.Type.Repeated<pbandk.ByteArr>(valueType = pbandk.FieldDescriptor.Type.Primitive.Bytes()),
                         jsonName = "strings",
-                        value = onnx.AttributeProto::strings
+                        value = AttributeProto::strings
                     )
                 )
                 add(
@@ -177,9 +177,9 @@ public data class AttributeProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "tensors",
                         number = 10,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.TensorProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.TensorProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<TensorProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = TensorProto.Companion)),
                         jsonName = "tensors",
-                        value = onnx.AttributeProto::tensors
+                        value = AttributeProto::tensors
                     )
                 )
                 add(
@@ -187,9 +187,9 @@ public data class AttributeProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "graphs",
                         number = 11,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.GraphProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.GraphProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<GraphProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = GraphProto.Companion)),
                         jsonName = "graphs",
-                        value = onnx.AttributeProto::graphs
+                        value = AttributeProto::graphs
                     )
                 )
                 add(
@@ -199,7 +199,7 @@ public data class AttributeProto(
                         number = 13,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "docString",
-                        value = onnx.AttributeProto::docString
+                        value = AttributeProto::docString
                     )
                 )
                 add(
@@ -207,9 +207,9 @@ public data class AttributeProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "tp",
                         number = 14,
-                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.TypeProto.Companion),
+                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = TypeProto.Companion),
                         jsonName = "tp",
-                        value = onnx.AttributeProto::tp
+                        value = AttributeProto::tp
                     )
                 )
                 add(
@@ -217,9 +217,9 @@ public data class AttributeProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "type_protos",
                         number = 15,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.TypeProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.TypeProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<TypeProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = TypeProto.Companion)),
                         jsonName = "typeProtos",
-                        value = onnx.AttributeProto::typeProtos
+                        value = AttributeProto::typeProtos
                     )
                 )
                 add(
@@ -227,9 +227,9 @@ public data class AttributeProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "type",
                         number = 20,
-                        type = pbandk.FieldDescriptor.Type.Enum(enumCompanion = onnx.AttributeProto.AttributeType.Companion),
+                        type = pbandk.FieldDescriptor.Type.Enum(enumCompanion = AttributeProto.AttributeType.Companion),
                         jsonName = "type",
-                        value = onnx.AttributeProto::type
+                        value = AttributeProto::type
                     )
                 )
                 add(
@@ -239,7 +239,7 @@ public data class AttributeProto(
                         number = 21,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "refAttrName",
-                        value = onnx.AttributeProto::refAttrName
+                        value = AttributeProto::refAttrName
                     )
                 )
                 add(
@@ -247,9 +247,9 @@ public data class AttributeProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "sparse_tensor",
                         number = 22,
-                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.SparseTensorProto.Companion),
+                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = SparseTensorProto.Companion),
                         jsonName = "sparseTensor",
-                        value = onnx.AttributeProto::sparseTensor
+                        value = AttributeProto::sparseTensor
                     )
                 )
                 add(
@@ -257,9 +257,9 @@ public data class AttributeProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "sparse_tensors",
                         number = 23,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.SparseTensorProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.SparseTensorProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<SparseTensorProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = SparseTensorProto.Companion)),
                         jsonName = "sparseTensors",
-                        value = onnx.AttributeProto::sparseTensors
+                        value = AttributeProto::sparseTensors
                     )
                 )
             }
@@ -267,7 +267,7 @@ public data class AttributeProto(
     }
 
     public sealed class AttributeType(override val value: Int, override val name: String? = null) : pbandk.Message.Enum {
-        override fun equals(other: kotlin.Any?): Boolean = other is onnx.AttributeProto.AttributeType && other.value == value
+        override fun equals(other: kotlin.Any?): Boolean = other is AttributeProto.AttributeType && other.value == value
         override fun hashCode(): Int = value.hashCode()
         override fun toString(): String = "AttributeProto.AttributeType.${name ?: "UNRECOGNIZED"}(value=$value)"
 
@@ -288,10 +288,10 @@ public data class AttributeProto(
         public object TYPE_PROTOS : AttributeType(14, "TYPE_PROTOS")
         public class UNRECOGNIZED(value: Int) : AttributeType(value)
 
-        public companion object : pbandk.Message.Enum.Companion<onnx.AttributeProto.AttributeType> {
-            public val values: List<onnx.AttributeProto.AttributeType> by lazy { listOf(UNDEFINED, FLOAT, INT, STRING, TENSOR, GRAPH, SPARSE_TENSOR, TYPE_PROTO, FLOATS, INTS, STRINGS, TENSORS, GRAPHS, SPARSE_TENSORS, TYPE_PROTOS) }
-            override fun fromValue(value: Int): onnx.AttributeProto.AttributeType = values.firstOrNull { it.value == value } ?: UNRECOGNIZED(value)
-            override fun fromName(name: String): onnx.AttributeProto.AttributeType = values.firstOrNull { it.name == name } ?: throw IllegalArgumentException("No AttributeType with name: $name")
+        public companion object : pbandk.Message.Enum.Companion<AttributeProto.AttributeType> {
+            public val values: List<AttributeProto.AttributeType> by lazy { listOf(UNDEFINED, FLOAT, INT, STRING, TENSOR, GRAPH, SPARSE_TENSOR, TYPE_PROTO, FLOATS, INTS, STRINGS, TENSORS, GRAPHS, SPARSE_TENSORS, TYPE_PROTOS) }
+            override fun fromValue(value: Int): AttributeProto.AttributeType = values.firstOrNull { it.value == value } ?: UNRECOGNIZED(value)
+            override fun fromName(name: String): AttributeProto.AttributeType = values.firstOrNull { it.name == name } ?: throw IllegalArgumentException("No AttributeType with name: $name")
         }
     }
 }
@@ -299,21 +299,21 @@ public data class AttributeProto(
 @pbandk.Export
 public data class ValueInfoProto(
     val name: String = "",
-    val type: onnx.TypeProto? = null,
+    val type: TypeProto? = null,
     val docString: String = "",
-    val metadataProps: List<onnx.StringStringEntryProto> = emptyList(),
+    val metadataProps: List<StringStringEntryProto> = emptyList(),
     override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
 ) : pbandk.Message {
-    override operator fun plus(other: pbandk.Message?): onnx.ValueInfoProto = protoMergeImpl(other)
-    override val descriptor: pbandk.MessageDescriptor<onnx.ValueInfoProto> get() = Companion.descriptor
+    override operator fun plus(other: pbandk.Message?): ValueInfoProto = protoMergeImpl(other)
+    override val descriptor: pbandk.MessageDescriptor<ValueInfoProto> get() = Companion.descriptor
     override val protoSize: Int by lazy { super.protoSize }
-    public companion object : pbandk.Message.Companion<onnx.ValueInfoProto> {
-        public val defaultInstance: onnx.ValueInfoProto by lazy { onnx.ValueInfoProto() }
-        override fun decodeWith(u: pbandk.MessageDecoder): onnx.ValueInfoProto = onnx.ValueInfoProto.decodeWithImpl(u)
+    public companion object : pbandk.Message.Companion<ValueInfoProto> {
+        public val defaultInstance: ValueInfoProto by lazy { ValueInfoProto() }
+        override fun decodeWith(u: pbandk.MessageDecoder): ValueInfoProto = ValueInfoProto.decodeWithImpl(u)
 
-        override val descriptor: pbandk.MessageDescriptor<onnx.ValueInfoProto> = pbandk.MessageDescriptor(
-            fullName = "onnx.ValueInfoProto",
-            messageClass = onnx.ValueInfoProto::class,
+        override val descriptor: pbandk.MessageDescriptor<ValueInfoProto> = pbandk.MessageDescriptor(
+            fullName = "ValueInfoProto",
+            messageClass = ValueInfoProto::class,
             messageCompanion = this,
             fields = buildList(4) {
                 add(
@@ -323,7 +323,7 @@ public data class ValueInfoProto(
                         number = 1,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "name",
-                        value = onnx.ValueInfoProto::name
+                        value = ValueInfoProto::name
                     )
                 )
                 add(
@@ -331,9 +331,9 @@ public data class ValueInfoProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "type",
                         number = 2,
-                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.TypeProto.Companion),
+                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = TypeProto.Companion),
                         jsonName = "type",
-                        value = onnx.ValueInfoProto::type
+                        value = ValueInfoProto::type
                     )
                 )
                 add(
@@ -343,7 +343,7 @@ public data class ValueInfoProto(
                         number = 3,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "docString",
-                        value = onnx.ValueInfoProto::docString
+                        value = ValueInfoProto::docString
                     )
                 )
                 add(
@@ -351,9 +351,9 @@ public data class ValueInfoProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "metadata_props",
                         number = 4,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.StringStringEntryProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.StringStringEntryProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<StringStringEntryProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = StringStringEntryProto.Companion)),
                         jsonName = "metadataProps",
-                        value = onnx.ValueInfoProto::metadataProps
+                        value = ValueInfoProto::metadataProps
                     )
                 )
             }
@@ -369,22 +369,22 @@ public data class NodeProto(
     val opType: String = "",
     val domain: String = "",
     val overload: String = "",
-    val attribute: List<onnx.AttributeProto> = emptyList(),
+    val attribute: List<AttributeProto> = emptyList(),
     val docString: String = "",
-    val metadataProps: List<onnx.StringStringEntryProto> = emptyList(),
-    val deviceConfigurations: List<onnx.NodeDeviceConfigurationProto> = emptyList(),
+    val metadataProps: List<StringStringEntryProto> = emptyList(),
+    val deviceConfigurations: List<NodeDeviceConfigurationProto> = emptyList(),
     override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
 ) : pbandk.Message {
-    override operator fun plus(other: pbandk.Message?): onnx.NodeProto = protoMergeImpl(other)
-    override val descriptor: pbandk.MessageDescriptor<onnx.NodeProto> get() = Companion.descriptor
+    override operator fun plus(other: pbandk.Message?): NodeProto = protoMergeImpl(other)
+    override val descriptor: pbandk.MessageDescriptor<NodeProto> get() = Companion.descriptor
     override val protoSize: Int by lazy { super.protoSize }
-    public companion object : pbandk.Message.Companion<onnx.NodeProto> {
-        public val defaultInstance: onnx.NodeProto by lazy { onnx.NodeProto() }
-        override fun decodeWith(u: pbandk.MessageDecoder): onnx.NodeProto = onnx.NodeProto.decodeWithImpl(u)
+    public companion object : pbandk.Message.Companion<NodeProto> {
+        public val defaultInstance: NodeProto by lazy { NodeProto() }
+        override fun decodeWith(u: pbandk.MessageDecoder): NodeProto = NodeProto.decodeWithImpl(u)
 
-        override val descriptor: pbandk.MessageDescriptor<onnx.NodeProto> = pbandk.MessageDescriptor(
-            fullName = "onnx.NodeProto",
-            messageClass = onnx.NodeProto::class,
+        override val descriptor: pbandk.MessageDescriptor<NodeProto> = pbandk.MessageDescriptor(
+            fullName = "NodeProto",
+            messageClass = NodeProto::class,
             messageCompanion = this,
             fields = buildList(10) {
                 add(
@@ -394,7 +394,7 @@ public data class NodeProto(
                         number = 1,
                         type = pbandk.FieldDescriptor.Type.Repeated<String>(valueType = pbandk.FieldDescriptor.Type.Primitive.String()),
                         jsonName = "input",
-                        value = onnx.NodeProto::input
+                        value = NodeProto::input
                     )
                 )
                 add(
@@ -404,7 +404,7 @@ public data class NodeProto(
                         number = 2,
                         type = pbandk.FieldDescriptor.Type.Repeated<String>(valueType = pbandk.FieldDescriptor.Type.Primitive.String()),
                         jsonName = "output",
-                        value = onnx.NodeProto::output
+                        value = NodeProto::output
                     )
                 )
                 add(
@@ -414,7 +414,7 @@ public data class NodeProto(
                         number = 3,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "name",
-                        value = onnx.NodeProto::name
+                        value = NodeProto::name
                     )
                 )
                 add(
@@ -424,7 +424,7 @@ public data class NodeProto(
                         number = 4,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "opType",
-                        value = onnx.NodeProto::opType
+                        value = NodeProto::opType
                     )
                 )
                 add(
@@ -432,9 +432,9 @@ public data class NodeProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "attribute",
                         number = 5,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.AttributeProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.AttributeProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<AttributeProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = AttributeProto.Companion)),
                         jsonName = "attribute",
-                        value = onnx.NodeProto::attribute
+                        value = NodeProto::attribute
                     )
                 )
                 add(
@@ -444,7 +444,7 @@ public data class NodeProto(
                         number = 6,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "docString",
-                        value = onnx.NodeProto::docString
+                        value = NodeProto::docString
                     )
                 )
                 add(
@@ -454,7 +454,7 @@ public data class NodeProto(
                         number = 7,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "domain",
-                        value = onnx.NodeProto::domain
+                        value = NodeProto::domain
                     )
                 )
                 add(
@@ -464,7 +464,7 @@ public data class NodeProto(
                         number = 8,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "overload",
-                        value = onnx.NodeProto::overload
+                        value = NodeProto::overload
                     )
                 )
                 add(
@@ -472,9 +472,9 @@ public data class NodeProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "metadata_props",
                         number = 9,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.StringStringEntryProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.StringStringEntryProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<StringStringEntryProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = StringStringEntryProto.Companion)),
                         jsonName = "metadataProps",
-                        value = onnx.NodeProto::metadataProps
+                        value = NodeProto::metadataProps
                     )
                 )
                 add(
@@ -482,9 +482,9 @@ public data class NodeProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "device_configurations",
                         number = 10,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.NodeDeviceConfigurationProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.NodeDeviceConfigurationProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<NodeDeviceConfigurationProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = NodeDeviceConfigurationProto.Companion)),
                         jsonName = "deviceConfigurations",
-                        value = onnx.NodeProto::deviceConfigurations
+                        value = NodeProto::deviceConfigurations
                     )
                 )
             }
@@ -498,16 +498,16 @@ public data class IntIntListEntryProto(
     val value: List<Long> = emptyList(),
     override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
 ) : pbandk.Message {
-    override operator fun plus(other: pbandk.Message?): onnx.IntIntListEntryProto = protoMergeImpl(other)
-    override val descriptor: pbandk.MessageDescriptor<onnx.IntIntListEntryProto> get() = Companion.descriptor
+    override operator fun plus(other: pbandk.Message?): IntIntListEntryProto = protoMergeImpl(other)
+    override val descriptor: pbandk.MessageDescriptor<IntIntListEntryProto> get() = Companion.descriptor
     override val protoSize: Int by lazy { super.protoSize }
-    public companion object : pbandk.Message.Companion<onnx.IntIntListEntryProto> {
-        public val defaultInstance: onnx.IntIntListEntryProto by lazy { onnx.IntIntListEntryProto() }
-        override fun decodeWith(u: pbandk.MessageDecoder): onnx.IntIntListEntryProto = onnx.IntIntListEntryProto.decodeWithImpl(u)
+    public companion object : pbandk.Message.Companion<IntIntListEntryProto> {
+        public val defaultInstance: IntIntListEntryProto by lazy { IntIntListEntryProto() }
+        override fun decodeWith(u: pbandk.MessageDecoder): IntIntListEntryProto = IntIntListEntryProto.decodeWithImpl(u)
 
-        override val descriptor: pbandk.MessageDescriptor<onnx.IntIntListEntryProto> = pbandk.MessageDescriptor(
-            fullName = "onnx.IntIntListEntryProto",
-            messageClass = onnx.IntIntListEntryProto::class,
+        override val descriptor: pbandk.MessageDescriptor<IntIntListEntryProto> = pbandk.MessageDescriptor(
+            fullName = "IntIntListEntryProto",
+            messageClass = IntIntListEntryProto::class,
             messageCompanion = this,
             fields = buildList(2) {
                 add(
@@ -517,7 +517,7 @@ public data class IntIntListEntryProto(
                         number = 1,
                         type = pbandk.FieldDescriptor.Type.Primitive.Int64(),
                         jsonName = "key",
-                        value = onnx.IntIntListEntryProto::key
+                        value = IntIntListEntryProto::key
                     )
                 )
                 add(
@@ -527,7 +527,7 @@ public data class IntIntListEntryProto(
                         number = 2,
                         type = pbandk.FieldDescriptor.Type.Repeated<Long>(valueType = pbandk.FieldDescriptor.Type.Primitive.Int64(), packed = true),
                         jsonName = "value",
-                        value = onnx.IntIntListEntryProto::value
+                        value = IntIntListEntryProto::value
                     )
                 )
             }
@@ -538,20 +538,20 @@ public data class IntIntListEntryProto(
 @pbandk.Export
 public data class NodeDeviceConfigurationProto(
     val configurationId: String = "",
-    val shardingSpec: List<onnx.ShardingSpecProto> = emptyList(),
+    val shardingSpec: List<ShardingSpecProto> = emptyList(),
     val pipelineStage: Int = 0,
     override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
 ) : pbandk.Message {
-    override operator fun plus(other: pbandk.Message?): onnx.NodeDeviceConfigurationProto = protoMergeImpl(other)
-    override val descriptor: pbandk.MessageDescriptor<onnx.NodeDeviceConfigurationProto> get() = Companion.descriptor
+    override operator fun plus(other: pbandk.Message?): NodeDeviceConfigurationProto = protoMergeImpl(other)
+    override val descriptor: pbandk.MessageDescriptor<NodeDeviceConfigurationProto> get() = Companion.descriptor
     override val protoSize: Int by lazy { super.protoSize }
-    public companion object : pbandk.Message.Companion<onnx.NodeDeviceConfigurationProto> {
-        public val defaultInstance: onnx.NodeDeviceConfigurationProto by lazy { onnx.NodeDeviceConfigurationProto() }
-        override fun decodeWith(u: pbandk.MessageDecoder): onnx.NodeDeviceConfigurationProto = onnx.NodeDeviceConfigurationProto.decodeWithImpl(u)
+    public companion object : pbandk.Message.Companion<NodeDeviceConfigurationProto> {
+        public val defaultInstance: NodeDeviceConfigurationProto by lazy { NodeDeviceConfigurationProto() }
+        override fun decodeWith(u: pbandk.MessageDecoder): NodeDeviceConfigurationProto = NodeDeviceConfigurationProto.decodeWithImpl(u)
 
-        override val descriptor: pbandk.MessageDescriptor<onnx.NodeDeviceConfigurationProto> = pbandk.MessageDescriptor(
-            fullName = "onnx.NodeDeviceConfigurationProto",
-            messageClass = onnx.NodeDeviceConfigurationProto::class,
+        override val descriptor: pbandk.MessageDescriptor<NodeDeviceConfigurationProto> = pbandk.MessageDescriptor(
+            fullName = "NodeDeviceConfigurationProto",
+            messageClass = NodeDeviceConfigurationProto::class,
             messageCompanion = this,
             fields = buildList(3) {
                 add(
@@ -561,7 +561,7 @@ public data class NodeDeviceConfigurationProto(
                         number = 1,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "configurationId",
-                        value = onnx.NodeDeviceConfigurationProto::configurationId
+                        value = NodeDeviceConfigurationProto::configurationId
                     )
                 )
                 add(
@@ -569,9 +569,9 @@ public data class NodeDeviceConfigurationProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "sharding_spec",
                         number = 2,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.ShardingSpecProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.ShardingSpecProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<ShardingSpecProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = ShardingSpecProto.Companion)),
                         jsonName = "shardingSpec",
-                        value = onnx.NodeDeviceConfigurationProto::shardingSpec
+                        value = NodeDeviceConfigurationProto::shardingSpec
                     )
                 )
                 add(
@@ -581,7 +581,7 @@ public data class NodeDeviceConfigurationProto(
                         number = 3,
                         type = pbandk.FieldDescriptor.Type.Primitive.Int32(),
                         jsonName = "pipelineStage",
-                        value = onnx.NodeDeviceConfigurationProto::pipelineStage
+                        value = NodeDeviceConfigurationProto::pipelineStage
                     )
                 )
             }
@@ -593,20 +593,20 @@ public data class NodeDeviceConfigurationProto(
 public data class ShardingSpecProto(
     val tensorName: String = "",
     val device: List<Long> = emptyList(),
-    val indexToDeviceGroupMap: List<onnx.IntIntListEntryProto> = emptyList(),
-    val shardedDim: List<onnx.ShardedDimProto> = emptyList(),
+    val indexToDeviceGroupMap: List<IntIntListEntryProto> = emptyList(),
+    val shardedDim: List<ShardedDimProto> = emptyList(),
     override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
 ) : pbandk.Message {
-    override operator fun plus(other: pbandk.Message?): onnx.ShardingSpecProto = protoMergeImpl(other)
-    override val descriptor: pbandk.MessageDescriptor<onnx.ShardingSpecProto> get() = Companion.descriptor
+    override operator fun plus(other: pbandk.Message?): ShardingSpecProto = protoMergeImpl(other)
+    override val descriptor: pbandk.MessageDescriptor<ShardingSpecProto> get() = Companion.descriptor
     override val protoSize: Int by lazy { super.protoSize }
-    public companion object : pbandk.Message.Companion<onnx.ShardingSpecProto> {
-        public val defaultInstance: onnx.ShardingSpecProto by lazy { onnx.ShardingSpecProto() }
-        override fun decodeWith(u: pbandk.MessageDecoder): onnx.ShardingSpecProto = onnx.ShardingSpecProto.decodeWithImpl(u)
+    public companion object : pbandk.Message.Companion<ShardingSpecProto> {
+        public val defaultInstance: ShardingSpecProto by lazy { ShardingSpecProto() }
+        override fun decodeWith(u: pbandk.MessageDecoder): ShardingSpecProto = ShardingSpecProto.decodeWithImpl(u)
 
-        override val descriptor: pbandk.MessageDescriptor<onnx.ShardingSpecProto> = pbandk.MessageDescriptor(
-            fullName = "onnx.ShardingSpecProto",
-            messageClass = onnx.ShardingSpecProto::class,
+        override val descriptor: pbandk.MessageDescriptor<ShardingSpecProto> = pbandk.MessageDescriptor(
+            fullName = "ShardingSpecProto",
+            messageClass = ShardingSpecProto::class,
             messageCompanion = this,
             fields = buildList(4) {
                 add(
@@ -616,7 +616,7 @@ public data class ShardingSpecProto(
                         number = 1,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "tensorName",
-                        value = onnx.ShardingSpecProto::tensorName
+                        value = ShardingSpecProto::tensorName
                     )
                 )
                 add(
@@ -626,7 +626,7 @@ public data class ShardingSpecProto(
                         number = 2,
                         type = pbandk.FieldDescriptor.Type.Repeated<Long>(valueType = pbandk.FieldDescriptor.Type.Primitive.Int64(), packed = true),
                         jsonName = "device",
-                        value = onnx.ShardingSpecProto::device
+                        value = ShardingSpecProto::device
                     )
                 )
                 add(
@@ -634,9 +634,9 @@ public data class ShardingSpecProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "index_to_device_group_map",
                         number = 3,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.IntIntListEntryProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.IntIntListEntryProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<IntIntListEntryProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = IntIntListEntryProto.Companion)),
                         jsonName = "indexToDeviceGroupMap",
-                        value = onnx.ShardingSpecProto::indexToDeviceGroupMap
+                        value = ShardingSpecProto::indexToDeviceGroupMap
                     )
                 )
                 add(
@@ -644,9 +644,9 @@ public data class ShardingSpecProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "sharded_dim",
                         number = 4,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.ShardedDimProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.ShardedDimProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<ShardedDimProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = ShardedDimProto.Companion)),
                         jsonName = "shardedDim",
-                        value = onnx.ShardingSpecProto::shardedDim
+                        value = ShardingSpecProto::shardedDim
                     )
                 )
             }
@@ -657,19 +657,19 @@ public data class ShardingSpecProto(
 @pbandk.Export
 public data class ShardedDimProto(
     val axis: Long = 0L,
-    val simpleSharding: List<onnx.SimpleShardedDimProto> = emptyList(),
+    val simpleSharding: List<SimpleShardedDimProto> = emptyList(),
     override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
 ) : pbandk.Message {
-    override operator fun plus(other: pbandk.Message?): onnx.ShardedDimProto = protoMergeImpl(other)
-    override val descriptor: pbandk.MessageDescriptor<onnx.ShardedDimProto> get() = Companion.descriptor
+    override operator fun plus(other: pbandk.Message?): ShardedDimProto = protoMergeImpl(other)
+    override val descriptor: pbandk.MessageDescriptor<ShardedDimProto> get() = Companion.descriptor
     override val protoSize: Int by lazy { super.protoSize }
-    public companion object : pbandk.Message.Companion<onnx.ShardedDimProto> {
-        public val defaultInstance: onnx.ShardedDimProto by lazy { onnx.ShardedDimProto() }
-        override fun decodeWith(u: pbandk.MessageDecoder): onnx.ShardedDimProto = onnx.ShardedDimProto.decodeWithImpl(u)
+    public companion object : pbandk.Message.Companion<ShardedDimProto> {
+        public val defaultInstance: ShardedDimProto by lazy { ShardedDimProto() }
+        override fun decodeWith(u: pbandk.MessageDecoder): ShardedDimProto = ShardedDimProto.decodeWithImpl(u)
 
-        override val descriptor: pbandk.MessageDescriptor<onnx.ShardedDimProto> = pbandk.MessageDescriptor(
-            fullName = "onnx.ShardedDimProto",
-            messageClass = onnx.ShardedDimProto::class,
+        override val descriptor: pbandk.MessageDescriptor<ShardedDimProto> = pbandk.MessageDescriptor(
+            fullName = "ShardedDimProto",
+            messageClass = ShardedDimProto::class,
             messageCompanion = this,
             fields = buildList(2) {
                 add(
@@ -679,7 +679,7 @@ public data class ShardedDimProto(
                         number = 1,
                         type = pbandk.FieldDescriptor.Type.Primitive.Int64(),
                         jsonName = "axis",
-                        value = onnx.ShardedDimProto::axis
+                        value = ShardedDimProto::axis
                     )
                 )
                 add(
@@ -687,9 +687,9 @@ public data class ShardedDimProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "simple_sharding",
                         number = 2,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.SimpleShardedDimProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.SimpleShardedDimProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<SimpleShardedDimProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = SimpleShardedDimProto.Companion)),
                         jsonName = "simpleSharding",
-                        value = onnx.ShardedDimProto::simpleSharding
+                        value = ShardedDimProto::simpleSharding
                     )
                 )
             }
@@ -713,16 +713,16 @@ public data class SimpleShardedDimProto(
     val dimParam: String?
         get() = (dim as? Dim.DimParam)?.value
 
-    override operator fun plus(other: pbandk.Message?): onnx.SimpleShardedDimProto = protoMergeImpl(other)
-    override val descriptor: pbandk.MessageDescriptor<onnx.SimpleShardedDimProto> get() = Companion.descriptor
+    override operator fun plus(other: pbandk.Message?): SimpleShardedDimProto = protoMergeImpl(other)
+    override val descriptor: pbandk.MessageDescriptor<SimpleShardedDimProto> get() = Companion.descriptor
     override val protoSize: Int by lazy { super.protoSize }
-    public companion object : pbandk.Message.Companion<onnx.SimpleShardedDimProto> {
-        public val defaultInstance: onnx.SimpleShardedDimProto by lazy { onnx.SimpleShardedDimProto() }
-        override fun decodeWith(u: pbandk.MessageDecoder): onnx.SimpleShardedDimProto = onnx.SimpleShardedDimProto.decodeWithImpl(u)
+    public companion object : pbandk.Message.Companion<SimpleShardedDimProto> {
+        public val defaultInstance: SimpleShardedDimProto by lazy { SimpleShardedDimProto() }
+        override fun decodeWith(u: pbandk.MessageDecoder): SimpleShardedDimProto = SimpleShardedDimProto.decodeWithImpl(u)
 
-        override val descriptor: pbandk.MessageDescriptor<onnx.SimpleShardedDimProto> = pbandk.MessageDescriptor(
-            fullName = "onnx.SimpleShardedDimProto",
-            messageClass = onnx.SimpleShardedDimProto::class,
+        override val descriptor: pbandk.MessageDescriptor<SimpleShardedDimProto> = pbandk.MessageDescriptor(
+            fullName = "SimpleShardedDimProto",
+            messageClass = SimpleShardedDimProto::class,
             messageCompanion = this,
             fields = buildList(3) {
                 add(
@@ -733,7 +733,7 @@ public data class SimpleShardedDimProto(
                         type = pbandk.FieldDescriptor.Type.Primitive.Int64(hasPresence = true),
                         oneofMember = true,
                         jsonName = "dimValue",
-                        value = onnx.SimpleShardedDimProto::dimValue
+                        value = SimpleShardedDimProto::dimValue
                     )
                 )
                 add(
@@ -744,7 +744,7 @@ public data class SimpleShardedDimProto(
                         type = pbandk.FieldDescriptor.Type.Primitive.String(hasPresence = true),
                         oneofMember = true,
                         jsonName = "dimParam",
-                        value = onnx.SimpleShardedDimProto::dimParam
+                        value = SimpleShardedDimProto::dimParam
                     )
                 )
                 add(
@@ -754,7 +754,7 @@ public data class SimpleShardedDimProto(
                         number = 3,
                         type = pbandk.FieldDescriptor.Type.Primitive.Int64(),
                         jsonName = "numShards",
-                        value = onnx.SimpleShardedDimProto::numShards
+                        value = SimpleShardedDimProto::numShards
                     )
                 )
             }
@@ -764,22 +764,22 @@ public data class SimpleShardedDimProto(
 
 @pbandk.Export
 public data class TrainingInfoProto(
-    val initialization: onnx.GraphProto? = null,
-    val algorithm: onnx.GraphProto? = null,
-    val initializationBinding: List<onnx.StringStringEntryProto> = emptyList(),
-    val updateBinding: List<onnx.StringStringEntryProto> = emptyList(),
+    val initialization: GraphProto? = null,
+    val algorithm: GraphProto? = null,
+    val initializationBinding: List<StringStringEntryProto> = emptyList(),
+    val updateBinding: List<StringStringEntryProto> = emptyList(),
     override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
 ) : pbandk.Message {
-    override operator fun plus(other: pbandk.Message?): onnx.TrainingInfoProto = protoMergeImpl(other)
-    override val descriptor: pbandk.MessageDescriptor<onnx.TrainingInfoProto> get() = Companion.descriptor
+    override operator fun plus(other: pbandk.Message?): TrainingInfoProto = protoMergeImpl(other)
+    override val descriptor: pbandk.MessageDescriptor<TrainingInfoProto> get() = Companion.descriptor
     override val protoSize: Int by lazy { super.protoSize }
-    public companion object : pbandk.Message.Companion<onnx.TrainingInfoProto> {
-        public val defaultInstance: onnx.TrainingInfoProto by lazy { onnx.TrainingInfoProto() }
-        override fun decodeWith(u: pbandk.MessageDecoder): onnx.TrainingInfoProto = onnx.TrainingInfoProto.decodeWithImpl(u)
+    public companion object : pbandk.Message.Companion<TrainingInfoProto> {
+        public val defaultInstance: TrainingInfoProto by lazy { TrainingInfoProto() }
+        override fun decodeWith(u: pbandk.MessageDecoder): TrainingInfoProto = TrainingInfoProto.decodeWithImpl(u)
 
-        override val descriptor: pbandk.MessageDescriptor<onnx.TrainingInfoProto> = pbandk.MessageDescriptor(
-            fullName = "onnx.TrainingInfoProto",
-            messageClass = onnx.TrainingInfoProto::class,
+        override val descriptor: pbandk.MessageDescriptor<TrainingInfoProto> = pbandk.MessageDescriptor(
+            fullName = "TrainingInfoProto",
+            messageClass = TrainingInfoProto::class,
             messageCompanion = this,
             fields = buildList(4) {
                 add(
@@ -787,9 +787,9 @@ public data class TrainingInfoProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "initialization",
                         number = 1,
-                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.GraphProto.Companion),
+                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = GraphProto.Companion),
                         jsonName = "initialization",
-                        value = onnx.TrainingInfoProto::initialization
+                        value = TrainingInfoProto::initialization
                     )
                 )
                 add(
@@ -797,9 +797,9 @@ public data class TrainingInfoProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "algorithm",
                         number = 2,
-                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.GraphProto.Companion),
+                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = GraphProto.Companion),
                         jsonName = "algorithm",
-                        value = onnx.TrainingInfoProto::algorithm
+                        value = TrainingInfoProto::algorithm
                     )
                 )
                 add(
@@ -807,9 +807,9 @@ public data class TrainingInfoProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "initialization_binding",
                         number = 3,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.StringStringEntryProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.StringStringEntryProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<StringStringEntryProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = StringStringEntryProto.Companion)),
                         jsonName = "initializationBinding",
-                        value = onnx.TrainingInfoProto::initializationBinding
+                        value = TrainingInfoProto::initializationBinding
                     )
                 )
                 add(
@@ -817,9 +817,9 @@ public data class TrainingInfoProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "update_binding",
                         number = 4,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.StringStringEntryProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.StringStringEntryProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<StringStringEntryProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = StringStringEntryProto.Companion)),
                         jsonName = "updateBinding",
-                        value = onnx.TrainingInfoProto::updateBinding
+                        value = TrainingInfoProto::updateBinding
                     )
                 )
             }
@@ -830,29 +830,29 @@ public data class TrainingInfoProto(
 @pbandk.Export
 public data class ModelProto(
     val irVersion: Long = 0L,
-    val opsetImport: List<onnx.OperatorSetIdProto> = emptyList(),
+    val opsetImport: List<OperatorSetIdProto> = emptyList(),
     val producerName: String = "",
     val producerVersion: String = "",
     val domain: String = "",
     val modelVersion: Long = 0L,
     val docString: String = "",
-    val graph: onnx.GraphProto? = null,
-    val metadataProps: List<onnx.StringStringEntryProto> = emptyList(),
-    val trainingInfo: List<onnx.TrainingInfoProto> = emptyList(),
-    val functions: List<onnx.FunctionProto> = emptyList(),
-    val configuration: List<onnx.DeviceConfigurationProto> = emptyList(),
+    val graph: GraphProto? = null,
+    val metadataProps: List<StringStringEntryProto> = emptyList(),
+    val trainingInfo: List<TrainingInfoProto> = emptyList(),
+    val functions: List<FunctionProto> = emptyList(),
+    val configuration: List<DeviceConfigurationProto> = emptyList(),
     override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
 ) : pbandk.Message {
-    override operator fun plus(other: pbandk.Message?): onnx.ModelProto = protoMergeImpl(other)
-    override val descriptor: pbandk.MessageDescriptor<onnx.ModelProto> get() = Companion.descriptor
+    override operator fun plus(other: pbandk.Message?): ModelProto = protoMergeImpl(other)
+    override val descriptor: pbandk.MessageDescriptor<ModelProto> get() = Companion.descriptor
     override val protoSize: Int by lazy { super.protoSize }
-    public companion object : pbandk.Message.Companion<onnx.ModelProto> {
-        public val defaultInstance: onnx.ModelProto by lazy { onnx.ModelProto() }
-        override fun decodeWith(u: pbandk.MessageDecoder): onnx.ModelProto = onnx.ModelProto.decodeWithImpl(u)
+    public companion object : pbandk.Message.Companion<ModelProto> {
+        public val defaultInstance: ModelProto by lazy { ModelProto() }
+        override fun decodeWith(u: pbandk.MessageDecoder): ModelProto = ModelProto.decodeWithImpl(u)
 
-        override val descriptor: pbandk.MessageDescriptor<onnx.ModelProto> = pbandk.MessageDescriptor(
-            fullName = "onnx.ModelProto",
-            messageClass = onnx.ModelProto::class,
+        override val descriptor: pbandk.MessageDescriptor<ModelProto> = pbandk.MessageDescriptor(
+            fullName = "ModelProto",
+            messageClass = ModelProto::class,
             messageCompanion = this,
             fields = buildList(12) {
                 add(
@@ -862,7 +862,7 @@ public data class ModelProto(
                         number = 1,
                         type = pbandk.FieldDescriptor.Type.Primitive.Int64(),
                         jsonName = "irVersion",
-                        value = onnx.ModelProto::irVersion
+                        value = ModelProto::irVersion
                     )
                 )
                 add(
@@ -872,7 +872,7 @@ public data class ModelProto(
                         number = 2,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "producerName",
-                        value = onnx.ModelProto::producerName
+                        value = ModelProto::producerName
                     )
                 )
                 add(
@@ -882,7 +882,7 @@ public data class ModelProto(
                         number = 3,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "producerVersion",
-                        value = onnx.ModelProto::producerVersion
+                        value = ModelProto::producerVersion
                     )
                 )
                 add(
@@ -892,7 +892,7 @@ public data class ModelProto(
                         number = 4,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "domain",
-                        value = onnx.ModelProto::domain
+                        value = ModelProto::domain
                     )
                 )
                 add(
@@ -902,7 +902,7 @@ public data class ModelProto(
                         number = 5,
                         type = pbandk.FieldDescriptor.Type.Primitive.Int64(),
                         jsonName = "modelVersion",
-                        value = onnx.ModelProto::modelVersion
+                        value = ModelProto::modelVersion
                     )
                 )
                 add(
@@ -912,7 +912,7 @@ public data class ModelProto(
                         number = 6,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "docString",
-                        value = onnx.ModelProto::docString
+                        value = ModelProto::docString
                     )
                 )
                 add(
@@ -920,9 +920,9 @@ public data class ModelProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "graph",
                         number = 7,
-                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.GraphProto.Companion),
+                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = GraphProto.Companion),
                         jsonName = "graph",
-                        value = onnx.ModelProto::graph
+                        value = ModelProto::graph
                     )
                 )
                 add(
@@ -930,9 +930,9 @@ public data class ModelProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "opset_import",
                         number = 8,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.OperatorSetIdProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.OperatorSetIdProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<OperatorSetIdProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = OperatorSetIdProto.Companion)),
                         jsonName = "opsetImport",
-                        value = onnx.ModelProto::opsetImport
+                        value = ModelProto::opsetImport
                     )
                 )
                 add(
@@ -940,9 +940,9 @@ public data class ModelProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "metadata_props",
                         number = 14,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.StringStringEntryProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.StringStringEntryProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<StringStringEntryProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = StringStringEntryProto.Companion)),
                         jsonName = "metadataProps",
-                        value = onnx.ModelProto::metadataProps
+                        value = ModelProto::metadataProps
                     )
                 )
                 add(
@@ -950,9 +950,9 @@ public data class ModelProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "training_info",
                         number = 20,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.TrainingInfoProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.TrainingInfoProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<TrainingInfoProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = TrainingInfoProto.Companion)),
                         jsonName = "trainingInfo",
-                        value = onnx.ModelProto::trainingInfo
+                        value = ModelProto::trainingInfo
                     )
                 )
                 add(
@@ -960,9 +960,9 @@ public data class ModelProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "functions",
                         number = 25,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.FunctionProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.FunctionProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<FunctionProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = FunctionProto.Companion)),
                         jsonName = "functions",
-                        value = onnx.ModelProto::functions
+                        value = ModelProto::functions
                     )
                 )
                 add(
@@ -970,9 +970,9 @@ public data class ModelProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "configuration",
                         number = 26,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.DeviceConfigurationProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.DeviceConfigurationProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<DeviceConfigurationProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = DeviceConfigurationProto.Companion)),
                         jsonName = "configuration",
-                        value = onnx.ModelProto::configuration
+                        value = ModelProto::configuration
                     )
                 )
             }
@@ -987,16 +987,16 @@ public data class DeviceConfigurationProto(
     val device: List<String> = emptyList(),
     override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
 ) : pbandk.Message {
-    override operator fun plus(other: pbandk.Message?): onnx.DeviceConfigurationProto = protoMergeImpl(other)
-    override val descriptor: pbandk.MessageDescriptor<onnx.DeviceConfigurationProto> get() = Companion.descriptor
+    override operator fun plus(other: pbandk.Message?): DeviceConfigurationProto = protoMergeImpl(other)
+    override val descriptor: pbandk.MessageDescriptor<DeviceConfigurationProto> get() = Companion.descriptor
     override val protoSize: Int by lazy { super.protoSize }
-    public companion object : pbandk.Message.Companion<onnx.DeviceConfigurationProto> {
-        public val defaultInstance: onnx.DeviceConfigurationProto by lazy { onnx.DeviceConfigurationProto() }
-        override fun decodeWith(u: pbandk.MessageDecoder): onnx.DeviceConfigurationProto = onnx.DeviceConfigurationProto.decodeWithImpl(u)
+    public companion object : pbandk.Message.Companion<DeviceConfigurationProto> {
+        public val defaultInstance: DeviceConfigurationProto by lazy { DeviceConfigurationProto() }
+        override fun decodeWith(u: pbandk.MessageDecoder): DeviceConfigurationProto = DeviceConfigurationProto.decodeWithImpl(u)
 
-        override val descriptor: pbandk.MessageDescriptor<onnx.DeviceConfigurationProto> = pbandk.MessageDescriptor(
-            fullName = "onnx.DeviceConfigurationProto",
-            messageClass = onnx.DeviceConfigurationProto::class,
+        override val descriptor: pbandk.MessageDescriptor<DeviceConfigurationProto> = pbandk.MessageDescriptor(
+            fullName = "DeviceConfigurationProto",
+            messageClass = DeviceConfigurationProto::class,
             messageCompanion = this,
             fields = buildList(3) {
                 add(
@@ -1006,7 +1006,7 @@ public data class DeviceConfigurationProto(
                         number = 1,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "name",
-                        value = onnx.DeviceConfigurationProto::name
+                        value = DeviceConfigurationProto::name
                     )
                 )
                 add(
@@ -1016,7 +1016,7 @@ public data class DeviceConfigurationProto(
                         number = 2,
                         type = pbandk.FieldDescriptor.Type.Primitive.Int32(),
                         jsonName = "numDevices",
-                        value = onnx.DeviceConfigurationProto::numDevices
+                        value = DeviceConfigurationProto::numDevices
                     )
                 )
                 add(
@@ -1026,7 +1026,7 @@ public data class DeviceConfigurationProto(
                         number = 3,
                         type = pbandk.FieldDescriptor.Type.Repeated<String>(valueType = pbandk.FieldDescriptor.Type.Primitive.String()),
                         jsonName = "device",
-                        value = onnx.DeviceConfigurationProto::device
+                        value = DeviceConfigurationProto::device
                     )
                 )
             }
@@ -1040,16 +1040,16 @@ public data class StringStringEntryProto(
     val value: String = "",
     override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
 ) : pbandk.Message {
-    override operator fun plus(other: pbandk.Message?): onnx.StringStringEntryProto = protoMergeImpl(other)
-    override val descriptor: pbandk.MessageDescriptor<onnx.StringStringEntryProto> get() = Companion.descriptor
+    override operator fun plus(other: pbandk.Message?): StringStringEntryProto = protoMergeImpl(other)
+    override val descriptor: pbandk.MessageDescriptor<StringStringEntryProto> get() = Companion.descriptor
     override val protoSize: Int by lazy { super.protoSize }
-    public companion object : pbandk.Message.Companion<onnx.StringStringEntryProto> {
-        public val defaultInstance: onnx.StringStringEntryProto by lazy { onnx.StringStringEntryProto() }
-        override fun decodeWith(u: pbandk.MessageDecoder): onnx.StringStringEntryProto = onnx.StringStringEntryProto.decodeWithImpl(u)
+    public companion object : pbandk.Message.Companion<StringStringEntryProto> {
+        public val defaultInstance: StringStringEntryProto by lazy { StringStringEntryProto() }
+        override fun decodeWith(u: pbandk.MessageDecoder): StringStringEntryProto = StringStringEntryProto.decodeWithImpl(u)
 
-        override val descriptor: pbandk.MessageDescriptor<onnx.StringStringEntryProto> = pbandk.MessageDescriptor(
-            fullName = "onnx.StringStringEntryProto",
-            messageClass = onnx.StringStringEntryProto::class,
+        override val descriptor: pbandk.MessageDescriptor<StringStringEntryProto> = pbandk.MessageDescriptor(
+            fullName = "StringStringEntryProto",
+            messageClass = StringStringEntryProto::class,
             messageCompanion = this,
             fields = buildList(2) {
                 add(
@@ -1059,7 +1059,7 @@ public data class StringStringEntryProto(
                         number = 1,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "key",
-                        value = onnx.StringStringEntryProto::key
+                        value = StringStringEntryProto::key
                     )
                 )
                 add(
@@ -1069,7 +1069,7 @@ public data class StringStringEntryProto(
                         number = 2,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "value",
-                        value = onnx.StringStringEntryProto::value
+                        value = StringStringEntryProto::value
                     )
                 )
             }
@@ -1080,19 +1080,19 @@ public data class StringStringEntryProto(
 @pbandk.Export
 public data class TensorAnnotation(
     val tensorName: String = "",
-    val quantParameterTensorNames: List<onnx.StringStringEntryProto> = emptyList(),
+    val quantParameterTensorNames: List<StringStringEntryProto> = emptyList(),
     override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
 ) : pbandk.Message {
-    override operator fun plus(other: pbandk.Message?): onnx.TensorAnnotation = protoMergeImpl(other)
-    override val descriptor: pbandk.MessageDescriptor<onnx.TensorAnnotation> get() = Companion.descriptor
+    override operator fun plus(other: pbandk.Message?): TensorAnnotation = protoMergeImpl(other)
+    override val descriptor: pbandk.MessageDescriptor<TensorAnnotation> get() = Companion.descriptor
     override val protoSize: Int by lazy { super.protoSize }
-    public companion object : pbandk.Message.Companion<onnx.TensorAnnotation> {
-        public val defaultInstance: onnx.TensorAnnotation by lazy { onnx.TensorAnnotation() }
-        override fun decodeWith(u: pbandk.MessageDecoder): onnx.TensorAnnotation = onnx.TensorAnnotation.decodeWithImpl(u)
+    public companion object : pbandk.Message.Companion<TensorAnnotation> {
+        public val defaultInstance: TensorAnnotation by lazy { TensorAnnotation() }
+        override fun decodeWith(u: pbandk.MessageDecoder): TensorAnnotation = TensorAnnotation.decodeWithImpl(u)
 
-        override val descriptor: pbandk.MessageDescriptor<onnx.TensorAnnotation> = pbandk.MessageDescriptor(
-            fullName = "onnx.TensorAnnotation",
-            messageClass = onnx.TensorAnnotation::class,
+        override val descriptor: pbandk.MessageDescriptor<TensorAnnotation> = pbandk.MessageDescriptor(
+            fullName = "TensorAnnotation",
+            messageClass = TensorAnnotation::class,
             messageCompanion = this,
             fields = buildList(2) {
                 add(
@@ -1102,7 +1102,7 @@ public data class TensorAnnotation(
                         number = 1,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "tensorName",
-                        value = onnx.TensorAnnotation::tensorName
+                        value = TensorAnnotation::tensorName
                     )
                 )
                 add(
@@ -1110,9 +1110,9 @@ public data class TensorAnnotation(
                         messageDescriptor = this@Companion::descriptor,
                         name = "quant_parameter_tensor_names",
                         number = 2,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.StringStringEntryProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.StringStringEntryProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<StringStringEntryProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = StringStringEntryProto.Companion)),
                         jsonName = "quantParameterTensorNames",
-                        value = onnx.TensorAnnotation::quantParameterTensorNames
+                        value = TensorAnnotation::quantParameterTensorNames
                     )
                 )
             }
@@ -1122,28 +1122,28 @@ public data class TensorAnnotation(
 
 @pbandk.Export
 public data class GraphProto(
-    val node: List<onnx.NodeProto> = emptyList(),
+    val node: List<NodeProto> = emptyList(),
     val name: String = "",
-    val initializer: List<onnx.TensorProto> = emptyList(),
-    val sparseInitializer: List<onnx.SparseTensorProto> = emptyList(),
+    val initializer: List<TensorProto> = emptyList(),
+    val sparseInitializer: List<SparseTensorProto> = emptyList(),
     val docString: String = "",
-    val input: List<onnx.ValueInfoProto> = emptyList(),
-    val output: List<onnx.ValueInfoProto> = emptyList(),
-    val valueInfo: List<onnx.ValueInfoProto> = emptyList(),
-    val quantizationAnnotation: List<onnx.TensorAnnotation> = emptyList(),
-    val metadataProps: List<onnx.StringStringEntryProto> = emptyList(),
+    val input: List<ValueInfoProto> = emptyList(),
+    val output: List<ValueInfoProto> = emptyList(),
+    val valueInfo: List<ValueInfoProto> = emptyList(),
+    val quantizationAnnotation: List<TensorAnnotation> = emptyList(),
+    val metadataProps: List<StringStringEntryProto> = emptyList(),
     override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
 ) : pbandk.Message {
-    override operator fun plus(other: pbandk.Message?): onnx.GraphProto = protoMergeImpl(other)
-    override val descriptor: pbandk.MessageDescriptor<onnx.GraphProto> get() = Companion.descriptor
+    override operator fun plus(other: pbandk.Message?): GraphProto = protoMergeImpl(other)
+    override val descriptor: pbandk.MessageDescriptor<GraphProto> get() = Companion.descriptor
     override val protoSize: Int by lazy { super.protoSize }
-    public companion object : pbandk.Message.Companion<onnx.GraphProto> {
-        public val defaultInstance: onnx.GraphProto by lazy { onnx.GraphProto() }
-        override fun decodeWith(u: pbandk.MessageDecoder): onnx.GraphProto = onnx.GraphProto.decodeWithImpl(u)
+    public companion object : pbandk.Message.Companion<GraphProto> {
+        public val defaultInstance: GraphProto by lazy { GraphProto() }
+        override fun decodeWith(u: pbandk.MessageDecoder): GraphProto = GraphProto.decodeWithImpl(u)
 
-        override val descriptor: pbandk.MessageDescriptor<onnx.GraphProto> = pbandk.MessageDescriptor(
-            fullName = "onnx.GraphProto",
-            messageClass = onnx.GraphProto::class,
+        override val descriptor: pbandk.MessageDescriptor<GraphProto> = pbandk.MessageDescriptor(
+            fullName = "GraphProto",
+            messageClass = GraphProto::class,
             messageCompanion = this,
             fields = buildList(10) {
                 add(
@@ -1151,9 +1151,9 @@ public data class GraphProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "node",
                         number = 1,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.NodeProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.NodeProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<NodeProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = NodeProto.Companion)),
                         jsonName = "node",
-                        value = onnx.GraphProto::node
+                        value = GraphProto::node
                     )
                 )
                 add(
@@ -1163,7 +1163,7 @@ public data class GraphProto(
                         number = 2,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "name",
-                        value = onnx.GraphProto::name
+                        value = GraphProto::name
                     )
                 )
                 add(
@@ -1171,9 +1171,9 @@ public data class GraphProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "initializer",
                         number = 5,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.TensorProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.TensorProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<TensorProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = TensorProto.Companion)),
                         jsonName = "initializer",
-                        value = onnx.GraphProto::initializer
+                        value = GraphProto::initializer
                     )
                 )
                 add(
@@ -1183,7 +1183,7 @@ public data class GraphProto(
                         number = 10,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "docString",
-                        value = onnx.GraphProto::docString
+                        value = GraphProto::docString
                     )
                 )
                 add(
@@ -1191,9 +1191,9 @@ public data class GraphProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "input",
                         number = 11,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.ValueInfoProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.ValueInfoProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<ValueInfoProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = ValueInfoProto.Companion)),
                         jsonName = "input",
-                        value = onnx.GraphProto::input
+                        value = GraphProto::input
                     )
                 )
                 add(
@@ -1201,9 +1201,9 @@ public data class GraphProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "output",
                         number = 12,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.ValueInfoProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.ValueInfoProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<ValueInfoProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = ValueInfoProto.Companion)),
                         jsonName = "output",
-                        value = onnx.GraphProto::output
+                        value = GraphProto::output
                     )
                 )
                 add(
@@ -1211,9 +1211,9 @@ public data class GraphProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "value_info",
                         number = 13,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.ValueInfoProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.ValueInfoProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<ValueInfoProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = ValueInfoProto.Companion)),
                         jsonName = "valueInfo",
-                        value = onnx.GraphProto::valueInfo
+                        value = GraphProto::valueInfo
                     )
                 )
                 add(
@@ -1221,9 +1221,9 @@ public data class GraphProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "quantization_annotation",
                         number = 14,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.TensorAnnotation>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.TensorAnnotation.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<TensorAnnotation>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = TensorAnnotation.Companion)),
                         jsonName = "quantizationAnnotation",
-                        value = onnx.GraphProto::quantizationAnnotation
+                        value = GraphProto::quantizationAnnotation
                     )
                 )
                 add(
@@ -1231,9 +1231,9 @@ public data class GraphProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "sparse_initializer",
                         number = 15,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.SparseTensorProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.SparseTensorProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<SparseTensorProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = SparseTensorProto.Companion)),
                         jsonName = "sparseInitializer",
-                        value = onnx.GraphProto::sparseInitializer
+                        value = GraphProto::sparseInitializer
                     )
                 )
                 add(
@@ -1241,9 +1241,9 @@ public data class GraphProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "metadata_props",
                         number = 16,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.StringStringEntryProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.StringStringEntryProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<StringStringEntryProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = StringStringEntryProto.Companion)),
                         jsonName = "metadataProps",
-                        value = onnx.GraphProto::metadataProps
+                        value = GraphProto::metadataProps
                     )
                 )
             }
@@ -1255,7 +1255,7 @@ public data class GraphProto(
 public data class TensorProto(
     val dims: List<Long> = emptyList(),
     val dataType: Int = 0,
-    val segment: onnx.TensorProto.Segment? = null,
+    val segment: TensorProto.Segment? = null,
     val floatData: List<Float> = emptyList(),
     val int32Data: List<Int> = emptyList(),
     val stringData: List<pbandk.ByteArr> = emptyList(),
@@ -1263,23 +1263,23 @@ public data class TensorProto(
     val name: String = "",
     val docString: String = "",
     val rawData: pbandk.ByteArr = pbandk.ByteArr.empty,
-    val externalData: List<onnx.StringStringEntryProto> = emptyList(),
-    val dataLocation: onnx.TensorProto.DataLocation = onnx.TensorProto.DataLocation.fromValue(0),
+    val externalData: List<StringStringEntryProto> = emptyList(),
+    val dataLocation: TensorProto.DataLocation = TensorProto.DataLocation.fromValue(0),
     val doubleData: List<Double> = emptyList(),
     val uint64Data: List<Long> = emptyList(),
-    val metadataProps: List<onnx.StringStringEntryProto> = emptyList(),
+    val metadataProps: List<StringStringEntryProto> = emptyList(),
     override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
 ) : pbandk.Message {
-    override operator fun plus(other: pbandk.Message?): onnx.TensorProto = protoMergeImpl(other)
-    override val descriptor: pbandk.MessageDescriptor<onnx.TensorProto> get() = Companion.descriptor
+    override operator fun plus(other: pbandk.Message?): TensorProto = protoMergeImpl(other)
+    override val descriptor: pbandk.MessageDescriptor<TensorProto> get() = Companion.descriptor
     override val protoSize: Int by lazy { super.protoSize }
-    public companion object : pbandk.Message.Companion<onnx.TensorProto> {
-        public val defaultInstance: onnx.TensorProto by lazy { onnx.TensorProto() }
-        override fun decodeWith(u: pbandk.MessageDecoder): onnx.TensorProto = onnx.TensorProto.decodeWithImpl(u)
+    public companion object : pbandk.Message.Companion<TensorProto> {
+        public val defaultInstance: TensorProto by lazy { TensorProto() }
+        override fun decodeWith(u: pbandk.MessageDecoder): TensorProto = TensorProto.decodeWithImpl(u)
 
-        override val descriptor: pbandk.MessageDescriptor<onnx.TensorProto> = pbandk.MessageDescriptor(
-            fullName = "onnx.TensorProto",
-            messageClass = onnx.TensorProto::class,
+        override val descriptor: pbandk.MessageDescriptor<TensorProto> = pbandk.MessageDescriptor(
+            fullName = "TensorProto",
+            messageClass = TensorProto::class,
             messageCompanion = this,
             fields = buildList(15) {
                 add(
@@ -1289,7 +1289,7 @@ public data class TensorProto(
                         number = 1,
                         type = pbandk.FieldDescriptor.Type.Repeated<Long>(valueType = pbandk.FieldDescriptor.Type.Primitive.Int64(), packed = true),
                         jsonName = "dims",
-                        value = onnx.TensorProto::dims
+                        value = TensorProto::dims
                     )
                 )
                 add(
@@ -1299,7 +1299,7 @@ public data class TensorProto(
                         number = 2,
                         type = pbandk.FieldDescriptor.Type.Primitive.Int32(),
                         jsonName = "dataType",
-                        value = onnx.TensorProto::dataType
+                        value = TensorProto::dataType
                     )
                 )
                 add(
@@ -1307,9 +1307,9 @@ public data class TensorProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "segment",
                         number = 3,
-                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.TensorProto.Segment.Companion),
+                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = TensorProto.Segment.Companion),
                         jsonName = "segment",
-                        value = onnx.TensorProto::segment
+                        value = TensorProto::segment
                     )
                 )
                 add(
@@ -1319,7 +1319,7 @@ public data class TensorProto(
                         number = 4,
                         type = pbandk.FieldDescriptor.Type.Repeated<Float>(valueType = pbandk.FieldDescriptor.Type.Primitive.Float(), packed = true),
                         jsonName = "floatData",
-                        value = onnx.TensorProto::floatData
+                        value = TensorProto::floatData
                     )
                 )
                 add(
@@ -1329,7 +1329,7 @@ public data class TensorProto(
                         number = 5,
                         type = pbandk.FieldDescriptor.Type.Repeated<Int>(valueType = pbandk.FieldDescriptor.Type.Primitive.Int32(), packed = true),
                         jsonName = "int32Data",
-                        value = onnx.TensorProto::int32Data
+                        value = TensorProto::int32Data
                     )
                 )
                 add(
@@ -1339,7 +1339,7 @@ public data class TensorProto(
                         number = 6,
                         type = pbandk.FieldDescriptor.Type.Repeated<pbandk.ByteArr>(valueType = pbandk.FieldDescriptor.Type.Primitive.Bytes()),
                         jsonName = "stringData",
-                        value = onnx.TensorProto::stringData
+                        value = TensorProto::stringData
                     )
                 )
                 add(
@@ -1349,7 +1349,7 @@ public data class TensorProto(
                         number = 7,
                         type = pbandk.FieldDescriptor.Type.Repeated<Long>(valueType = pbandk.FieldDescriptor.Type.Primitive.Int64(), packed = true),
                         jsonName = "int64Data",
-                        value = onnx.TensorProto::int64Data
+                        value = TensorProto::int64Data
                     )
                 )
                 add(
@@ -1359,7 +1359,7 @@ public data class TensorProto(
                         number = 8,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "name",
-                        value = onnx.TensorProto::name
+                        value = TensorProto::name
                     )
                 )
                 add(
@@ -1369,7 +1369,7 @@ public data class TensorProto(
                         number = 9,
                         type = pbandk.FieldDescriptor.Type.Primitive.Bytes(),
                         jsonName = "rawData",
-                        value = onnx.TensorProto::rawData
+                        value = TensorProto::rawData
                     )
                 )
                 add(
@@ -1379,7 +1379,7 @@ public data class TensorProto(
                         number = 10,
                         type = pbandk.FieldDescriptor.Type.Repeated<Double>(valueType = pbandk.FieldDescriptor.Type.Primitive.Double(), packed = true),
                         jsonName = "doubleData",
-                        value = onnx.TensorProto::doubleData
+                        value = TensorProto::doubleData
                     )
                 )
                 add(
@@ -1389,7 +1389,7 @@ public data class TensorProto(
                         number = 11,
                         type = pbandk.FieldDescriptor.Type.Repeated<Long>(valueType = pbandk.FieldDescriptor.Type.Primitive.UInt64(), packed = true),
                         jsonName = "uint64Data",
-                        value = onnx.TensorProto::uint64Data
+                        value = TensorProto::uint64Data
                     )
                 )
                 add(
@@ -1399,7 +1399,7 @@ public data class TensorProto(
                         number = 12,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "docString",
-                        value = onnx.TensorProto::docString
+                        value = TensorProto::docString
                     )
                 )
                 add(
@@ -1407,9 +1407,9 @@ public data class TensorProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "external_data",
                         number = 13,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.StringStringEntryProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.StringStringEntryProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<StringStringEntryProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = StringStringEntryProto.Companion)),
                         jsonName = "externalData",
-                        value = onnx.TensorProto::externalData
+                        value = TensorProto::externalData
                     )
                 )
                 add(
@@ -1417,9 +1417,9 @@ public data class TensorProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "data_location",
                         number = 14,
-                        type = pbandk.FieldDescriptor.Type.Enum(enumCompanion = onnx.TensorProto.DataLocation.Companion),
+                        type = pbandk.FieldDescriptor.Type.Enum(enumCompanion = TensorProto.DataLocation.Companion),
                         jsonName = "dataLocation",
-                        value = onnx.TensorProto::dataLocation
+                        value = TensorProto::dataLocation
                     )
                 )
                 add(
@@ -1427,9 +1427,9 @@ public data class TensorProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "metadata_props",
                         number = 16,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.StringStringEntryProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.StringStringEntryProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<StringStringEntryProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = StringStringEntryProto.Companion)),
                         jsonName = "metadataProps",
-                        value = onnx.TensorProto::metadataProps
+                        value = TensorProto::metadataProps
                     )
                 )
             }
@@ -1437,7 +1437,7 @@ public data class TensorProto(
     }
 
     public sealed class DataType(override val value: Int, override val name: String? = null) : pbandk.Message.Enum {
-        override fun equals(other: kotlin.Any?): Boolean = other is onnx.TensorProto.DataType && other.value == value
+        override fun equals(other: kotlin.Any?): Boolean = other is TensorProto.DataType && other.value == value
         override fun hashCode(): Int = value.hashCode()
         override fun toString(): String = "TensorProto.DataType.${name ?: "UNRECOGNIZED"}(value=$value)"
 
@@ -1470,15 +1470,15 @@ public data class TensorProto(
         public object INT2 : DataType(26, "INT2")
         public class UNRECOGNIZED(value: Int) : DataType(value)
 
-        public companion object : pbandk.Message.Enum.Companion<onnx.TensorProto.DataType> {
-            public val values: List<onnx.TensorProto.DataType> by lazy { listOf(UNDEFINED, FLOAT, UINT8, INT8, UINT16, INT16, INT32, INT64, STRING, BOOL, FLOAT16, DOUBLE, UINT32, UINT64, COMPLEX64, COMPLEX128, BFLOAT16, FLOAT8E4M3FN, FLOAT8E4M3FNUZ, FLOAT8E5M2, FLOAT8E5M2FNUZ, UINT4, INT4, FLOAT4E2M1, FLOAT8E8M0, UINT2, INT2) }
-            override fun fromValue(value: Int): onnx.TensorProto.DataType = values.firstOrNull { it.value == value } ?: UNRECOGNIZED(value)
-            override fun fromName(name: String): onnx.TensorProto.DataType = values.firstOrNull { it.name == name } ?: throw IllegalArgumentException("No DataType with name: $name")
+        public companion object : pbandk.Message.Enum.Companion<TensorProto.DataType> {
+            public val values: List<TensorProto.DataType> by lazy { listOf(UNDEFINED, FLOAT, UINT8, INT8, UINT16, INT16, INT32, INT64, STRING, BOOL, FLOAT16, DOUBLE, UINT32, UINT64, COMPLEX64, COMPLEX128, BFLOAT16, FLOAT8E4M3FN, FLOAT8E4M3FNUZ, FLOAT8E5M2, FLOAT8E5M2FNUZ, UINT4, INT4, FLOAT4E2M1, FLOAT8E8M0, UINT2, INT2) }
+            override fun fromValue(value: Int): TensorProto.DataType = values.firstOrNull { it.value == value } ?: UNRECOGNIZED(value)
+            override fun fromName(name: String): TensorProto.DataType = values.firstOrNull { it.name == name } ?: throw IllegalArgumentException("No DataType with name: $name")
         }
     }
 
     public sealed class DataLocation(override val value: Int, override val name: String? = null) : pbandk.Message.Enum {
-        override fun equals(other: kotlin.Any?): Boolean = other is onnx.TensorProto.DataLocation && other.value == value
+        override fun equals(other: kotlin.Any?): Boolean = other is TensorProto.DataLocation && other.value == value
         override fun hashCode(): Int = value.hashCode()
         override fun toString(): String = "TensorProto.DataLocation.${name ?: "UNRECOGNIZED"}(value=$value)"
 
@@ -1486,10 +1486,10 @@ public data class TensorProto(
         public object EXTERNAL : DataLocation(1, "EXTERNAL")
         public class UNRECOGNIZED(value: Int) : DataLocation(value)
 
-        public companion object : pbandk.Message.Enum.Companion<onnx.TensorProto.DataLocation> {
-            public val values: List<onnx.TensorProto.DataLocation> by lazy { listOf(DEFAULT, EXTERNAL) }
-            override fun fromValue(value: Int): onnx.TensorProto.DataLocation = values.firstOrNull { it.value == value } ?: UNRECOGNIZED(value)
-            override fun fromName(name: String): onnx.TensorProto.DataLocation = values.firstOrNull { it.name == name } ?: throw IllegalArgumentException("No DataLocation with name: $name")
+        public companion object : pbandk.Message.Enum.Companion<TensorProto.DataLocation> {
+            public val values: List<TensorProto.DataLocation> by lazy { listOf(DEFAULT, EXTERNAL) }
+            override fun fromValue(value: Int): TensorProto.DataLocation = values.firstOrNull { it.value == value } ?: UNRECOGNIZED(value)
+            override fun fromName(name: String): TensorProto.DataLocation = values.firstOrNull { it.name == name } ?: throw IllegalArgumentException("No DataLocation with name: $name")
         }
     }
 
@@ -1498,16 +1498,16 @@ public data class TensorProto(
         val end: Long = 0L,
         override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
     ) : pbandk.Message {
-        override operator fun plus(other: pbandk.Message?): onnx.TensorProto.Segment = protoMergeImpl(other)
-        override val descriptor: pbandk.MessageDescriptor<onnx.TensorProto.Segment> get() = Companion.descriptor
+        override operator fun plus(other: pbandk.Message?): TensorProto.Segment = protoMergeImpl(other)
+        override val descriptor: pbandk.MessageDescriptor<TensorProto.Segment> get() = Companion.descriptor
         override val protoSize: Int by lazy { super.protoSize }
-        public companion object : pbandk.Message.Companion<onnx.TensorProto.Segment> {
-            public val defaultInstance: onnx.TensorProto.Segment by lazy { onnx.TensorProto.Segment() }
-            override fun decodeWith(u: pbandk.MessageDecoder): onnx.TensorProto.Segment = onnx.TensorProto.Segment.decodeWithImpl(u)
+        public companion object : pbandk.Message.Companion<TensorProto.Segment> {
+            public val defaultInstance: TensorProto.Segment by lazy { TensorProto.Segment() }
+            override fun decodeWith(u: pbandk.MessageDecoder): TensorProto.Segment = TensorProto.Segment.decodeWithImpl(u)
 
-            override val descriptor: pbandk.MessageDescriptor<onnx.TensorProto.Segment> = pbandk.MessageDescriptor(
-                fullName = "onnx.TensorProto.Segment",
-                messageClass = onnx.TensorProto.Segment::class,
+            override val descriptor: pbandk.MessageDescriptor<TensorProto.Segment> = pbandk.MessageDescriptor(
+                fullName = "TensorProto.Segment",
+                messageClass = TensorProto.Segment::class,
                 messageCompanion = this,
                 fields = buildList(2) {
                     add(
@@ -1517,7 +1517,7 @@ public data class TensorProto(
                             number = 1,
                             type = pbandk.FieldDescriptor.Type.Primitive.Int64(),
                             jsonName = "begin",
-                            value = onnx.TensorProto.Segment::begin
+                            value = TensorProto.Segment::begin
                         )
                     )
                     add(
@@ -1527,7 +1527,7 @@ public data class TensorProto(
                             number = 2,
                             type = pbandk.FieldDescriptor.Type.Primitive.Int64(),
                             jsonName = "end",
-                            value = onnx.TensorProto.Segment::end
+                            value = TensorProto.Segment::end
                         )
                     )
                 }
@@ -1538,21 +1538,21 @@ public data class TensorProto(
 
 @pbandk.Export
 public data class SparseTensorProto(
-    val values: onnx.TensorProto? = null,
-    val indices: onnx.TensorProto? = null,
+    val values: TensorProto? = null,
+    val indices: TensorProto? = null,
     val dims: List<Long> = emptyList(),
     override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
 ) : pbandk.Message {
-    override operator fun plus(other: pbandk.Message?): onnx.SparseTensorProto = protoMergeImpl(other)
-    override val descriptor: pbandk.MessageDescriptor<onnx.SparseTensorProto> get() = Companion.descriptor
+    override operator fun plus(other: pbandk.Message?): SparseTensorProto = protoMergeImpl(other)
+    override val descriptor: pbandk.MessageDescriptor<SparseTensorProto> get() = Companion.descriptor
     override val protoSize: Int by lazy { super.protoSize }
-    public companion object : pbandk.Message.Companion<onnx.SparseTensorProto> {
-        public val defaultInstance: onnx.SparseTensorProto by lazy { onnx.SparseTensorProto() }
-        override fun decodeWith(u: pbandk.MessageDecoder): onnx.SparseTensorProto = onnx.SparseTensorProto.decodeWithImpl(u)
+    public companion object : pbandk.Message.Companion<SparseTensorProto> {
+        public val defaultInstance: SparseTensorProto by lazy { SparseTensorProto() }
+        override fun decodeWith(u: pbandk.MessageDecoder): SparseTensorProto = SparseTensorProto.decodeWithImpl(u)
 
-        override val descriptor: pbandk.MessageDescriptor<onnx.SparseTensorProto> = pbandk.MessageDescriptor(
-            fullName = "onnx.SparseTensorProto",
-            messageClass = onnx.SparseTensorProto::class,
+        override val descriptor: pbandk.MessageDescriptor<SparseTensorProto> = pbandk.MessageDescriptor(
+            fullName = "SparseTensorProto",
+            messageClass = SparseTensorProto::class,
             messageCompanion = this,
             fields = buildList(3) {
                 add(
@@ -1560,9 +1560,9 @@ public data class SparseTensorProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "values",
                         number = 1,
-                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.TensorProto.Companion),
+                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = TensorProto.Companion),
                         jsonName = "values",
-                        value = onnx.SparseTensorProto::values
+                        value = SparseTensorProto::values
                     )
                 )
                 add(
@@ -1570,9 +1570,9 @@ public data class SparseTensorProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "indices",
                         number = 2,
-                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.TensorProto.Companion),
+                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = TensorProto.Companion),
                         jsonName = "indices",
-                        value = onnx.SparseTensorProto::indices
+                        value = SparseTensorProto::indices
                     )
                 )
                 add(
@@ -1582,7 +1582,7 @@ public data class SparseTensorProto(
                         number = 3,
                         type = pbandk.FieldDescriptor.Type.Repeated<Long>(valueType = pbandk.FieldDescriptor.Type.Primitive.Int64(), packed = true),
                         jsonName = "dims",
-                        value = onnx.SparseTensorProto::dims
+                        value = SparseTensorProto::dims
                     )
                 )
             }
@@ -1592,19 +1592,19 @@ public data class SparseTensorProto(
 
 @pbandk.Export
 public data class TensorShapeProto(
-    val dim: List<onnx.TensorShapeProto.Dimension> = emptyList(),
+    val dim: List<TensorShapeProto.Dimension> = emptyList(),
     override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
 ) : pbandk.Message {
-    override operator fun plus(other: pbandk.Message?): onnx.TensorShapeProto = protoMergeImpl(other)
-    override val descriptor: pbandk.MessageDescriptor<onnx.TensorShapeProto> get() = Companion.descriptor
+    override operator fun plus(other: pbandk.Message?): TensorShapeProto = protoMergeImpl(other)
+    override val descriptor: pbandk.MessageDescriptor<TensorShapeProto> get() = Companion.descriptor
     override val protoSize: Int by lazy { super.protoSize }
-    public companion object : pbandk.Message.Companion<onnx.TensorShapeProto> {
-        public val defaultInstance: onnx.TensorShapeProto by lazy { onnx.TensorShapeProto() }
-        override fun decodeWith(u: pbandk.MessageDecoder): onnx.TensorShapeProto = onnx.TensorShapeProto.decodeWithImpl(u)
+    public companion object : pbandk.Message.Companion<TensorShapeProto> {
+        public val defaultInstance: TensorShapeProto by lazy { TensorShapeProto() }
+        override fun decodeWith(u: pbandk.MessageDecoder): TensorShapeProto = TensorShapeProto.decodeWithImpl(u)
 
-        override val descriptor: pbandk.MessageDescriptor<onnx.TensorShapeProto> = pbandk.MessageDescriptor(
-            fullName = "onnx.TensorShapeProto",
-            messageClass = onnx.TensorShapeProto::class,
+        override val descriptor: pbandk.MessageDescriptor<TensorShapeProto> = pbandk.MessageDescriptor(
+            fullName = "TensorShapeProto",
+            messageClass = TensorShapeProto::class,
             messageCompanion = this,
             fields = buildList(1) {
                 add(
@@ -1612,9 +1612,9 @@ public data class TensorShapeProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "dim",
                         number = 1,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.TensorShapeProto.Dimension>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.TensorShapeProto.Dimension.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<TensorShapeProto.Dimension>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = TensorShapeProto.Dimension.Companion)),
                         jsonName = "dim",
-                        value = onnx.TensorShapeProto::dim
+                        value = TensorShapeProto::dim
                     )
                 )
             }
@@ -1636,16 +1636,16 @@ public data class TensorShapeProto(
         val dimParam: String?
             get() = (value as? Value.DimParam)?.value
 
-        override operator fun plus(other: pbandk.Message?): onnx.TensorShapeProto.Dimension = protoMergeImpl(other)
-        override val descriptor: pbandk.MessageDescriptor<onnx.TensorShapeProto.Dimension> get() = Companion.descriptor
+        override operator fun plus(other: pbandk.Message?): TensorShapeProto.Dimension = protoMergeImpl(other)
+        override val descriptor: pbandk.MessageDescriptor<TensorShapeProto.Dimension> get() = Companion.descriptor
         override val protoSize: Int by lazy { super.protoSize }
-        public companion object : pbandk.Message.Companion<onnx.TensorShapeProto.Dimension> {
-            public val defaultInstance: onnx.TensorShapeProto.Dimension by lazy { onnx.TensorShapeProto.Dimension() }
-            override fun decodeWith(u: pbandk.MessageDecoder): onnx.TensorShapeProto.Dimension = onnx.TensorShapeProto.Dimension.decodeWithImpl(u)
+        public companion object : pbandk.Message.Companion<TensorShapeProto.Dimension> {
+            public val defaultInstance: TensorShapeProto.Dimension by lazy { TensorShapeProto.Dimension() }
+            override fun decodeWith(u: pbandk.MessageDecoder): TensorShapeProto.Dimension = TensorShapeProto.Dimension.decodeWithImpl(u)
 
-            override val descriptor: pbandk.MessageDescriptor<onnx.TensorShapeProto.Dimension> = pbandk.MessageDescriptor(
-                fullName = "onnx.TensorShapeProto.Dimension",
-                messageClass = onnx.TensorShapeProto.Dimension::class,
+            override val descriptor: pbandk.MessageDescriptor<TensorShapeProto.Dimension> = pbandk.MessageDescriptor(
+                fullName = "TensorShapeProto.Dimension",
+                messageClass = TensorShapeProto.Dimension::class,
                 messageCompanion = this,
                 fields = buildList(3) {
                     add(
@@ -1656,7 +1656,7 @@ public data class TensorShapeProto(
                             type = pbandk.FieldDescriptor.Type.Primitive.Int64(hasPresence = true),
                             oneofMember = true,
                             jsonName = "dimValue",
-                            value = onnx.TensorShapeProto.Dimension::dimValue
+                            value = TensorShapeProto.Dimension::dimValue
                         )
                     )
                     add(
@@ -1667,7 +1667,7 @@ public data class TensorShapeProto(
                             type = pbandk.FieldDescriptor.Type.Primitive.String(hasPresence = true),
                             oneofMember = true,
                             jsonName = "dimParam",
-                            value = onnx.TensorShapeProto.Dimension::dimParam
+                            value = TensorShapeProto.Dimension::dimParam
                         )
                     )
                     add(
@@ -1677,7 +1677,7 @@ public data class TensorShapeProto(
                             number = 3,
                             type = pbandk.FieldDescriptor.Type.Primitive.String(),
                             jsonName = "denotation",
-                            value = onnx.TensorShapeProto.Dimension::denotation
+                            value = TensorShapeProto.Dimension::denotation
                         )
                     )
                 }
@@ -1693,37 +1693,37 @@ public data class TypeProto(
     override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
 ) : pbandk.Message {
     public sealed class Value<V>(value: V) : pbandk.Message.OneOf<V>(value) {
-        public class TensorType(tensorType: onnx.TypeProto.Tensor) : Value<onnx.TypeProto.Tensor>(tensorType)
-        public class SequenceType(sequenceType: onnx.TypeProto.Sequence) : Value<onnx.TypeProto.Sequence>(sequenceType)
-        public class MapType(mapType: onnx.TypeProto.Map_) : Value<onnx.TypeProto.Map_>(mapType)
-        public class OptionalType(optionalType: onnx.TypeProto.Optional) : Value<onnx.TypeProto.Optional>(optionalType)
-        public class SparseTensorType(sparseTensorType: onnx.TypeProto.SparseTensor) : Value<onnx.TypeProto.SparseTensor>(sparseTensorType)
-        public class OpaqueType(opaqueType: onnx.TypeProto.Opaque) : Value<onnx.TypeProto.Opaque>(opaqueType)
+        public class TensorType(tensorType: TypeProto.Tensor) : Value<TypeProto.Tensor>(tensorType)
+        public class SequenceType(sequenceType: TypeProto.Sequence) : Value<TypeProto.Sequence>(sequenceType)
+        public class MapType(mapType: TypeProto.Map_) : Value<TypeProto.Map_>(mapType)
+        public class OptionalType(optionalType: TypeProto.Optional) : Value<TypeProto.Optional>(optionalType)
+        public class SparseTensorType(sparseTensorType: TypeProto.SparseTensor) : Value<TypeProto.SparseTensor>(sparseTensorType)
+        public class OpaqueType(opaqueType: TypeProto.Opaque) : Value<TypeProto.Opaque>(opaqueType)
     }
 
-    val tensorType: onnx.TypeProto.Tensor?
+    val tensorType: TypeProto.Tensor?
         get() = (value as? Value.TensorType)?.value
-    val sequenceType: onnx.TypeProto.Sequence?
+    val sequenceType: TypeProto.Sequence?
         get() = (value as? Value.SequenceType)?.value
-    val mapType: onnx.TypeProto.Map_?
+    val mapType: TypeProto.Map_?
         get() = (value as? Value.MapType)?.value
-    val optionalType: onnx.TypeProto.Optional?
+    val optionalType: TypeProto.Optional?
         get() = (value as? Value.OptionalType)?.value
-    val sparseTensorType: onnx.TypeProto.SparseTensor?
+    val sparseTensorType: TypeProto.SparseTensor?
         get() = (value as? Value.SparseTensorType)?.value
-    val opaqueType: onnx.TypeProto.Opaque?
+    val opaqueType: TypeProto.Opaque?
         get() = (value as? Value.OpaqueType)?.value
 
-    override operator fun plus(other: pbandk.Message?): onnx.TypeProto = protoMergeImpl(other)
-    override val descriptor: pbandk.MessageDescriptor<onnx.TypeProto> get() = Companion.descriptor
+    override operator fun plus(other: pbandk.Message?): TypeProto = protoMergeImpl(other)
+    override val descriptor: pbandk.MessageDescriptor<TypeProto> get() = Companion.descriptor
     override val protoSize: Int by lazy { super.protoSize }
-    public companion object : pbandk.Message.Companion<onnx.TypeProto> {
-        public val defaultInstance: onnx.TypeProto by lazy { onnx.TypeProto() }
-        override fun decodeWith(u: pbandk.MessageDecoder): onnx.TypeProto = onnx.TypeProto.decodeWithImpl(u)
+    public companion object : pbandk.Message.Companion<TypeProto> {
+        public val defaultInstance: TypeProto by lazy { TypeProto() }
+        override fun decodeWith(u: pbandk.MessageDecoder): TypeProto = TypeProto.decodeWithImpl(u)
 
-        override val descriptor: pbandk.MessageDescriptor<onnx.TypeProto> = pbandk.MessageDescriptor(
-            fullName = "onnx.TypeProto",
-            messageClass = onnx.TypeProto::class,
+        override val descriptor: pbandk.MessageDescriptor<TypeProto> = pbandk.MessageDescriptor(
+            fullName = "TypeProto",
+            messageClass = TypeProto::class,
             messageCompanion = this,
             fields = buildList(7) {
                 add(
@@ -1731,10 +1731,10 @@ public data class TypeProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "tensor_type",
                         number = 1,
-                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.TypeProto.Tensor.Companion),
+                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = TypeProto.Tensor.Companion),
                         oneofMember = true,
                         jsonName = "tensorType",
-                        value = onnx.TypeProto::tensorType
+                        value = TypeProto::tensorType
                     )
                 )
                 add(
@@ -1742,10 +1742,10 @@ public data class TypeProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "sequence_type",
                         number = 4,
-                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.TypeProto.Sequence.Companion),
+                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = TypeProto.Sequence.Companion),
                         oneofMember = true,
                         jsonName = "sequenceType",
-                        value = onnx.TypeProto::sequenceType
+                        value = TypeProto::sequenceType
                     )
                 )
                 add(
@@ -1753,10 +1753,10 @@ public data class TypeProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "map_type",
                         number = 5,
-                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.TypeProto.Map_.Companion),
+                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = Map_.Companion),
                         oneofMember = true,
                         jsonName = "mapType",
-                        value = onnx.TypeProto::mapType
+                        value = TypeProto::mapType
                     )
                 )
                 add(
@@ -1766,7 +1766,7 @@ public data class TypeProto(
                         number = 6,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "denotation",
-                        value = onnx.TypeProto::denotation
+                        value = TypeProto::denotation
                     )
                 )
                 add(
@@ -1774,10 +1774,10 @@ public data class TypeProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "opaque_type",
                         number = 7,
-                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.TypeProto.Opaque.Companion),
+                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = TypeProto.Opaque.Companion),
                         oneofMember = true,
                         jsonName = "opaqueType",
-                        value = onnx.TypeProto::opaqueType
+                        value = TypeProto::opaqueType
                     )
                 )
                 add(
@@ -1785,10 +1785,10 @@ public data class TypeProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "sparse_tensor_type",
                         number = 8,
-                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.TypeProto.SparseTensor.Companion),
+                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = TypeProto.SparseTensor.Companion),
                         oneofMember = true,
                         jsonName = "sparseTensorType",
-                        value = onnx.TypeProto::sparseTensorType
+                        value = TypeProto::sparseTensorType
                     )
                 )
                 add(
@@ -1796,10 +1796,10 @@ public data class TypeProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "optional_type",
                         number = 9,
-                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.TypeProto.Optional.Companion),
+                        type = pbandk.FieldDescriptor.Type.Message(messageCompanion = TypeProto.Optional.Companion),
                         oneofMember = true,
                         jsonName = "optionalType",
-                        value = onnx.TypeProto::optionalType
+                        value = TypeProto::optionalType
                     )
                 )
             }
@@ -1808,19 +1808,19 @@ public data class TypeProto(
 
     public data class Tensor(
         val elemType: Int = 0,
-        val shape: onnx.TensorShapeProto? = null,
+        val shape: TensorShapeProto? = null,
         override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
     ) : pbandk.Message {
-        override operator fun plus(other: pbandk.Message?): onnx.TypeProto.Tensor = protoMergeImpl(other)
-        override val descriptor: pbandk.MessageDescriptor<onnx.TypeProto.Tensor> get() = Companion.descriptor
+        override operator fun plus(other: pbandk.Message?): Tensor = protoMergeImpl(other)
+        override val descriptor: pbandk.MessageDescriptor<TypeProto.Tensor> get() = Companion.descriptor
         override val protoSize: Int by lazy { super.protoSize }
-        public companion object : pbandk.Message.Companion<onnx.TypeProto.Tensor> {
-            public val defaultInstance: onnx.TypeProto.Tensor by lazy { onnx.TypeProto.Tensor() }
-            override fun decodeWith(u: pbandk.MessageDecoder): onnx.TypeProto.Tensor = onnx.TypeProto.Tensor.decodeWithImpl(u)
+        public companion object : pbandk.Message.Companion<TypeProto.Tensor> {
+            public val defaultInstance: TypeProto.Tensor by lazy { TypeProto.Tensor() }
+            override fun decodeWith(u: pbandk.MessageDecoder): TypeProto.Tensor = TypeProto.Tensor.decodeWithImpl(u)
 
-            override val descriptor: pbandk.MessageDescriptor<onnx.TypeProto.Tensor> = pbandk.MessageDescriptor(
-                fullName = "onnx.TypeProto.Tensor",
-                messageClass = onnx.TypeProto.Tensor::class,
+            override val descriptor: pbandk.MessageDescriptor<TypeProto.Tensor> = pbandk.MessageDescriptor(
+                fullName = "TypeProto.Tensor",
+                messageClass = TypeProto.Tensor::class,
                 messageCompanion = this,
                 fields = buildList(2) {
                     add(
@@ -1830,7 +1830,7 @@ public data class TypeProto(
                             number = 1,
                             type = pbandk.FieldDescriptor.Type.Primitive.Int32(),
                             jsonName = "elemType",
-                            value = onnx.TypeProto.Tensor::elemType
+                            value = TypeProto.Tensor::elemType
                         )
                     )
                     add(
@@ -1838,9 +1838,9 @@ public data class TypeProto(
                             messageDescriptor = this@Companion::descriptor,
                             name = "shape",
                             number = 2,
-                            type = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.TensorShapeProto.Companion),
+                            type = pbandk.FieldDescriptor.Type.Message(messageCompanion = TensorShapeProto.Companion),
                             jsonName = "shape",
-                            value = onnx.TypeProto.Tensor::shape
+                            value = TypeProto.Tensor::shape
                         )
                     )
                 }
@@ -1849,19 +1849,19 @@ public data class TypeProto(
     }
 
     public data class Sequence(
-        val elemType: onnx.TypeProto? = null,
+        val elemType: TypeProto? = null,
         override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
     ) : pbandk.Message {
-        override operator fun plus(other: pbandk.Message?): onnx.TypeProto.Sequence = protoMergeImpl(other)
-        override val descriptor: pbandk.MessageDescriptor<onnx.TypeProto.Sequence> get() = Companion.descriptor
+        override operator fun plus(other: pbandk.Message?): TypeProto.Sequence = protoMergeImpl(other)
+        override val descriptor: pbandk.MessageDescriptor<TypeProto.Sequence> get() = Companion.descriptor
         override val protoSize: Int by lazy { super.protoSize }
-        public companion object : pbandk.Message.Companion<onnx.TypeProto.Sequence> {
-            public val defaultInstance: onnx.TypeProto.Sequence by lazy { onnx.TypeProto.Sequence() }
-            override fun decodeWith(u: pbandk.MessageDecoder): onnx.TypeProto.Sequence = onnx.TypeProto.Sequence.decodeWithImpl(u)
+        public companion object : pbandk.Message.Companion<TypeProto.Sequence> {
+            public val defaultInstance: TypeProto.Sequence by lazy { TypeProto.Sequence() }
+            override fun decodeWith(u: pbandk.MessageDecoder): TypeProto.Sequence = TypeProto.Sequence.decodeWithImpl(u)
 
-            override val descriptor: pbandk.MessageDescriptor<onnx.TypeProto.Sequence> = pbandk.MessageDescriptor(
-                fullName = "onnx.TypeProto.Sequence",
-                messageClass = onnx.TypeProto.Sequence::class,
+            override val descriptor: pbandk.MessageDescriptor<TypeProto.Sequence> = pbandk.MessageDescriptor(
+                fullName = "TypeProto.Sequence",
+                messageClass = TypeProto.Sequence::class,
                 messageCompanion = this,
                 fields = buildList(1) {
                     add(
@@ -1869,9 +1869,9 @@ public data class TypeProto(
                             messageDescriptor = this@Companion::descriptor,
                             name = "elem_type",
                             number = 1,
-                            type = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.TypeProto.Companion),
+                            type = pbandk.FieldDescriptor.Type.Message(messageCompanion = TypeProto.Companion),
                             jsonName = "elemType",
-                            value = onnx.TypeProto.Sequence::elemType
+                            value = TypeProto.Sequence::elemType
                         )
                     )
                 }
@@ -1881,19 +1881,19 @@ public data class TypeProto(
 
     public data class Map_(
         val keyType: Int = 0,
-        val valueType: onnx.TypeProto? = null,
+        val valueType: TypeProto? = null,
         override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
     ) : pbandk.Message {
-        override operator fun plus(other: pbandk.Message?): onnx.TypeProto.Map_ = protoMergeImpl(other)
-        override val descriptor: pbandk.MessageDescriptor<onnx.TypeProto.Map_> get() = Companion.descriptor
+        override operator fun plus(other: pbandk.Message?): TypeProto.Map_ = protoMergeImpl(other)
+        override val descriptor: pbandk.MessageDescriptor<TypeProto.Map_> get() = Companion.descriptor
         override val protoSize: Int by lazy { super.protoSize }
-        public companion object : pbandk.Message.Companion<onnx.TypeProto.Map_> {
-            public val defaultInstance: onnx.TypeProto.Map_ by lazy { onnx.TypeProto.Map_() }
-            override fun decodeWith(u: pbandk.MessageDecoder): onnx.TypeProto.Map_ = onnx.TypeProto.Map_.decodeWithImpl(u)
+        public companion object : pbandk.Message.Companion<TypeProto.Map_> {
+            public val defaultInstance: TypeProto.Map_ by lazy { TypeProto.Map_() }
+            override fun decodeWith(u: pbandk.MessageDecoder): TypeProto.Map_ = TypeProto.Map_.decodeWithImpl(u)
 
-            override val descriptor: pbandk.MessageDescriptor<onnx.TypeProto.Map_> = pbandk.MessageDescriptor(
-                fullName = "onnx.TypeProto.Map",
-                messageClass = onnx.TypeProto.Map_::class,
+            override val descriptor: pbandk.MessageDescriptor<TypeProto.Map_> = pbandk.MessageDescriptor(
+                fullName = "TypeProto.Map",
+                messageClass = TypeProto.Map_::class,
                 messageCompanion = this,
                 fields = buildList(2) {
                     add(
@@ -1903,7 +1903,7 @@ public data class TypeProto(
                             number = 1,
                             type = pbandk.FieldDescriptor.Type.Primitive.Int32(),
                             jsonName = "keyType",
-                            value = onnx.TypeProto.Map_::keyType
+                            value = TypeProto.Map_::keyType
                         )
                     )
                     add(
@@ -1911,9 +1911,9 @@ public data class TypeProto(
                             messageDescriptor = this@Companion::descriptor,
                             name = "value_type",
                             number = 2,
-                            type = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.TypeProto.Companion),
+                            type = pbandk.FieldDescriptor.Type.Message(messageCompanion = TypeProto.Companion),
                             jsonName = "valueType",
-                            value = onnx.TypeProto.Map_::valueType
+                            value = TypeProto.Map_::valueType
                         )
                     )
                 }
@@ -1922,19 +1922,19 @@ public data class TypeProto(
     }
 
     public data class Optional(
-        val elemType: onnx.TypeProto? = null,
+        val elemType: TypeProto? = null,
         override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
     ) : pbandk.Message {
-        override operator fun plus(other: pbandk.Message?): onnx.TypeProto.Optional = protoMergeImpl(other)
-        override val descriptor: pbandk.MessageDescriptor<onnx.TypeProto.Optional> get() = Companion.descriptor
+        override operator fun plus(other: pbandk.Message?): TypeProto.Optional = protoMergeImpl(other)
+        override val descriptor: pbandk.MessageDescriptor<TypeProto.Optional> get() = Companion.descriptor
         override val protoSize: Int by lazy { super.protoSize }
-        public companion object : pbandk.Message.Companion<onnx.TypeProto.Optional> {
-            public val defaultInstance: onnx.TypeProto.Optional by lazy { onnx.TypeProto.Optional() }
-            override fun decodeWith(u: pbandk.MessageDecoder): onnx.TypeProto.Optional = onnx.TypeProto.Optional.decodeWithImpl(u)
+        public companion object : pbandk.Message.Companion<TypeProto.Optional> {
+            public val defaultInstance: TypeProto.Optional by lazy { TypeProto.Optional() }
+            override fun decodeWith(u: pbandk.MessageDecoder): TypeProto.Optional = TypeProto.Optional.decodeWithImpl(u)
 
-            override val descriptor: pbandk.MessageDescriptor<onnx.TypeProto.Optional> = pbandk.MessageDescriptor(
-                fullName = "onnx.TypeProto.Optional",
-                messageClass = onnx.TypeProto.Optional::class,
+            override val descriptor: pbandk.MessageDescriptor<TypeProto.Optional> = pbandk.MessageDescriptor(
+                fullName = "TypeProto.Optional",
+                messageClass = TypeProto.Optional::class,
                 messageCompanion = this,
                 fields = buildList(1) {
                     add(
@@ -1942,9 +1942,9 @@ public data class TypeProto(
                             messageDescriptor = this@Companion::descriptor,
                             name = "elem_type",
                             number = 1,
-                            type = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.TypeProto.Companion),
+                            type = pbandk.FieldDescriptor.Type.Message(messageCompanion = TypeProto.Companion),
                             jsonName = "elemType",
-                            value = onnx.TypeProto.Optional::elemType
+                            value = TypeProto.Optional::elemType
                         )
                     )
                 }
@@ -1954,19 +1954,19 @@ public data class TypeProto(
 
     public data class SparseTensor(
         val elemType: Int = 0,
-        val shape: onnx.TensorShapeProto? = null,
+        val shape: TensorShapeProto? = null,
         override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
     ) : pbandk.Message {
-        override operator fun plus(other: pbandk.Message?): onnx.TypeProto.SparseTensor = protoMergeImpl(other)
-        override val descriptor: pbandk.MessageDescriptor<onnx.TypeProto.SparseTensor> get() = Companion.descriptor
+        override operator fun plus(other: pbandk.Message?): TypeProto.SparseTensor = protoMergeImpl(other)
+        override val descriptor: pbandk.MessageDescriptor<TypeProto.SparseTensor> get() = Companion.descriptor
         override val protoSize: Int by lazy { super.protoSize }
-        public companion object : pbandk.Message.Companion<onnx.TypeProto.SparseTensor> {
-            public val defaultInstance: onnx.TypeProto.SparseTensor by lazy { onnx.TypeProto.SparseTensor() }
-            override fun decodeWith(u: pbandk.MessageDecoder): onnx.TypeProto.SparseTensor = onnx.TypeProto.SparseTensor.decodeWithImpl(u)
+        public companion object : pbandk.Message.Companion<TypeProto.SparseTensor> {
+            public val defaultInstance: TypeProto.SparseTensor by lazy { TypeProto.SparseTensor() }
+            override fun decodeWith(u: pbandk.MessageDecoder): TypeProto.SparseTensor = TypeProto.SparseTensor.decodeWithImpl(u)
 
-            override val descriptor: pbandk.MessageDescriptor<onnx.TypeProto.SparseTensor> = pbandk.MessageDescriptor(
-                fullName = "onnx.TypeProto.SparseTensor",
-                messageClass = onnx.TypeProto.SparseTensor::class,
+            override val descriptor: pbandk.MessageDescriptor<TypeProto.SparseTensor> = pbandk.MessageDescriptor(
+                fullName = "TypeProto.SparseTensor",
+                messageClass = TypeProto.SparseTensor::class,
                 messageCompanion = this,
                 fields = buildList(2) {
                     add(
@@ -1976,7 +1976,7 @@ public data class TypeProto(
                             number = 1,
                             type = pbandk.FieldDescriptor.Type.Primitive.Int32(),
                             jsonName = "elemType",
-                            value = onnx.TypeProto.SparseTensor::elemType
+                            value = TypeProto.SparseTensor::elemType
                         )
                     )
                     add(
@@ -1984,9 +1984,9 @@ public data class TypeProto(
                             messageDescriptor = this@Companion::descriptor,
                             name = "shape",
                             number = 2,
-                            type = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.TensorShapeProto.Companion),
+                            type = pbandk.FieldDescriptor.Type.Message(messageCompanion = TensorShapeProto.Companion),
                             jsonName = "shape",
-                            value = onnx.TypeProto.SparseTensor::shape
+                            value = TypeProto.SparseTensor::shape
                         )
                     )
                 }
@@ -1999,16 +1999,16 @@ public data class TypeProto(
         val name: String = "",
         override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
     ) : pbandk.Message {
-        override operator fun plus(other: pbandk.Message?): onnx.TypeProto.Opaque = protoMergeImpl(other)
-        override val descriptor: pbandk.MessageDescriptor<onnx.TypeProto.Opaque> get() = Companion.descriptor
+        override operator fun plus(other: pbandk.Message?): TypeProto.Opaque = protoMergeImpl(other)
+        override val descriptor: pbandk.MessageDescriptor<TypeProto.Opaque> get() = Companion.descriptor
         override val protoSize: Int by lazy { super.protoSize }
-        public companion object : pbandk.Message.Companion<onnx.TypeProto.Opaque> {
-            public val defaultInstance: onnx.TypeProto.Opaque by lazy { onnx.TypeProto.Opaque() }
-            override fun decodeWith(u: pbandk.MessageDecoder): onnx.TypeProto.Opaque = onnx.TypeProto.Opaque.decodeWithImpl(u)
+        public companion object : pbandk.Message.Companion<TypeProto.Opaque> {
+            public val defaultInstance: TypeProto.Opaque by lazy { TypeProto.Opaque() }
+            override fun decodeWith(u: pbandk.MessageDecoder): TypeProto.Opaque = TypeProto.Opaque.decodeWithImpl(u)
 
-            override val descriptor: pbandk.MessageDescriptor<onnx.TypeProto.Opaque> = pbandk.MessageDescriptor(
-                fullName = "onnx.TypeProto.Opaque",
-                messageClass = onnx.TypeProto.Opaque::class,
+            override val descriptor: pbandk.MessageDescriptor<TypeProto.Opaque> = pbandk.MessageDescriptor(
+                fullName = "TypeProto.Opaque",
+                messageClass = TypeProto.Opaque::class,
                 messageCompanion = this,
                 fields = buildList(2) {
                     add(
@@ -2018,7 +2018,7 @@ public data class TypeProto(
                             number = 1,
                             type = pbandk.FieldDescriptor.Type.Primitive.String(),
                             jsonName = "domain",
-                            value = onnx.TypeProto.Opaque::domain
+                            value = TypeProto.Opaque::domain
                         )
                     )
                     add(
@@ -2028,7 +2028,7 @@ public data class TypeProto(
                             number = 2,
                             type = pbandk.FieldDescriptor.Type.Primitive.String(),
                             jsonName = "name",
-                            value = onnx.TypeProto.Opaque::name
+                            value = TypeProto.Opaque::name
                         )
                     )
                 }
@@ -2043,16 +2043,16 @@ public data class OperatorSetIdProto(
     val version: Long = 0L,
     override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
 ) : pbandk.Message {
-    override operator fun plus(other: pbandk.Message?): onnx.OperatorSetIdProto = protoMergeImpl(other)
-    override val descriptor: pbandk.MessageDescriptor<onnx.OperatorSetIdProto> get() = Companion.descriptor
+    override operator fun plus(other: pbandk.Message?): OperatorSetIdProto = protoMergeImpl(other)
+    override val descriptor: pbandk.MessageDescriptor<OperatorSetIdProto> get() = Companion.descriptor
     override val protoSize: Int by lazy { super.protoSize }
-    public companion object : pbandk.Message.Companion<onnx.OperatorSetIdProto> {
-        public val defaultInstance: onnx.OperatorSetIdProto by lazy { onnx.OperatorSetIdProto() }
-        override fun decodeWith(u: pbandk.MessageDecoder): onnx.OperatorSetIdProto = onnx.OperatorSetIdProto.decodeWithImpl(u)
+    public companion object : pbandk.Message.Companion<OperatorSetIdProto> {
+        public val defaultInstance: OperatorSetIdProto by lazy { OperatorSetIdProto() }
+        override fun decodeWith(u: pbandk.MessageDecoder): OperatorSetIdProto = OperatorSetIdProto.decodeWithImpl(u)
 
-        override val descriptor: pbandk.MessageDescriptor<onnx.OperatorSetIdProto> = pbandk.MessageDescriptor(
-            fullName = "onnx.OperatorSetIdProto",
-            messageClass = onnx.OperatorSetIdProto::class,
+        override val descriptor: pbandk.MessageDescriptor<OperatorSetIdProto> = pbandk.MessageDescriptor(
+            fullName = "OperatorSetIdProto",
+            messageClass = OperatorSetIdProto::class,
             messageCompanion = this,
             fields = buildList(2) {
                 add(
@@ -2062,7 +2062,7 @@ public data class OperatorSetIdProto(
                         number = 1,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "domain",
-                        value = onnx.OperatorSetIdProto::domain
+                        value = OperatorSetIdProto::domain
                     )
                 )
                 add(
@@ -2072,7 +2072,7 @@ public data class OperatorSetIdProto(
                         number = 2,
                         type = pbandk.FieldDescriptor.Type.Primitive.Int64(),
                         jsonName = "version",
-                        value = onnx.OperatorSetIdProto::version
+                        value = OperatorSetIdProto::version
                     )
                 )
             }
@@ -2086,26 +2086,26 @@ public data class FunctionProto(
     val input: List<String> = emptyList(),
     val output: List<String> = emptyList(),
     val attribute: List<String> = emptyList(),
-    val attributeProto: List<onnx.AttributeProto> = emptyList(),
-    val node: List<onnx.NodeProto> = emptyList(),
+    val attributeProto: List<AttributeProto> = emptyList(),
+    val node: List<NodeProto> = emptyList(),
     val docString: String = "",
-    val opsetImport: List<onnx.OperatorSetIdProto> = emptyList(),
+    val opsetImport: List<OperatorSetIdProto> = emptyList(),
     val domain: String = "",
     val overload: String = "",
-    val valueInfo: List<onnx.ValueInfoProto> = emptyList(),
-    val metadataProps: List<onnx.StringStringEntryProto> = emptyList(),
+    val valueInfo: List<ValueInfoProto> = emptyList(),
+    val metadataProps: List<StringStringEntryProto> = emptyList(),
     override val unknownFields: Map<Int, pbandk.UnknownField> = emptyMap()
 ) : pbandk.Message {
-    override operator fun plus(other: pbandk.Message?): onnx.FunctionProto = protoMergeImpl(other)
-    override val descriptor: pbandk.MessageDescriptor<onnx.FunctionProto> get() = Companion.descriptor
+    override operator fun plus(other: pbandk.Message?): FunctionProto = protoMergeImpl(other)
+    override val descriptor: pbandk.MessageDescriptor<FunctionProto> get() = Companion.descriptor
     override val protoSize: Int by lazy { super.protoSize }
-    public companion object : pbandk.Message.Companion<onnx.FunctionProto> {
-        public val defaultInstance: onnx.FunctionProto by lazy { onnx.FunctionProto() }
-        override fun decodeWith(u: pbandk.MessageDecoder): onnx.FunctionProto = onnx.FunctionProto.decodeWithImpl(u)
+    public companion object : pbandk.Message.Companion<FunctionProto> {
+        public val defaultInstance: FunctionProto by lazy { FunctionProto() }
+        override fun decodeWith(u: pbandk.MessageDecoder): FunctionProto = FunctionProto.decodeWithImpl(u)
 
-        override val descriptor: pbandk.MessageDescriptor<onnx.FunctionProto> = pbandk.MessageDescriptor(
-            fullName = "onnx.FunctionProto",
-            messageClass = onnx.FunctionProto::class,
+        override val descriptor: pbandk.MessageDescriptor<FunctionProto> = pbandk.MessageDescriptor(
+            fullName = "FunctionProto",
+            messageClass = FunctionProto::class,
             messageCompanion = this,
             fields = buildList(12) {
                 add(
@@ -2115,7 +2115,7 @@ public data class FunctionProto(
                         number = 1,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "name",
-                        value = onnx.FunctionProto::name
+                        value = FunctionProto::name
                     )
                 )
                 add(
@@ -2125,7 +2125,7 @@ public data class FunctionProto(
                         number = 4,
                         type = pbandk.FieldDescriptor.Type.Repeated<String>(valueType = pbandk.FieldDescriptor.Type.Primitive.String()),
                         jsonName = "input",
-                        value = onnx.FunctionProto::input
+                        value = FunctionProto::input
                     )
                 )
                 add(
@@ -2135,7 +2135,7 @@ public data class FunctionProto(
                         number = 5,
                         type = pbandk.FieldDescriptor.Type.Repeated<String>(valueType = pbandk.FieldDescriptor.Type.Primitive.String()),
                         jsonName = "output",
-                        value = onnx.FunctionProto::output
+                        value = FunctionProto::output
                     )
                 )
                 add(
@@ -2145,7 +2145,7 @@ public data class FunctionProto(
                         number = 6,
                         type = pbandk.FieldDescriptor.Type.Repeated<String>(valueType = pbandk.FieldDescriptor.Type.Primitive.String()),
                         jsonName = "attribute",
-                        value = onnx.FunctionProto::attribute
+                        value = FunctionProto::attribute
                     )
                 )
                 add(
@@ -2153,9 +2153,9 @@ public data class FunctionProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "node",
                         number = 7,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.NodeProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.NodeProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<NodeProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = NodeProto.Companion)),
                         jsonName = "node",
-                        value = onnx.FunctionProto::node
+                        value = FunctionProto::node
                     )
                 )
                 add(
@@ -2165,7 +2165,7 @@ public data class FunctionProto(
                         number = 8,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "docString",
-                        value = onnx.FunctionProto::docString
+                        value = FunctionProto::docString
                     )
                 )
                 add(
@@ -2173,9 +2173,9 @@ public data class FunctionProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "opset_import",
                         number = 9,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.OperatorSetIdProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.OperatorSetIdProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<OperatorSetIdProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = OperatorSetIdProto.Companion)),
                         jsonName = "opsetImport",
-                        value = onnx.FunctionProto::opsetImport
+                        value = FunctionProto::opsetImport
                     )
                 )
                 add(
@@ -2185,7 +2185,7 @@ public data class FunctionProto(
                         number = 10,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "domain",
-                        value = onnx.FunctionProto::domain
+                        value = FunctionProto::domain
                     )
                 )
                 add(
@@ -2193,9 +2193,9 @@ public data class FunctionProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "attribute_proto",
                         number = 11,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.AttributeProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.AttributeProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<AttributeProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = AttributeProto.Companion)),
                         jsonName = "attributeProto",
-                        value = onnx.FunctionProto::attributeProto
+                        value = FunctionProto::attributeProto
                     )
                 )
                 add(
@@ -2203,9 +2203,9 @@ public data class FunctionProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "value_info",
                         number = 12,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.ValueInfoProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.ValueInfoProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<ValueInfoProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = ValueInfoProto.Companion)),
                         jsonName = "valueInfo",
-                        value = onnx.FunctionProto::valueInfo
+                        value = FunctionProto::valueInfo
                     )
                 )
                 add(
@@ -2215,7 +2215,7 @@ public data class FunctionProto(
                         number = 13,
                         type = pbandk.FieldDescriptor.Type.Primitive.String(),
                         jsonName = "overload",
-                        value = onnx.FunctionProto::overload
+                        value = FunctionProto::overload
                     )
                 )
                 add(
@@ -2223,9 +2223,9 @@ public data class FunctionProto(
                         messageDescriptor = this@Companion::descriptor,
                         name = "metadata_props",
                         number = 14,
-                        type = pbandk.FieldDescriptor.Type.Repeated<onnx.StringStringEntryProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = onnx.StringStringEntryProto.Companion)),
+                        type = pbandk.FieldDescriptor.Type.Repeated<StringStringEntryProto>(valueType = pbandk.FieldDescriptor.Type.Message(messageCompanion = StringStringEntryProto.Companion)),
                         jsonName = "metadataProps",
-                        value = onnx.FunctionProto::metadataProps
+                        value = FunctionProto::metadataProps
                     )
                 )
             }
@@ -2235,7 +2235,7 @@ public data class FunctionProto(
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForAttributeProto")
-public fun AttributeProto?.orDefault(): onnx.AttributeProto = this ?: AttributeProto.defaultInstance
+public fun AttributeProto?.orDefault(): AttributeProto = this ?: AttributeProto.defaultInstance
 
 private fun AttributeProto.protoMergeImpl(plus: pbandk.Message?): AttributeProto = (plus as? AttributeProto)?.let {
     it.copy(
@@ -2259,21 +2259,21 @@ private fun AttributeProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): A
     var name = ""
     var refAttrName = ""
     var docString = ""
-    var type: onnx.AttributeProto.AttributeType = onnx.AttributeProto.AttributeType.fromValue(0)
+    var type: AttributeProto.AttributeType = AttributeProto.AttributeType.fromValue(0)
     var f = 0.0F
     var i = 0L
     var s: pbandk.ByteArr = pbandk.ByteArr.empty
-    var t: onnx.TensorProto? = null
-    var g: onnx.GraphProto? = null
-    var sparseTensor: onnx.SparseTensorProto? = null
-    var tp: onnx.TypeProto? = null
+    var t: TensorProto? = null
+    var g: GraphProto? = null
+    var sparseTensor: SparseTensorProto? = null
+    var tp: TypeProto? = null
     var floats: pbandk.ListWithSize.Builder<Float>? = null
     var ints: pbandk.ListWithSize.Builder<Long>? = null
     var strings: pbandk.ListWithSize.Builder<pbandk.ByteArr>? = null
-    var tensors: pbandk.ListWithSize.Builder<onnx.TensorProto>? = null
-    var graphs: pbandk.ListWithSize.Builder<onnx.GraphProto>? = null
-    var sparseTensors: pbandk.ListWithSize.Builder<onnx.SparseTensorProto>? = null
-    var typeProtos: pbandk.ListWithSize.Builder<onnx.TypeProto>? = null
+    var tensors: pbandk.ListWithSize.Builder<TensorProto>? = null
+    var graphs: pbandk.ListWithSize.Builder<GraphProto>? = null
+    var sparseTensors: pbandk.ListWithSize.Builder<SparseTensorProto>? = null
+    var typeProtos: pbandk.ListWithSize.Builder<TypeProto>? = null
 
     val unknownFields = u.readMessage(this) { _fieldNumber, _fieldValue ->
         when (_fieldNumber) {
@@ -2281,20 +2281,20 @@ private fun AttributeProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): A
             2 -> f = _fieldValue as Float
             3 -> i = _fieldValue as Long
             4 -> s = _fieldValue as pbandk.ByteArr
-            5 -> t = _fieldValue as onnx.TensorProto
-            6 -> g = _fieldValue as onnx.GraphProto
+            5 -> t = _fieldValue as TensorProto
+            6 -> g = _fieldValue as GraphProto
             7 -> floats = (floats ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<Float> }
             8 -> ints = (ints ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<Long> }
             9 -> strings = (strings ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<pbandk.ByteArr> }
-            10 -> tensors = (tensors ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.TensorProto> }
-            11 -> graphs = (graphs ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.GraphProto> }
+            10 -> tensors = (tensors ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<TensorProto> }
+            11 -> graphs = (graphs ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<GraphProto> }
             13 -> docString = _fieldValue as String
-            14 -> tp = _fieldValue as onnx.TypeProto
-            15 -> typeProtos = (typeProtos ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.TypeProto> }
-            20 -> type = _fieldValue as onnx.AttributeProto.AttributeType
+            14 -> tp = _fieldValue as TypeProto
+            15 -> typeProtos = (typeProtos ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<TypeProto> }
+            20 -> type = _fieldValue as AttributeProto.AttributeType
             21 -> refAttrName = _fieldValue as String
-            22 -> sparseTensor = _fieldValue as onnx.SparseTensorProto
-            23 -> sparseTensors = (sparseTensors ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.SparseTensorProto> }
+            22 -> sparseTensor = _fieldValue as SparseTensorProto
+            23 -> sparseTensors = (sparseTensors ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<SparseTensorProto> }
         }
     }
 
@@ -2307,7 +2307,7 @@ private fun AttributeProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): A
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForValueInfoProto")
-public fun ValueInfoProto?.orDefault(): onnx.ValueInfoProto = this ?: ValueInfoProto.defaultInstance
+public fun ValueInfoProto?.orDefault(): ValueInfoProto = this ?: ValueInfoProto.defaultInstance
 
 private fun ValueInfoProto.protoMergeImpl(plus: pbandk.Message?): ValueInfoProto = (plus as? ValueInfoProto)?.let {
     it.copy(
@@ -2320,16 +2320,16 @@ private fun ValueInfoProto.protoMergeImpl(plus: pbandk.Message?): ValueInfoProto
 @Suppress("UNCHECKED_CAST")
 private fun ValueInfoProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): ValueInfoProto {
     var name = ""
-    var type: onnx.TypeProto? = null
+    var type: TypeProto? = null
     var docString = ""
-    var metadataProps: pbandk.ListWithSize.Builder<onnx.StringStringEntryProto>? = null
+    var metadataProps: pbandk.ListWithSize.Builder<StringStringEntryProto>? = null
 
     val unknownFields = u.readMessage(this) { _fieldNumber, _fieldValue ->
         when (_fieldNumber) {
             1 -> name = _fieldValue as String
-            2 -> type = _fieldValue as onnx.TypeProto
+            2 -> type = _fieldValue as TypeProto
             3 -> docString = _fieldValue as String
-            4 -> metadataProps = (metadataProps ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.StringStringEntryProto> }
+            4 -> metadataProps = (metadataProps ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<StringStringEntryProto> }
         }
     }
 
@@ -2338,7 +2338,7 @@ private fun ValueInfoProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): V
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForNodeProto")
-public fun NodeProto?.orDefault(): onnx.NodeProto = this ?: NodeProto.defaultInstance
+public fun NodeProto?.orDefault(): NodeProto = this ?: NodeProto.defaultInstance
 
 private fun NodeProto.protoMergeImpl(plus: pbandk.Message?): NodeProto = (plus as? NodeProto)?.let {
     it.copy(
@@ -2359,10 +2359,10 @@ private fun NodeProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): NodePr
     var opType = ""
     var domain = ""
     var overload = ""
-    var attribute: pbandk.ListWithSize.Builder<onnx.AttributeProto>? = null
+    var attribute: pbandk.ListWithSize.Builder<AttributeProto>? = null
     var docString = ""
-    var metadataProps: pbandk.ListWithSize.Builder<onnx.StringStringEntryProto>? = null
-    var deviceConfigurations: pbandk.ListWithSize.Builder<onnx.NodeDeviceConfigurationProto>? = null
+    var metadataProps: pbandk.ListWithSize.Builder<StringStringEntryProto>? = null
+    var deviceConfigurations: pbandk.ListWithSize.Builder<NodeDeviceConfigurationProto>? = null
 
     val unknownFields = u.readMessage(this) { _fieldNumber, _fieldValue ->
         when (_fieldNumber) {
@@ -2370,12 +2370,12 @@ private fun NodeProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): NodePr
             2 -> output = (output ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<String> }
             3 -> name = _fieldValue as String
             4 -> opType = _fieldValue as String
-            5 -> attribute = (attribute ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.AttributeProto> }
+            5 -> attribute = (attribute ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<AttributeProto> }
             6 -> docString = _fieldValue as String
             7 -> domain = _fieldValue as String
             8 -> overload = _fieldValue as String
-            9 -> metadataProps = (metadataProps ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.StringStringEntryProto> }
-            10 -> deviceConfigurations = (deviceConfigurations ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.NodeDeviceConfigurationProto> }
+            9 -> metadataProps = (metadataProps ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<StringStringEntryProto> }
+            10 -> deviceConfigurations = (deviceConfigurations ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<NodeDeviceConfigurationProto> }
         }
     }
 
@@ -2386,7 +2386,7 @@ private fun NodeProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): NodePr
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForIntIntListEntryProto")
-public fun IntIntListEntryProto?.orDefault(): onnx.IntIntListEntryProto = this ?: IntIntListEntryProto.defaultInstance
+public fun IntIntListEntryProto?.orDefault(): IntIntListEntryProto = this ?: IntIntListEntryProto.defaultInstance
 
 private fun IntIntListEntryProto.protoMergeImpl(plus: pbandk.Message?): IntIntListEntryProto = (plus as? IntIntListEntryProto)?.let {
     it.copy(
@@ -2412,7 +2412,7 @@ private fun IntIntListEntryProto.Companion.decodeWithImpl(u: pbandk.MessageDecod
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForNodeDeviceConfigurationProto")
-public fun NodeDeviceConfigurationProto?.orDefault(): onnx.NodeDeviceConfigurationProto = this ?: NodeDeviceConfigurationProto.defaultInstance
+public fun NodeDeviceConfigurationProto?.orDefault(): NodeDeviceConfigurationProto = this ?: NodeDeviceConfigurationProto.defaultInstance
 
 private fun NodeDeviceConfigurationProto.protoMergeImpl(plus: pbandk.Message?): NodeDeviceConfigurationProto = (plus as? NodeDeviceConfigurationProto)?.let {
     it.copy(
@@ -2424,13 +2424,13 @@ private fun NodeDeviceConfigurationProto.protoMergeImpl(plus: pbandk.Message?): 
 @Suppress("UNCHECKED_CAST")
 private fun NodeDeviceConfigurationProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): NodeDeviceConfigurationProto {
     var configurationId = ""
-    var shardingSpec: pbandk.ListWithSize.Builder<onnx.ShardingSpecProto>? = null
+    var shardingSpec: pbandk.ListWithSize.Builder<ShardingSpecProto>? = null
     var pipelineStage = 0
 
     val unknownFields = u.readMessage(this) { _fieldNumber, _fieldValue ->
         when (_fieldNumber) {
             1 -> configurationId = _fieldValue as String
-            2 -> shardingSpec = (shardingSpec ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.ShardingSpecProto> }
+            2 -> shardingSpec = (shardingSpec ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<ShardingSpecProto> }
             3 -> pipelineStage = _fieldValue as Int
         }
     }
@@ -2440,7 +2440,7 @@ private fun NodeDeviceConfigurationProto.Companion.decodeWithImpl(u: pbandk.Mess
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForShardingSpecProto")
-public fun ShardingSpecProto?.orDefault(): onnx.ShardingSpecProto = this ?: ShardingSpecProto.defaultInstance
+public fun ShardingSpecProto?.orDefault(): ShardingSpecProto = this ?: ShardingSpecProto.defaultInstance
 
 private fun ShardingSpecProto.protoMergeImpl(plus: pbandk.Message?): ShardingSpecProto = (plus as? ShardingSpecProto)?.let {
     it.copy(
@@ -2455,15 +2455,15 @@ private fun ShardingSpecProto.protoMergeImpl(plus: pbandk.Message?): ShardingSpe
 private fun ShardingSpecProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): ShardingSpecProto {
     var tensorName = ""
     var device: pbandk.ListWithSize.Builder<Long>? = null
-    var indexToDeviceGroupMap: pbandk.ListWithSize.Builder<onnx.IntIntListEntryProto>? = null
-    var shardedDim: pbandk.ListWithSize.Builder<onnx.ShardedDimProto>? = null
+    var indexToDeviceGroupMap: pbandk.ListWithSize.Builder<IntIntListEntryProto>? = null
+    var shardedDim: pbandk.ListWithSize.Builder<ShardedDimProto>? = null
 
     val unknownFields = u.readMessage(this) { _fieldNumber, _fieldValue ->
         when (_fieldNumber) {
             1 -> tensorName = _fieldValue as String
             2 -> device = (device ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<Long> }
-            3 -> indexToDeviceGroupMap = (indexToDeviceGroupMap ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.IntIntListEntryProto> }
-            4 -> shardedDim = (shardedDim ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.ShardedDimProto> }
+            3 -> indexToDeviceGroupMap = (indexToDeviceGroupMap ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<IntIntListEntryProto> }
+            4 -> shardedDim = (shardedDim ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<ShardedDimProto> }
         }
     }
 
@@ -2472,7 +2472,7 @@ private fun ShardingSpecProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder)
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForShardedDimProto")
-public fun ShardedDimProto?.orDefault(): onnx.ShardedDimProto = this ?: ShardedDimProto.defaultInstance
+public fun ShardedDimProto?.orDefault(): ShardedDimProto = this ?: ShardedDimProto.defaultInstance
 
 private fun ShardedDimProto.protoMergeImpl(plus: pbandk.Message?): ShardedDimProto = (plus as? ShardedDimProto)?.let {
     it.copy(
@@ -2484,12 +2484,12 @@ private fun ShardedDimProto.protoMergeImpl(plus: pbandk.Message?): ShardedDimPro
 @Suppress("UNCHECKED_CAST")
 private fun ShardedDimProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): ShardedDimProto {
     var axis = 0L
-    var simpleSharding: pbandk.ListWithSize.Builder<onnx.SimpleShardedDimProto>? = null
+    var simpleSharding: pbandk.ListWithSize.Builder<SimpleShardedDimProto>? = null
 
     val unknownFields = u.readMessage(this) { _fieldNumber, _fieldValue ->
         when (_fieldNumber) {
             1 -> axis = _fieldValue as Long
-            2 -> simpleSharding = (simpleSharding ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.SimpleShardedDimProto> }
+            2 -> simpleSharding = (simpleSharding ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<SimpleShardedDimProto> }
         }
     }
 
@@ -2498,7 +2498,7 @@ private fun ShardedDimProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): 
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForSimpleShardedDimProto")
-public fun SimpleShardedDimProto?.orDefault(): onnx.SimpleShardedDimProto = this ?: SimpleShardedDimProto.defaultInstance
+public fun SimpleShardedDimProto?.orDefault(): SimpleShardedDimProto = this ?: SimpleShardedDimProto.defaultInstance
 
 private fun SimpleShardedDimProto.protoMergeImpl(plus: pbandk.Message?): SimpleShardedDimProto = (plus as? SimpleShardedDimProto)?.let {
     it.copy(
@@ -2525,7 +2525,7 @@ private fun SimpleShardedDimProto.Companion.decodeWithImpl(u: pbandk.MessageDeco
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForTrainingInfoProto")
-public fun TrainingInfoProto?.orDefault(): onnx.TrainingInfoProto = this ?: TrainingInfoProto.defaultInstance
+public fun TrainingInfoProto?.orDefault(): TrainingInfoProto = this ?: TrainingInfoProto.defaultInstance
 
 private fun TrainingInfoProto.protoMergeImpl(plus: pbandk.Message?): TrainingInfoProto = (plus as? TrainingInfoProto)?.let {
     it.copy(
@@ -2539,17 +2539,17 @@ private fun TrainingInfoProto.protoMergeImpl(plus: pbandk.Message?): TrainingInf
 
 @Suppress("UNCHECKED_CAST")
 private fun TrainingInfoProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): TrainingInfoProto {
-    var initialization: onnx.GraphProto? = null
-    var algorithm: onnx.GraphProto? = null
-    var initializationBinding: pbandk.ListWithSize.Builder<onnx.StringStringEntryProto>? = null
-    var updateBinding: pbandk.ListWithSize.Builder<onnx.StringStringEntryProto>? = null
+    var initialization: GraphProto? = null
+    var algorithm: GraphProto? = null
+    var initializationBinding: pbandk.ListWithSize.Builder<StringStringEntryProto>? = null
+    var updateBinding: pbandk.ListWithSize.Builder<StringStringEntryProto>? = null
 
     val unknownFields = u.readMessage(this) { _fieldNumber, _fieldValue ->
         when (_fieldNumber) {
-            1 -> initialization = _fieldValue as onnx.GraphProto
-            2 -> algorithm = _fieldValue as onnx.GraphProto
-            3 -> initializationBinding = (initializationBinding ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.StringStringEntryProto> }
-            4 -> updateBinding = (updateBinding ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.StringStringEntryProto> }
+            1 -> initialization = _fieldValue as GraphProto
+            2 -> algorithm = _fieldValue as GraphProto
+            3 -> initializationBinding = (initializationBinding ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<StringStringEntryProto> }
+            4 -> updateBinding = (updateBinding ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<StringStringEntryProto> }
         }
     }
 
@@ -2558,7 +2558,7 @@ private fun TrainingInfoProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder)
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForModelProto")
-public fun ModelProto?.orDefault(): onnx.ModelProto = this ?: ModelProto.defaultInstance
+public fun ModelProto?.orDefault(): ModelProto = this ?: ModelProto.defaultInstance
 
 private fun ModelProto.protoMergeImpl(plus: pbandk.Message?): ModelProto = (plus as? ModelProto)?.let {
     it.copy(
@@ -2575,17 +2575,17 @@ private fun ModelProto.protoMergeImpl(plus: pbandk.Message?): ModelProto = (plus
 @Suppress("UNCHECKED_CAST")
 private fun ModelProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): ModelProto {
     var irVersion = 0L
-    var opsetImport: pbandk.ListWithSize.Builder<onnx.OperatorSetIdProto>? = null
+    var opsetImport: pbandk.ListWithSize.Builder<OperatorSetIdProto>? = null
     var producerName = ""
     var producerVersion = ""
     var domain = ""
     var modelVersion = 0L
     var docString = ""
-    var graph: onnx.GraphProto? = null
-    var metadataProps: pbandk.ListWithSize.Builder<onnx.StringStringEntryProto>? = null
-    var trainingInfo: pbandk.ListWithSize.Builder<onnx.TrainingInfoProto>? = null
-    var functions: pbandk.ListWithSize.Builder<onnx.FunctionProto>? = null
-    var configuration: pbandk.ListWithSize.Builder<onnx.DeviceConfigurationProto>? = null
+    var graph: GraphProto? = null
+    var metadataProps: pbandk.ListWithSize.Builder<StringStringEntryProto>? = null
+    var trainingInfo: pbandk.ListWithSize.Builder<TrainingInfoProto>? = null
+    var functions: pbandk.ListWithSize.Builder<FunctionProto>? = null
+    var configuration: pbandk.ListWithSize.Builder<DeviceConfigurationProto>? = null
 
     val unknownFields = u.readMessage(this) { _fieldNumber, _fieldValue ->
         when (_fieldNumber) {
@@ -2595,12 +2595,12 @@ private fun ModelProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): Model
             4 -> domain = _fieldValue as String
             5 -> modelVersion = _fieldValue as Long
             6 -> docString = _fieldValue as String
-            7 -> graph = _fieldValue as onnx.GraphProto
-            8 -> opsetImport = (opsetImport ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.OperatorSetIdProto> }
-            14 -> metadataProps = (metadataProps ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.StringStringEntryProto> }
-            20 -> trainingInfo = (trainingInfo ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.TrainingInfoProto> }
-            25 -> functions = (functions ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.FunctionProto> }
-            26 -> configuration = (configuration ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.DeviceConfigurationProto> }
+            7 -> graph = _fieldValue as GraphProto
+            8 -> opsetImport = (opsetImport ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<OperatorSetIdProto> }
+            14 -> metadataProps = (metadataProps ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<StringStringEntryProto> }
+            20 -> trainingInfo = (trainingInfo ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<TrainingInfoProto> }
+            25 -> functions = (functions ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<FunctionProto> }
+            26 -> configuration = (configuration ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<DeviceConfigurationProto> }
         }
     }
 
@@ -2611,7 +2611,7 @@ private fun ModelProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): Model
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForDeviceConfigurationProto")
-public fun DeviceConfigurationProto?.orDefault(): onnx.DeviceConfigurationProto = this ?: DeviceConfigurationProto.defaultInstance
+public fun DeviceConfigurationProto?.orDefault(): DeviceConfigurationProto = this ?: DeviceConfigurationProto.defaultInstance
 
 private fun DeviceConfigurationProto.protoMergeImpl(plus: pbandk.Message?): DeviceConfigurationProto = (plus as? DeviceConfigurationProto)?.let {
     it.copy(
@@ -2639,7 +2639,7 @@ private fun DeviceConfigurationProto.Companion.decodeWithImpl(u: pbandk.MessageD
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForStringStringEntryProto")
-public fun StringStringEntryProto?.orDefault(): onnx.StringStringEntryProto = this ?: StringStringEntryProto.defaultInstance
+public fun StringStringEntryProto?.orDefault(): StringStringEntryProto = this ?: StringStringEntryProto.defaultInstance
 
 private fun StringStringEntryProto.protoMergeImpl(plus: pbandk.Message?): StringStringEntryProto = (plus as? StringStringEntryProto)?.let {
     it.copy(
@@ -2664,7 +2664,7 @@ private fun StringStringEntryProto.Companion.decodeWithImpl(u: pbandk.MessageDec
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForTensorAnnotation")
-public fun TensorAnnotation?.orDefault(): onnx.TensorAnnotation = this ?: TensorAnnotation.defaultInstance
+public fun TensorAnnotation?.orDefault(): TensorAnnotation = this ?: TensorAnnotation.defaultInstance
 
 private fun TensorAnnotation.protoMergeImpl(plus: pbandk.Message?): TensorAnnotation = (plus as? TensorAnnotation)?.let {
     it.copy(
@@ -2676,12 +2676,12 @@ private fun TensorAnnotation.protoMergeImpl(plus: pbandk.Message?): TensorAnnota
 @Suppress("UNCHECKED_CAST")
 private fun TensorAnnotation.Companion.decodeWithImpl(u: pbandk.MessageDecoder): TensorAnnotation {
     var tensorName = ""
-    var quantParameterTensorNames: pbandk.ListWithSize.Builder<onnx.StringStringEntryProto>? = null
+    var quantParameterTensorNames: pbandk.ListWithSize.Builder<StringStringEntryProto>? = null
 
     val unknownFields = u.readMessage(this) { _fieldNumber, _fieldValue ->
         when (_fieldNumber) {
             1 -> tensorName = _fieldValue as String
-            2 -> quantParameterTensorNames = (quantParameterTensorNames ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.StringStringEntryProto> }
+            2 -> quantParameterTensorNames = (quantParameterTensorNames ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<StringStringEntryProto> }
         }
     }
 
@@ -2690,7 +2690,7 @@ private fun TensorAnnotation.Companion.decodeWithImpl(u: pbandk.MessageDecoder):
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForGraphProto")
-public fun GraphProto?.orDefault(): onnx.GraphProto = this ?: GraphProto.defaultInstance
+public fun GraphProto?.orDefault(): GraphProto = this ?: GraphProto.defaultInstance
 
 private fun GraphProto.protoMergeImpl(plus: pbandk.Message?): GraphProto = (plus as? GraphProto)?.let {
     it.copy(
@@ -2708,29 +2708,29 @@ private fun GraphProto.protoMergeImpl(plus: pbandk.Message?): GraphProto = (plus
 
 @Suppress("UNCHECKED_CAST")
 private fun GraphProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): GraphProto {
-    var node: pbandk.ListWithSize.Builder<onnx.NodeProto>? = null
+    var node: pbandk.ListWithSize.Builder<NodeProto>? = null
     var name = ""
-    var initializer: pbandk.ListWithSize.Builder<onnx.TensorProto>? = null
-    var sparseInitializer: pbandk.ListWithSize.Builder<onnx.SparseTensorProto>? = null
+    var initializer: pbandk.ListWithSize.Builder<TensorProto>? = null
+    var sparseInitializer: pbandk.ListWithSize.Builder<SparseTensorProto>? = null
     var docString = ""
-    var input: pbandk.ListWithSize.Builder<onnx.ValueInfoProto>? = null
-    var output: pbandk.ListWithSize.Builder<onnx.ValueInfoProto>? = null
-    var valueInfo: pbandk.ListWithSize.Builder<onnx.ValueInfoProto>? = null
-    var quantizationAnnotation: pbandk.ListWithSize.Builder<onnx.TensorAnnotation>? = null
-    var metadataProps: pbandk.ListWithSize.Builder<onnx.StringStringEntryProto>? = null
+    var input: pbandk.ListWithSize.Builder<ValueInfoProto>? = null
+    var output: pbandk.ListWithSize.Builder<ValueInfoProto>? = null
+    var valueInfo: pbandk.ListWithSize.Builder<ValueInfoProto>? = null
+    var quantizationAnnotation: pbandk.ListWithSize.Builder<TensorAnnotation>? = null
+    var metadataProps: pbandk.ListWithSize.Builder<StringStringEntryProto>? = null
 
     val unknownFields = u.readMessage(this) { _fieldNumber, _fieldValue ->
         when (_fieldNumber) {
-            1 -> node = (node ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.NodeProto> }
+            1 -> node = (node ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<NodeProto> }
             2 -> name = _fieldValue as String
-            5 -> initializer = (initializer ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.TensorProto> }
+            5 -> initializer = (initializer ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<TensorProto> }
             10 -> docString = _fieldValue as String
-            11 -> input = (input ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.ValueInfoProto> }
-            12 -> output = (output ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.ValueInfoProto> }
-            13 -> valueInfo = (valueInfo ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.ValueInfoProto> }
-            14 -> quantizationAnnotation = (quantizationAnnotation ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.TensorAnnotation> }
-            15 -> sparseInitializer = (sparseInitializer ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.SparseTensorProto> }
-            16 -> metadataProps = (metadataProps ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.StringStringEntryProto> }
+            11 -> input = (input ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<ValueInfoProto> }
+            12 -> output = (output ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<ValueInfoProto> }
+            13 -> valueInfo = (valueInfo ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<ValueInfoProto> }
+            14 -> quantizationAnnotation = (quantizationAnnotation ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<TensorAnnotation> }
+            15 -> sparseInitializer = (sparseInitializer ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<SparseTensorProto> }
+            16 -> metadataProps = (metadataProps ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<StringStringEntryProto> }
         }
     }
 
@@ -2741,7 +2741,7 @@ private fun GraphProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): Graph
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForTensorProto")
-public fun TensorProto?.orDefault(): onnx.TensorProto = this ?: TensorProto.defaultInstance
+public fun TensorProto?.orDefault(): TensorProto = this ?: TensorProto.defaultInstance
 
 private fun TensorProto.protoMergeImpl(plus: pbandk.Message?): TensorProto = (plus as? TensorProto)?.let {
     it.copy(
@@ -2763,7 +2763,7 @@ private fun TensorProto.protoMergeImpl(plus: pbandk.Message?): TensorProto = (pl
 private fun TensorProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): TensorProto {
     var dims: pbandk.ListWithSize.Builder<Long>? = null
     var dataType = 0
-    var segment: onnx.TensorProto.Segment? = null
+    var segment: TensorProto.Segment? = null
     var floatData: pbandk.ListWithSize.Builder<Float>? = null
     var int32Data: pbandk.ListWithSize.Builder<Int>? = null
     var stringData: pbandk.ListWithSize.Builder<pbandk.ByteArr>? = null
@@ -2771,17 +2771,17 @@ private fun TensorProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): Tens
     var name = ""
     var docString = ""
     var rawData: pbandk.ByteArr = pbandk.ByteArr.empty
-    var externalData: pbandk.ListWithSize.Builder<onnx.StringStringEntryProto>? = null
-    var dataLocation: onnx.TensorProto.DataLocation = onnx.TensorProto.DataLocation.fromValue(0)
+    var externalData: pbandk.ListWithSize.Builder<StringStringEntryProto>? = null
+    var dataLocation: TensorProto.DataLocation = TensorProto.DataLocation.fromValue(0)
     var doubleData: pbandk.ListWithSize.Builder<Double>? = null
     var uint64Data: pbandk.ListWithSize.Builder<Long>? = null
-    var metadataProps: pbandk.ListWithSize.Builder<onnx.StringStringEntryProto>? = null
+    var metadataProps: pbandk.ListWithSize.Builder<StringStringEntryProto>? = null
 
     val unknownFields = u.readMessage(this) { _fieldNumber, _fieldValue ->
         when (_fieldNumber) {
             1 -> dims = (dims ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<Long> }
             2 -> dataType = _fieldValue as Int
-            3 -> segment = _fieldValue as onnx.TensorProto.Segment
+            3 -> segment = _fieldValue as TensorProto.Segment
             4 -> floatData = (floatData ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<Float> }
             5 -> int32Data = (int32Data ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<Int> }
             6 -> stringData = (stringData ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<pbandk.ByteArr> }
@@ -2791,9 +2791,9 @@ private fun TensorProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): Tens
             10 -> doubleData = (doubleData ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<Double> }
             11 -> uint64Data = (uint64Data ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<Long> }
             12 -> docString = _fieldValue as String
-            13 -> externalData = (externalData ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.StringStringEntryProto> }
-            14 -> dataLocation = _fieldValue as onnx.TensorProto.DataLocation
-            16 -> metadataProps = (metadataProps ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.StringStringEntryProto> }
+            13 -> externalData = (externalData ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<StringStringEntryProto> }
+            14 -> dataLocation = _fieldValue as TensorProto.DataLocation
+            16 -> metadataProps = (metadataProps ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<StringStringEntryProto> }
         }
     }
 
@@ -2805,7 +2805,7 @@ private fun TensorProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): Tens
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForTensorProtoSegment")
-public fun TensorProto.Segment?.orDefault(): onnx.TensorProto.Segment = this ?: TensorProto.Segment.defaultInstance
+public fun TensorProto.Segment?.orDefault(): TensorProto.Segment = this ?: TensorProto.Segment.defaultInstance
 
 private fun TensorProto.Segment.protoMergeImpl(plus: pbandk.Message?): TensorProto.Segment = (plus as? TensorProto.Segment)?.let {
     it.copy(
@@ -2830,7 +2830,7 @@ private fun TensorProto.Segment.Companion.decodeWithImpl(u: pbandk.MessageDecode
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForSparseTensorProto")
-public fun SparseTensorProto?.orDefault(): onnx.SparseTensorProto = this ?: SparseTensorProto.defaultInstance
+public fun SparseTensorProto?.orDefault(): SparseTensorProto = this ?: SparseTensorProto.defaultInstance
 
 private fun SparseTensorProto.protoMergeImpl(plus: pbandk.Message?): SparseTensorProto = (plus as? SparseTensorProto)?.let {
     it.copy(
@@ -2843,14 +2843,14 @@ private fun SparseTensorProto.protoMergeImpl(plus: pbandk.Message?): SparseTenso
 
 @Suppress("UNCHECKED_CAST")
 private fun SparseTensorProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): SparseTensorProto {
-    var values: onnx.TensorProto? = null
-    var indices: onnx.TensorProto? = null
+    var values: TensorProto? = null
+    var indices: TensorProto? = null
     var dims: pbandk.ListWithSize.Builder<Long>? = null
 
     val unknownFields = u.readMessage(this) { _fieldNumber, _fieldValue ->
         when (_fieldNumber) {
-            1 -> values = _fieldValue as onnx.TensorProto
-            2 -> indices = _fieldValue as onnx.TensorProto
+            1 -> values = _fieldValue as TensorProto
+            2 -> indices = _fieldValue as TensorProto
             3 -> dims = (dims ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<Long> }
         }
     }
@@ -2860,7 +2860,7 @@ private fun SparseTensorProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder)
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForTensorShapeProto")
-public fun TensorShapeProto?.orDefault(): onnx.TensorShapeProto = this ?: TensorShapeProto.defaultInstance
+public fun TensorShapeProto?.orDefault(): TensorShapeProto = this ?: TensorShapeProto.defaultInstance
 
 private fun TensorShapeProto.protoMergeImpl(plus: pbandk.Message?): TensorShapeProto = (plus as? TensorShapeProto)?.let {
     it.copy(
@@ -2871,11 +2871,11 @@ private fun TensorShapeProto.protoMergeImpl(plus: pbandk.Message?): TensorShapeP
 
 @Suppress("UNCHECKED_CAST")
 private fun TensorShapeProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): TensorShapeProto {
-    var dim: pbandk.ListWithSize.Builder<onnx.TensorShapeProto.Dimension>? = null
+    var dim: pbandk.ListWithSize.Builder<TensorShapeProto.Dimension>? = null
 
     val unknownFields = u.readMessage(this) { _fieldNumber, _fieldValue ->
         when (_fieldNumber) {
-            1 -> dim = (dim ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.TensorShapeProto.Dimension> }
+            1 -> dim = (dim ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<TensorShapeProto.Dimension> }
         }
     }
 
@@ -2884,7 +2884,7 @@ private fun TensorShapeProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder):
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForTensorShapeProtoDimension")
-public fun TensorShapeProto.Dimension?.orDefault(): onnx.TensorShapeProto.Dimension = this ?: TensorShapeProto.Dimension.defaultInstance
+public fun TensorShapeProto.Dimension?.orDefault(): TensorShapeProto.Dimension = this ?: TensorShapeProto.Dimension.defaultInstance
 
 private fun TensorShapeProto.Dimension.protoMergeImpl(plus: pbandk.Message?): TensorShapeProto.Dimension = (plus as? TensorShapeProto.Dimension)?.let {
     it.copy(
@@ -2911,7 +2911,7 @@ private fun TensorShapeProto.Dimension.Companion.decodeWithImpl(u: pbandk.Messag
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForTypeProto")
-public fun TypeProto?.orDefault(): onnx.TypeProto = this ?: TypeProto.defaultInstance
+public fun TypeProto?.orDefault(): TypeProto = this ?: TypeProto.defaultInstance
 
 private fun TypeProto.protoMergeImpl(plus: pbandk.Message?): TypeProto = (plus as? TypeProto)?.let {
     it.copy(
@@ -2942,13 +2942,13 @@ private fun TypeProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): TypePr
 
     val unknownFields = u.readMessage(this) { _fieldNumber, _fieldValue ->
         when (_fieldNumber) {
-            1 -> value = TypeProto.Value.TensorType(_fieldValue as onnx.TypeProto.Tensor)
-            4 -> value = TypeProto.Value.SequenceType(_fieldValue as onnx.TypeProto.Sequence)
-            5 -> value = TypeProto.Value.MapType(_fieldValue as onnx.TypeProto.Map_)
+            1 -> value = TypeProto.Value.TensorType(_fieldValue as TypeProto.Tensor)
+            4 -> value = TypeProto.Value.SequenceType(_fieldValue as TypeProto.Sequence)
+            5 -> value = TypeProto.Value.MapType(_fieldValue as TypeProto.Map_)
             6 -> denotation = _fieldValue as String
-            7 -> value = TypeProto.Value.OpaqueType(_fieldValue as onnx.TypeProto.Opaque)
-            8 -> value = TypeProto.Value.SparseTensorType(_fieldValue as onnx.TypeProto.SparseTensor)
-            9 -> value = TypeProto.Value.OptionalType(_fieldValue as onnx.TypeProto.Optional)
+            7 -> value = TypeProto.Value.OpaqueType(_fieldValue as TypeProto.Opaque)
+            8 -> value = TypeProto.Value.SparseTensorType(_fieldValue as TypeProto.SparseTensor)
+            9 -> value = TypeProto.Value.OptionalType(_fieldValue as TypeProto.Optional)
         }
     }
 
@@ -2957,7 +2957,7 @@ private fun TypeProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): TypePr
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForTypeProtoTensor")
-public fun TypeProto.Tensor?.orDefault(): onnx.TypeProto.Tensor = this ?: TypeProto.Tensor.defaultInstance
+public fun TypeProto.Tensor?.orDefault(): TypeProto.Tensor = this ?: TypeProto.Tensor.defaultInstance
 
 private fun TypeProto.Tensor.protoMergeImpl(plus: pbandk.Message?): TypeProto.Tensor = (plus as? TypeProto.Tensor)?.let {
     it.copy(
@@ -2969,12 +2969,12 @@ private fun TypeProto.Tensor.protoMergeImpl(plus: pbandk.Message?): TypeProto.Te
 @Suppress("UNCHECKED_CAST")
 private fun TypeProto.Tensor.Companion.decodeWithImpl(u: pbandk.MessageDecoder): TypeProto.Tensor {
     var elemType = 0
-    var shape: onnx.TensorShapeProto? = null
+    var shape: TensorShapeProto? = null
 
     val unknownFields = u.readMessage(this) { _fieldNumber, _fieldValue ->
         when (_fieldNumber) {
             1 -> elemType = _fieldValue as Int
-            2 -> shape = _fieldValue as onnx.TensorShapeProto
+            2 -> shape = _fieldValue as TensorShapeProto
         }
     }
 
@@ -2983,7 +2983,7 @@ private fun TypeProto.Tensor.Companion.decodeWithImpl(u: pbandk.MessageDecoder):
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForTypeProtoSequence")
-public fun TypeProto.Sequence?.orDefault(): onnx.TypeProto.Sequence = this ?: TypeProto.Sequence.defaultInstance
+public fun TypeProto.Sequence?.orDefault(): TypeProto.Sequence = this ?: TypeProto.Sequence.defaultInstance
 
 private fun TypeProto.Sequence.protoMergeImpl(plus: pbandk.Message?): TypeProto.Sequence = (plus as? TypeProto.Sequence)?.let {
     it.copy(
@@ -2994,11 +2994,11 @@ private fun TypeProto.Sequence.protoMergeImpl(plus: pbandk.Message?): TypeProto.
 
 @Suppress("UNCHECKED_CAST")
 private fun TypeProto.Sequence.Companion.decodeWithImpl(u: pbandk.MessageDecoder): TypeProto.Sequence {
-    var elemType: onnx.TypeProto? = null
+    var elemType: TypeProto? = null
 
     val unknownFields = u.readMessage(this) { _fieldNumber, _fieldValue ->
         when (_fieldNumber) {
-            1 -> elemType = _fieldValue as onnx.TypeProto
+            1 -> elemType = _fieldValue as TypeProto
         }
     }
 
@@ -3007,7 +3007,7 @@ private fun TypeProto.Sequence.Companion.decodeWithImpl(u: pbandk.MessageDecoder
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForTypeProtoMap_")
-public fun TypeProto.Map_?.orDefault(): onnx.TypeProto.Map_ = this ?: TypeProto.Map_.defaultInstance
+public fun TypeProto.Map_?.orDefault(): TypeProto.Map_ = this ?: TypeProto.Map_.defaultInstance
 
 private fun TypeProto.Map_.protoMergeImpl(plus: pbandk.Message?): TypeProto.Map_ = (plus as? TypeProto.Map_)?.let {
     it.copy(
@@ -3019,12 +3019,12 @@ private fun TypeProto.Map_.protoMergeImpl(plus: pbandk.Message?): TypeProto.Map_
 @Suppress("UNCHECKED_CAST")
 private fun TypeProto.Map_.Companion.decodeWithImpl(u: pbandk.MessageDecoder): TypeProto.Map_ {
     var keyType = 0
-    var valueType: onnx.TypeProto? = null
+    var valueType: TypeProto? = null
 
     val unknownFields = u.readMessage(this) { _fieldNumber, _fieldValue ->
         when (_fieldNumber) {
             1 -> keyType = _fieldValue as Int
-            2 -> valueType = _fieldValue as onnx.TypeProto
+            2 -> valueType = _fieldValue as TypeProto
         }
     }
 
@@ -3033,7 +3033,7 @@ private fun TypeProto.Map_.Companion.decodeWithImpl(u: pbandk.MessageDecoder): T
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForTypeProtoOptional")
-public fun TypeProto.Optional?.orDefault(): onnx.TypeProto.Optional = this ?: TypeProto.Optional.defaultInstance
+public fun TypeProto.Optional?.orDefault(): TypeProto.Optional = this ?: TypeProto.Optional.defaultInstance
 
 private fun TypeProto.Optional.protoMergeImpl(plus: pbandk.Message?): TypeProto.Optional = (plus as? TypeProto.Optional)?.let {
     it.copy(
@@ -3044,11 +3044,11 @@ private fun TypeProto.Optional.protoMergeImpl(plus: pbandk.Message?): TypeProto.
 
 @Suppress("UNCHECKED_CAST")
 private fun TypeProto.Optional.Companion.decodeWithImpl(u: pbandk.MessageDecoder): TypeProto.Optional {
-    var elemType: onnx.TypeProto? = null
+    var elemType: TypeProto? = null
 
     val unknownFields = u.readMessage(this) { _fieldNumber, _fieldValue ->
         when (_fieldNumber) {
-            1 -> elemType = _fieldValue as onnx.TypeProto
+            1 -> elemType = _fieldValue as TypeProto
         }
     }
 
@@ -3057,7 +3057,7 @@ private fun TypeProto.Optional.Companion.decodeWithImpl(u: pbandk.MessageDecoder
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForTypeProtoSparseTensor")
-public fun TypeProto.SparseTensor?.orDefault(): onnx.TypeProto.SparseTensor = this ?: TypeProto.SparseTensor.defaultInstance
+public fun TypeProto.SparseTensor?.orDefault(): TypeProto.SparseTensor = this ?: TypeProto.SparseTensor.defaultInstance
 
 private fun TypeProto.SparseTensor.protoMergeImpl(plus: pbandk.Message?): TypeProto.SparseTensor = (plus as? TypeProto.SparseTensor)?.let {
     it.copy(
@@ -3069,12 +3069,12 @@ private fun TypeProto.SparseTensor.protoMergeImpl(plus: pbandk.Message?): TypePr
 @Suppress("UNCHECKED_CAST")
 private fun TypeProto.SparseTensor.Companion.decodeWithImpl(u: pbandk.MessageDecoder): TypeProto.SparseTensor {
     var elemType = 0
-    var shape: onnx.TensorShapeProto? = null
+    var shape: TensorShapeProto? = null
 
     val unknownFields = u.readMessage(this) { _fieldNumber, _fieldValue ->
         when (_fieldNumber) {
             1 -> elemType = _fieldValue as Int
-            2 -> shape = _fieldValue as onnx.TensorShapeProto
+            2 -> shape = _fieldValue as TensorShapeProto
         }
     }
 
@@ -3083,7 +3083,7 @@ private fun TypeProto.SparseTensor.Companion.decodeWithImpl(u: pbandk.MessageDec
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForTypeProtoOpaque")
-public fun TypeProto.Opaque?.orDefault(): onnx.TypeProto.Opaque = this ?: TypeProto.Opaque.defaultInstance
+public fun TypeProto.Opaque?.orDefault(): TypeProto.Opaque = this ?: TypeProto.Opaque.defaultInstance
 
 private fun TypeProto.Opaque.protoMergeImpl(plus: pbandk.Message?): TypeProto.Opaque = (plus as? TypeProto.Opaque)?.let {
     it.copy(
@@ -3108,7 +3108,7 @@ private fun TypeProto.Opaque.Companion.decodeWithImpl(u: pbandk.MessageDecoder):
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForOperatorSetIdProto")
-public fun OperatorSetIdProto?.orDefault(): onnx.OperatorSetIdProto = this ?: OperatorSetIdProto.defaultInstance
+public fun OperatorSetIdProto?.orDefault(): OperatorSetIdProto = this ?: OperatorSetIdProto.defaultInstance
 
 private fun OperatorSetIdProto.protoMergeImpl(plus: pbandk.Message?): OperatorSetIdProto = (plus as? OperatorSetIdProto)?.let {
     it.copy(
@@ -3133,7 +3133,7 @@ private fun OperatorSetIdProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder
 
 @pbandk.Export
 @pbandk.JsName("orDefaultForFunctionProto")
-public fun FunctionProto?.orDefault(): onnx.FunctionProto = this ?: FunctionProto.defaultInstance
+public fun FunctionProto?.orDefault(): FunctionProto = this ?: FunctionProto.defaultInstance
 
 private fun FunctionProto.protoMergeImpl(plus: pbandk.Message?): FunctionProto = (plus as? FunctionProto)?.let {
     it.copy(
@@ -3155,14 +3155,14 @@ private fun FunctionProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): Fu
     var input: pbandk.ListWithSize.Builder<String>? = null
     var output: pbandk.ListWithSize.Builder<String>? = null
     var attribute: pbandk.ListWithSize.Builder<String>? = null
-    var attributeProto: pbandk.ListWithSize.Builder<onnx.AttributeProto>? = null
-    var node: pbandk.ListWithSize.Builder<onnx.NodeProto>? = null
+    var attributeProto: pbandk.ListWithSize.Builder<AttributeProto>? = null
+    var node: pbandk.ListWithSize.Builder<NodeProto>? = null
     var docString = ""
-    var opsetImport: pbandk.ListWithSize.Builder<onnx.OperatorSetIdProto>? = null
+    var opsetImport: pbandk.ListWithSize.Builder<OperatorSetIdProto>? = null
     var domain = ""
     var overload = ""
-    var valueInfo: pbandk.ListWithSize.Builder<onnx.ValueInfoProto>? = null
-    var metadataProps: pbandk.ListWithSize.Builder<onnx.StringStringEntryProto>? = null
+    var valueInfo: pbandk.ListWithSize.Builder<ValueInfoProto>? = null
+    var metadataProps: pbandk.ListWithSize.Builder<StringStringEntryProto>? = null
 
     val unknownFields = u.readMessage(this) { _fieldNumber, _fieldValue ->
         when (_fieldNumber) {
@@ -3170,14 +3170,14 @@ private fun FunctionProto.Companion.decodeWithImpl(u: pbandk.MessageDecoder): Fu
             4 -> input = (input ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<String> }
             5 -> output = (output ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<String> }
             6 -> attribute = (attribute ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<String> }
-            7 -> node = (node ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.NodeProto> }
+            7 -> node = (node ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<NodeProto> }
             8 -> docString = _fieldValue as String
-            9 -> opsetImport = (opsetImport ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.OperatorSetIdProto> }
+            9 -> opsetImport = (opsetImport ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<OperatorSetIdProto> }
             10 -> domain = _fieldValue as String
-            11 -> attributeProto = (attributeProto ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.AttributeProto> }
-            12 -> valueInfo = (valueInfo ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.ValueInfoProto> }
+            11 -> attributeProto = (attributeProto ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<AttributeProto> }
+            12 -> valueInfo = (valueInfo ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<ValueInfoProto> }
             13 -> overload = _fieldValue as String
-            14 -> metadataProps = (metadataProps ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<onnx.StringStringEntryProto> }
+            14 -> metadataProps = (metadataProps ?: pbandk.ListWithSize.Builder()).apply { this += _fieldValue as kotlin.sequences.Sequence<StringStringEntryProto> }
         }
     }
 
