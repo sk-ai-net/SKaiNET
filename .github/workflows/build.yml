@@ -28,5 +28,21 @@ jobs:
       - name: Copy CI gradle.properties
         run: mkdir -p ~/.gradle ; cp .github/ci-gradle.properties ~/.gradle/gradle.properties
 
-      - name: Build
-        run: ./gradlew --stacktrace clean assemble allTests
+      # Use --no-daemon only if you must. With setup-gradle, the build runs efficiently without a long-lived daemon anyway.
+      - name: Build and Test (PR)
+        if: github.event_name == 'pull_request'
+        run: |
+          ./gradlew --stacktrace \
+            -Dorg.gradle.caching=true \
+            -Dorg.gradle.configuration-cache=true \
+            -Dorg.gradle.parallel=true \
+            clean assemble allTests
+
+      - name: Build and Test (push)
+        if: github.event_name != 'pull_request'
+        run: |
+          ./gradlew --stacktrace \
+            -Dorg.gradle.caching=true \
+            -Dorg.gradle.configuration-cache=true \
+            -Dorg.gradle.parallel=true \
+            check assemble
