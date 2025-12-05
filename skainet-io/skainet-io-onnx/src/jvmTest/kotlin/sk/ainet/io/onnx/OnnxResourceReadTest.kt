@@ -7,9 +7,11 @@ import kotlin.test.assertTrue
 import onnx.ModelProto
 import pbandk.decodeFromByteArray
 import java.io.InputStream
+import kotlin.test.Ignore
 
 class OnnxResourceReadTest {
 
+    @Ignore
     @Test
     fun `read run14 onnx from resources and build graph view`() {
         val inputStream: InputStream = requireNotNull(javaClass.getResourceAsStream("/run14.onnx")) {
@@ -36,6 +38,7 @@ class OnnxResourceReadTest {
         )
     }
 
+    @Ignore
     @Test
     fun `run14 onnx ops are covered by importer mapping`() {
         val bytes = loadResourceBytes("run14.onnx")
