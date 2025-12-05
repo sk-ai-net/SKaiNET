@@ -45,4 +45,4 @@ jobs:
             -Dorg.gradle.caching=true \
             -Dorg.gradle.configuration-cache=true \
             -Dorg.gradle.parallel=true \
-            check assemble
+             assemble allTests
