@@ -88,4 +88,27 @@ class BatchNormalizationTest {
         assertEquals(true, approx(y10,  1.0f), "y[1,0] expected  1, got $y10")
         assertEquals(true, approx(y11,  1.0f), "y[1,1] expected  1, got $y11")
     }
+
+    @Test
+    fun broadcast_stats_over_spatial_dims() {
+        val exec = DirectCpuExecutionContext(phase = sk.ainet.context.Phase.TRAIN)
+        val input = exec.fromFloatArray<FP32, Float>(
+            Shape(1, 2, 2, 2),
+            FP32::class,
+            floatArrayOf(
+                1f, 2f, 3f, 4f,
+                5f, 6f, 7f, 8f
+            )
+        )
+        val bn = BatchNormalization<FP32, Float>(
+            numFeatures = 2,
+            eps = 1e-5,
+            momentum = 1.0,
+            affine = false,
+            name = "bn_broadcast"
+        )
+        bn.train()
+        val out = bn.forward(input, exec)
+        assertEquals(input.shape, out.shape)
+    }
 }

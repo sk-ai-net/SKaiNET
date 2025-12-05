@@ -47,6 +47,7 @@ include("skainet-data:skainet-data-simple")
 include("skainet-io:skainet-io-core")
 include("skainet-io:skainet-io-gguf")
 include("skainet-io:skainet-io-image")
+include("skainet-io:skainet-io-onnx")
 
 // ====== models
 include("skainet-models:skainet-model-yolo")
@@ -57,3 +58,5 @@ include("skainet-integrations:skainet-simple-cpu")
 
 // ====== APPS
 //include("skainet-apps:skainet-KGPChat")
+include("skainet-apps:skainet-onnx-tools")
+include("skainet-apps:skainet-onnx-detect")

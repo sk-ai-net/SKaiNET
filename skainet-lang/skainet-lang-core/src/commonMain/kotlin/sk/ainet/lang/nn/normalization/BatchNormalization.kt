@@ -169,9 +169,11 @@ public class BatchNormalization<T : DType, V>(
 
     private fun normalize(input: Tensor<T, V>, mean: Tensor<T, V>, variance: Tensor<T, V>): Tensor<T, V> {
         // normalized = (input - mean) / sqrt(variance + eps)
-        val epsTensor = fullLike(variance, eps)
-        val denom = (variance + epsTensor).sqrt()
-        val normalized = (input - mean) / denom
+        val broadcastMean = reshapeForBroadcast(mean, input.shape)
+        val broadcastVar = reshapeForBroadcast(variance, input.shape)
+        val epsTensor = fullLike(broadcastVar, eps)
+        val denom = (broadcastVar + epsTensor).sqrt()
+        val normalized = (input - broadcastMean) / denom
         
         return if (affine) {
             var gamma = params[0].value // (C)

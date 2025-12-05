@@ -1,4 +1,4 @@
-@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+@file:OptIn(ExperimentalForeignApi::class)
 
 package sk.ainet.io.image
 
@@ -17,9 +17,9 @@ import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.tensor.dsl.tensor
 import sk.ainet.lang.types.FP16
 
-actual typealias PlatformBitmapImage = NSImage
+public actual typealias PlatformBitmapImage = NSImage
 
-actual fun platformImageToArgb(image: PlatformBitmapImage, ctx: ExecutionContext): Tensor<FP16, Float> =
+public actual fun platformImageToArgb(image: PlatformBitmapImage, ctx: ExecutionContext): Tensor<FP16, Float> =
     data<FP16, Float>(ctx) {
         // Draw into RGBA8 buffer and read back as RGB
         val (w, h) = platformImageSize(image)
@@ -48,7 +48,7 @@ actual fun platformImageToArgb(image: PlatformBitmapImage, ctx: ExecutionContext
         }
     }
 
-actual fun argbToPlatformImage(image: Tensor<FP16, Float>, ctx: ExecutionContext): PlatformBitmapImage {
+public actual fun argbToPlatformImage(image: Tensor<FP16, Float>, ctx: ExecutionContext): PlatformBitmapImage {
     val shape = image.data.shape
     val channels = shape[1]
     val height = shape[2]
@@ -93,7 +93,7 @@ actual fun argbToPlatformImage(image: Tensor<FP16, Float>, ctx: ExecutionContext
     return NSImage(cGImage = cgImage, size = size)
 }
 
-actual fun platformImageToRgbByteArray(image: PlatformBitmapImage): ByteArray {
+public actual fun platformImageToRgbByteArray(image: PlatformBitmapImage): ByteArray {
     val (w, h) = platformImageSize(image)
     val rgba = drawImageIntoRgbaBuffer(image, w, h)
     val out = ByteArray(w * h * 3)
@@ -108,7 +108,7 @@ actual fun platformImageToRgbByteArray(image: PlatformBitmapImage): ByteArray {
     return out
 }
 
-actual fun platformImageSize(image: PlatformBitmapImage): Pair<Int, Int> {
+public actual fun platformImageSize(image: PlatformBitmapImage): Pair<Int, Int> {
     val cg = image.CGImageForProposedRect(null, null, null)
     return if (cg != null) {
         CGImageGetWidth(cg).toInt() to CGImageGetHeight(cg).toInt()

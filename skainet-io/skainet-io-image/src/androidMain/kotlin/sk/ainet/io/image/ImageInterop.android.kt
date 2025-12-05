@@ -8,7 +8,7 @@ import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.types.FP16
 import android.graphics.Bitmap.Config
 
-actual typealias PlatformBitmapImage = Bitmap
+public actual typealias PlatformBitmapImage = Bitmap
 
 /**
  * Converts this Bitmap to a packed RGB (R,G,B) ByteArray.
@@ -39,7 +39,7 @@ private fun PlatformBitmapImage.toRgbByteArray(): ByteArray {
     return rgb
 }
 
-actual fun platformImageToArgb(
+public actual fun platformImageToArgb(
     image: PlatformBitmapImage,
     ctx: ExecutionContext
 ): Tensor<FP16, Float> {
@@ -79,17 +79,17 @@ actual fun platformImageToArgb(
     }
 }
 
-actual fun platformImageToRgbByteArray(image: PlatformBitmapImage): ByteArray {
+public actual fun platformImageToRgbByteArray(image: PlatformBitmapImage): ByteArray {
     val src = if (image.config != Bitmap.Config.ARGB_8888) {
         image.copy(Bitmap.Config.ARGB_8888, /*mutable=*/false)
     } else image
     return src.toRgbByteArray()
 }
 
-actual fun platformImageSize(image: PlatformBitmapImage): Pair<Int, Int> =
+public actual fun platformImageSize(image: PlatformBitmapImage): Pair<Int, Int> =
     image.width to image.height
 
-actual fun argbToPlatformImage(
+public actual fun argbToPlatformImage(
     image: Tensor<FP16, Float>,
     ctx: ExecutionContext
 ): PlatformBitmapImage {

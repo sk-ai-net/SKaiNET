@@ -8,6 +8,7 @@ import sk.ainet.lang.tensor.Tensor
 import sk.ainet.lang.tensor.ops.UpsampleMode
 import sk.ainet.lang.tensor.silu
 import sk.ainet.lang.types.FP32
+import kotlin.math.round
 
 /**
  * Minimal YOLOv8-style graph assembled from reusable blocks.
@@ -19,9 +20,19 @@ import sk.ainet.lang.types.FP32
  */
 internal class Yolo8Graph(private val executionContext: ExecutionContext, private val config: YoloConfig) {
 
-    private val stem = ConvBnSiLU(
+    private val base = config.baseChannels
+    private val c1 = base
+    private val c2 = base * 2
+    private val c3 = base * 4
+    private val c4 = base * 8
+    private val c5 = base * 16
+
+    private fun scaleDepth(baseCount: Int): Int =
+        kotlin.math.max(1, round(baseCount * config.depthMultiple).toInt())
+
+    private val stem = ConvSiLU(
         inChannels = 3,
-        outChannels = 32,
+        outChannels = c1,
         kernel = 3,
         stride = 2,
         padding = 1,
@@ -29,9 +40,9 @@ internal class Yolo8Graph(private val executionContext: ExecutionContext, privat
         executionContext = executionContext
     )
 
-    private val stage1 = ConvBnSiLU(
-        inChannels = 32,
-        outChannels = 64,
+    private val stage1 = ConvSiLU(
+        inChannels = c1,
+        outChannels = c2,
         kernel = 3,
         stride = 2,
         padding = 1,
@@ -39,16 +50,16 @@ internal class Yolo8Graph(private val executionContext: ExecutionContext, privat
         executionContext = executionContext
     )
     private val c2f1 = C2f(
-        inChannels = 64,
-        outChannels = 64,
-        bottlenecks = 1,
+        inChannels = c2,
+        outChannels = c2,
+        bottlenecks = scaleDepth(3),
         name = "c2f1",
         executionContext = executionContext
     )
 
-    private val stage2 = ConvBnSiLU(
-        inChannels = 64,
-        outChannels = 128,
+    private val stage2 = ConvSiLU(
+        inChannels = c2,
+        outChannels = c3,
         kernel = 3,
         stride = 2,
         padding = 1,
@@ -56,16 +67,16 @@ internal class Yolo8Graph(private val executionContext: ExecutionContext, privat
         executionContext = executionContext
     )
     private val c2f2 = C2f(
-        inChannels = 128,
-        outChannels = 128,
-        bottlenecks = 1,
+        inChannels = c3,
+        outChannels = c3,
+        bottlenecks = scaleDepth(6),
         name = "c2f2",
         executionContext = executionContext
     )
 
-    private val stage3 = ConvBnSiLU(
-        inChannels = 128,
-        outChannels = 256,
+    private val stage3 = ConvSiLU(
+        inChannels = c3,
+        outChannels = c4,
         kernel = 3,
         stride = 2,
         padding = 1,
@@ -73,16 +84,16 @@ internal class Yolo8Graph(private val executionContext: ExecutionContext, privat
         executionContext = executionContext
     )
     private val c2f3 = C2f(
-        inChannels = 256,
-        outChannels = 256,
-        bottlenecks = 1,
+        inChannels = c4,
+        outChannels = c4,
+        bottlenecks = scaleDepth(6),
         name = "c2f3",
         executionContext = executionContext
     )
 
-    private val stage4 = ConvBnSiLU(
-        inChannels = 256,
-        outChannels = 512,
+    private val stage4 = ConvSiLU(
+        inChannels = c4,
+        outChannels = c5,
         kernel = 3,
         stride = 2,
         padding = 1,
@@ -90,73 +101,93 @@ internal class Yolo8Graph(private val executionContext: ExecutionContext, privat
         executionContext = executionContext
     )
     private val c2f4 = C2f(
-        inChannels = 512,
-        outChannels = 512,
-        bottlenecks = 1,
+        inChannels = c5,
+        outChannels = c5,
+        bottlenecks = scaleDepth(3),
         name = "c2f4",
         executionContext = executionContext
     )
 
-    private val sppf = Sppf(
-        channels = 512,
-        name = "sppf",
-        executionContext = executionContext
-    )
+    private val sppf = Sppf(channels = c5, name = "sppf", executionContext = executionContext)
 
     // Neck
     private val up1 = UpsampleWrapper(scale = 2 to 2, name = "up1", executionContext = executionContext)
     private val c2fNeck1 = C2f(
-        inChannels = 512 + 256,
-        outChannels = 256,
-        bottlenecks = 1,
-        name = "c2f_neck1",
+        inChannels = c5 + c4,
+        outChannels = c4,
+        bottlenecks = scaleDepth(3),
+        name = "model.12",
         executionContext = executionContext
     )
 
     private val up2 = UpsampleWrapper(scale = 2 to 2, name = "up2", executionContext = executionContext)
     private val c2fNeck2 = C2f(
-        inChannels = 256 + 128,
-        outChannels = 128,
-        bottlenecks = 1,
-        name = "c2f_neck2",
+        inChannels = c4 + c3,
+        outChannels = c3,
+        bottlenecks = scaleDepth(3),
+        name = "model.15",
         executionContext = executionContext
     )
 
-    // Heads (three scales)
-    private val headSmall = DetectHead(
-        inChannels = 128,
-        outChannels = config.numClasses + 5,
-        name = "detect_small",
+    // Bottom-up path
+    private val down1 = ConvSiLU(
+        inChannels = c3,
+        outChannels = c3,
+        kernel = 3,
+        stride = 2,
+        padding = 1,
+        name = "model.16",
         executionContext = executionContext
     )
-    private val headMedium = DetectHead(
-        inChannels = 256,
-        outChannels = config.numClasses + 5,
-        name = "detect_medium",
+    private val c2fDown1 = C2f(
+        inChannels = c3 + c4,
+        outChannels = c4,
+        bottlenecks = scaleDepth(3),
+        name = "model.18",
         executionContext = executionContext
     )
-    private val headLarge = DetectHead(
-        inChannels = 512,
-        outChannels = config.numClasses + 5,
-        name = "detect_large",
+    private val down2 = ConvSiLU(
+        inChannels = c4,
+        outChannels = c4,
+        kernel = 3,
+        stride = 2,
+        padding = 1,
+        name = "model.19",
+        executionContext = executionContext
+    )
+    private val c2fDown2 = C2f(
+        inChannels = c4 + c5,
+        outChannels = c5,
+        bottlenecks = scaleDepth(3),
+        name = "model.21",
         executionContext = executionContext
     )
 
-    fun modules(): List<Module<FP32, Float>> = listOf(
-        stem.module,
-        stage1.module, c2f1,
-        stage2.module, c2f2,
-        stage3.module, c2f3,
-        stage4.module, c2f4,
-        sppf,
-        up1,
-        c2fNeck1,
-        up2,
-        c2fNeck2,
-        headSmall,
-        headMedium,
-        headLarge
+    private val detect = DecoupledDetectHead(
+        ch = listOf(c3, c4, c5),
+        numClasses = config.numClasses,
+        regMax = config.regMax,
+        name = "model.22",
+        executionContext = executionContext
     )
+
+    fun modules(): List<Module<FP32, Float>> = buildList {
+        add(stem.module)
+        add(stage1.module); add(c2f1)
+        add(stage2.module); add(c2f2)
+        add(stage3.module); add(c2f3)
+        add(stage4.module); add(c2f4)
+        add(sppf)
+        add(up1)
+        add(c2fNeck1)
+        add(up2)
+        add(c2fNeck2)
+        add(down1.module)
+        add(c2fDown1)
+        add(down2.module)
+        add(c2fDown2)
+        add(detect)
+    }
 
     fun forward(input: Tensor<FP32, Float>, ctx: ExecutionContext): HeadOutputs {
         val x0 = stem.forward(input, ctx)
@@ -184,11 +215,25 @@ internal class Yolo8Graph(private val executionContext: ExecutionContext, privat
             ctx
         )
 
-        // Heads: currently return the large-scale output; smaller scales stay available for later post-processing wiring.
-        val small = headSmall.forward(p3, ctx)
-        val medium = headMedium.forward(p4, ctx)
-        val large = headLarge.forward(p5, ctx)
-        return HeadOutputs(small = small, medium = medium, large = large)
+        // Bottom-up refinements
+        val p4d = c2fDown1.forward(
+            concatAlongChannels(
+                down1.forward(p3, ctx),
+                p4,
+                ctx
+            ),
+            ctx
+        )
+        val p5d = c2fDown2.forward(
+            concatAlongChannels(
+                down2.forward(p4d, ctx),
+                p5,
+                ctx
+            ),
+            ctx
+        )
+
+        return detect.forward(listOf(p3, p4d, p5d), ctx)
     }
 
     private fun concatAlongChannels(
@@ -230,87 +275,153 @@ internal class ConvBnSiLU(
         module.forward(input, ctx)
 }
 
+internal class ConvSiLU(
+    private val inChannels: Int,
+    private val outChannels: Int,
+    private val kernel: Int,
+    private val stride: Int,
+    private val padding: Int,
+    private val name: String,
+    executionContext: ExecutionContext
+) {
+    val module: Module<FP32, Float> = definition {
+        network(executionContext) {
+            sequential {
+                stage(name) {
+                    conv2d(
+                        outChannels = outChannels,
+                        kernelSize = kernel to kernel,
+                        stride = stride to stride,
+                        padding = padding to padding
+                    ) {
+                        this.inChannels = this@ConvSiLU.inChannels
+                        this.bias = true
+                    }
+                    activation { tensor -> tensor.silu() }
+                }
+            }
+        }
+    }
+
+    fun forward(input: Tensor<FP32, Float>, ctx: ExecutionContext): Tensor<FP32, Float> =
+        module.forward(input, ctx)
+}
+
 internal class C2f(
     private val inChannels: Int,
     private val outChannels: Int,
-    private val bottlenecks: Int,
+    bottlenecks: Int,
     override val name: String,
     private val executionContext: ExecutionContext
 ) : Module<FP32, Float>() {
 
     private val hidden = outChannels / 2
-    private val reduce = ConvBnSiLU(
+    private val cv1 = ConvSiLU(
         inChannels = inChannels,
         outChannels = hidden * 2,
         kernel = 1,
         stride = 1,
         padding = 0,
-        name = "${name}_reduce",
+        name = "${name}_cv1",
         executionContext = executionContext
     )
     private val bottleneckBlocks = List(bottlenecks) { idx ->
-        ConvBnSiLU(
-            inChannels = hidden * 2,
-            outChannels = hidden * 2,
-            kernel = 3,
-            stride = 1,
-            padding = 1,
-            name = "${name}_b$idx",
+        Bottleneck(
+            channels = hidden,
+            name = "${name}_m$idx",
             executionContext = executionContext
         )
     }
-    private val expand = ConvBnSiLU(
+    private val cv2 = ConvSiLU(
         inChannels = hidden * (2 + bottlenecks),
         outChannels = outChannels,
         kernel = 1,
         stride = 1,
         padding = 0,
-        name = "${name}_expand",
+        name = "${name}_cv2",
         executionContext = executionContext
     )
 
     override val modules: List<Module<FP32, Float>> = buildList {
-        add(reduce.module)
-        bottleneckBlocks.forEach { add(it.module) }
-        add(expand.module)
+        add(cv1.module)
+        bottleneckBlocks.forEach { add(it) }
+        add(cv2.module)
     }
 
     override fun forward(input: Tensor<FP32, Float>, ctx: ExecutionContext): Tensor<FP32, Float> {
-        val y0 = reduce.forward(input, ctx)
-        val parts = mutableListOf(y0)
-        var last = y0
+        val y = ctx.ops.split(cv1.forward(input, ctx), splitSize = hidden, dim = 1).toMutableList()
+        var last = y.last()
         bottleneckBlocks.forEach { block ->
             last = block.forward(last, ctx)
-            parts += last
+            y += last
         }
-        val concat = ctx.ops.concat(parts, dim = 1)
-        return expand.forward(concat, ctx)
+        val concat = ctx.ops.concat(y, dim = 1)
+        return cv2.forward(concat, ctx)
     }
 }
 
-public data class HeadOutputs(
-    val small: Tensor<FP32, Float>,
-    val medium: Tensor<FP32, Float>,
-    val large: Tensor<FP32, Float>
-)
-
-internal class Sppf(
-    private val channels: Int,
+private class Bottleneck(
+    channels: Int,
     override val name: String,
     private val executionContext: ExecutionContext
 ) : Module<FP32, Float>() {
 
-    private val reduce = ConvBnSiLU(
+    private val cv1 = ConvSiLU(
         inChannels = channels,
         outChannels = channels,
+        kernel = 3,
+        stride = 1,
+        padding = 1,
+        name = "${name}_cv1",
+        executionContext = executionContext
+    )
+    private val cv2 = ConvSiLU(
+        inChannels = channels,
+        outChannels = channels,
+        kernel = 3,
+        stride = 1,
+        padding = 1,
+        name = "${name}_cv2",
+        executionContext = executionContext
+    )
+
+    override val modules: List<Module<FP32, Float>> = listOf(cv1.module, cv2.module)
+
+    override fun forward(input: Tensor<FP32, Float>, ctx: ExecutionContext): Tensor<FP32, Float> {
+        val h1 = cv1.forward(input, ctx)
+        val h2 = cv2.forward(h1, ctx)
+        return ctx.ops.add(input, h2)
+    }
+}
+
+public data class HeadTensor(
+    val reg: Tensor<FP32, Float>,
+    val cls: Tensor<FP32, Float>
+)
+
+public data class HeadOutputs(
+    val small: HeadTensor,
+    val medium: HeadTensor,
+    val large: HeadTensor
+)
+
+internal class Sppf(
+    channels: Int,
+    override val name: String,
+    private val executionContext: ExecutionContext
+) : Module<FP32, Float>() {
+
+    private val reduce = ConvSiLU(
+        inChannels = channels,
+        outChannels = channels / 2,
         kernel = 1,
         stride = 1,
         padding = 0,
         name = "${name}_reduce",
         executionContext = executionContext
     )
-    private val expand = ConvBnSiLU(
-        inChannels = channels * 4,
+    private val expand = ConvSiLU(
+        inChannels = channels * 2,
         outChannels = channels,
         kernel = 1,
         stride = 1,
@@ -352,34 +463,124 @@ internal class UpsampleWrapper(
         module.forward(input, ctx)
 }
 
-internal class DetectHead(
-    private val inChannels: Int,
-    private val outChannels: Int,
+internal class DecoupledDetectHead(
+    ch: List<Int>,
+    private val numClasses: Int,
+    private val regMax: Int,
     override val name: String,
     private val executionContext: ExecutionContext
 ) : Module<FP32, Float>() {
 
-    private val stem = ConvBnSiLU(
+    private val regBranches = ch.mapIndexed { idx, c ->
+        DecoupledBranch(
+            inChannels = c,
+            midChannels = 64,
+            outChannels = regMax * 4,
+            baseName = "$name.cv2.$idx",
+            executionContext = executionContext
+        )
+    }
+    private val clsBranches = ch.mapIndexed { idx, c ->
+        DecoupledBranch(
+            inChannels = c,
+            midChannels = 64,
+            outChannels = numClasses,
+            baseName = "$name.cv3.$idx",
+            executionContext = executionContext
+        )
+    }
+
+    // Holder for DFL projection weights so the ONNX initializer maps cleanly.
+    private val dfl = DflProjection(regMax, name = "$name.dfl", executionContext = executionContext)
+
+    override val modules: List<Module<FP32, Float>> = buildList {
+        addAll(regBranches)
+        addAll(clsBranches)
+        add(dfl)
+    }
+
+    fun forward(inputs: List<Tensor<FP32, Float>>, ctx: ExecutionContext): HeadOutputs {
+        require(inputs.size == 3) { "Detect head expects 3 feature maps, got ${inputs.size}" }
+        val reg = regBranches.mapIndexed { idx, branch -> branch.forward(inputs[idx], ctx) }
+        val cls = clsBranches.mapIndexed { idx, branch -> branch.forward(inputs[idx], ctx) }
+        return HeadOutputs(
+            small = HeadTensor(reg = reg[0], cls = cls[0]),
+            medium = HeadTensor(reg = reg[1], cls = cls[1]),
+            large = HeadTensor(reg = reg[2], cls = cls[2])
+        )
+    }
+
+    override fun forward(input: Tensor<FP32, Float>, ctx: ExecutionContext): Tensor<FP32, Float> {
+        // Return a placeholder tensor (small cls) to satisfy Module contract; inference uses forward(inputs).
+        return clsBranches.first().forward(input, ctx)
+    }
+}
+
+private class DecoupledBranch(
+    private val inChannels: Int,
+    midChannels: Int,
+    private val outChannels: Int,
+    baseName: String,
+    private val executionContext: ExecutionContext
+) : Module<FP32, Float>() {
+    override val name: String = baseName
+    private val c1 = ConvSiLU(
         inChannels = inChannels,
-        outChannels = inChannels,
+        outChannels = midChannels,
         kernel = 3,
         stride = 1,
         padding = 1,
-        name = "${name}_stem",
+        name = "$baseName.0",
+        executionContext = executionContext
+    )
+    private val c2 = ConvSiLU(
+        inChannels = midChannels,
+        outChannels = midChannels,
+        kernel = 3,
+        stride = 1,
+        padding = 1,
+        name = "$baseName.1",
+        executionContext = executionContext
+    )
+    private val out = ConvNoAct(
+        inChannels = midChannels,
+        outChannels = outChannels,
+        kernel = 1,
+        stride = 1,
+        padding = 0,
+        name = "$baseName.2",
         executionContext = executionContext
     )
 
-    private val proj: Module<FP32, Float> = definition {
+    override val modules: List<Module<FP32, Float>> = listOf(c1.module, c2.module, out.module)
+
+    override fun forward(input: Tensor<FP32, Float>, ctx: ExecutionContext): Tensor<FP32, Float> {
+        val h1 = c1.forward(input, ctx)
+        val h2 = c2.forward(h1, ctx)
+        return out.forward(h2, ctx)
+    }
+}
+
+private class ConvNoAct(
+    private val inChannels: Int,
+    private val outChannels: Int,
+    private val kernel: Int,
+    private val stride: Int,
+    private val padding: Int,
+    private val name: String,
+    executionContext: ExecutionContext
+) {
+    val module: Module<FP32, Float> = definition {
         network(executionContext) {
             sequential {
-                stage("${name}_proj") {
+                stage(name) {
                     conv2d(
                         outChannels = outChannels,
-                        kernelSize = 1 to 1,
-                        stride = 1 to 1,
-                        padding = 0 to 0
+                        kernelSize = kernel to kernel,
+                        stride = stride to stride,
+                        padding = padding to padding
                     ) {
-                        this.inChannels = inChannels
+                        this.inChannels = this@ConvNoAct.inChannels
                         this.bias = true
                     }
                 }
@@ -387,10 +588,25 @@ internal class DetectHead(
         }
     }
 
-    override val modules: List<Module<FP32, Float>> = listOf(stem.module, proj)
+    fun forward(input: Tensor<FP32, Float>, ctx: ExecutionContext): Tensor<FP32, Float> =
+        module.forward(input, ctx)
+}
 
-    override fun forward(input: Tensor<FP32, Float>, ctx: ExecutionContext): Tensor<FP32, Float> {
-        val h = stem.forward(input, ctx)
-        return proj.forward(h, ctx)
-    }
+private class DflProjection(
+    regMax: Int,
+    override val name: String,
+    executionContext: ExecutionContext
+) : Module<FP32, Float>(), sk.ainet.lang.nn.topology.ModuleParameters<FP32, Float> {
+    private val weightShape = sk.ainet.lang.tensor.Shape(intArrayOf(1, regMax, 1, 1))
+    override val params: List<sk.ainet.lang.nn.topology.ModuleParameter<FP32, Float>> =
+        listOf(
+            sk.ainet.lang.nn.topology.ModuleParameter.WeightParameter(
+                "$name.conv.weight",
+                executionContext.zeros(weightShape, FP32::class)
+            )
+        )
+    override val modules: List<Module<FP32, Float>> = emptyList()
+
+    override fun forward(input: Tensor<FP32, Float>, ctx: ExecutionContext): Tensor<FP32, Float> =
+        input
 }

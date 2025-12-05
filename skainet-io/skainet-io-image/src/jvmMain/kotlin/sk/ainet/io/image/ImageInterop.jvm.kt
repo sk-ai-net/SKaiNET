@@ -8,9 +8,9 @@ import sk.ainet.lang.types.FP16
 import java.awt.Color
 import java.awt.image.BufferedImage
 
-actual typealias PlatformBitmapImage = BufferedImage
+public actual typealias PlatformBitmapImage = BufferedImage
 
-actual fun platformImageToArgb(
+public actual fun platformImageToArgb(
     image: PlatformBitmapImage,
     ctx: ExecutionContext
 ): Tensor<FP16, Float> {
@@ -43,7 +43,7 @@ actual fun platformImageToArgb(
     }
 }
 
-actual fun argbToPlatformImage(
+public actual fun argbToPlatformImage(
     image: Tensor<FP16, Float>,
     ctx: ExecutionContext
 ): PlatformBitmapImage {
@@ -81,7 +81,7 @@ actual fun argbToPlatformImage(
     return out
 }
 
-actual fun platformImageToRgbByteArray(image: PlatformBitmapImage): ByteArray {
+public actual fun platformImageToRgbByteArray(image: PlatformBitmapImage): ByteArray {
     val w = image.width
     val h = image.height
     val argb = IntArray(w * h)
@@ -96,5 +96,5 @@ actual fun platformImageToRgbByteArray(image: PlatformBitmapImage): ByteArray {
     return out
 }
 
-actual fun platformImageSize(image: PlatformBitmapImage): Pair<Int, Int> =
+public actual fun platformImageSize(image: PlatformBitmapImage): Pair<Int, Int> =
     image.width to image.height

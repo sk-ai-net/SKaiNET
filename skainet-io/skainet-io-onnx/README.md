@@ -1,0 +1,97 @@
+io-onnx: Load ONNX models in Kotlin with pbandk
+
+Overview
+- This module provides a minimal, multiplatform-friendly way to read .onnx files by deserializing the ONNX protobuf into Kotlin data classes generated with pbandk.
+- It ships with a small helper, OnnxLoader, and (in this repository) Kotlin sources generated from the ONNX proto (onnx-ml.proto3.kt) under commonMain.
+
+What you get
+- Kotlin Multiplatform (JVM, Android, iOS, macOS, Linux, JS, Wasm) support via pbandk runtime.
+- Zero Java/Google protobuf runtime dependency — pbandk is a pure Kotlin implementation.
+- Simple API to decode bytes into onnx.ModelProto.
+
+Quick start (using the generated types in this repo)
+1) Add dependency to pbandk runtime (already done in this module):
+   - build.gradle.kts: implementation(libs.pbandk.runtime)
+2) Deserialize an ONNX file into ModelProto:
+
+   // Common Kotlin
+   import kotlinx.io.files.Path
+   import kotlinx.io.files.source
+   import onnx.ModelProto
+   import pbandk.decodeFromByteArray
+   import sk.ainet.io.onnx.OnnxLoader
+
+   suspend fun loadOnnx(path: String): ModelProto {
+       val loader = OnnxLoader.fromModelSource {
+           Path(path).source()
+       }
+       return loader.load().proto // onnx.ModelProto
+   }
+
+   // Alternatively, if you already have the bytes:
+   fun decode(bytes: ByteArray): ModelProto = ModelProto.decodeFromByteArray(bytes)
+
+OnnxLoader API summary
+- OnnxLoader.fromModelSource { Source }: reads all bytes from a kotlinx-io Source and decodes them into onnx.ModelProto via pbandk.
+- OnnxLoader.fromSource { Source, decode }: generic variant allowing custom decode function for other protobuf messages.
+- The returned OnnxLoadedModel wraps both the parsed proto and the raw bytes.
+
+How to generate Kotlin from ONNX .proto with pbandk (if you need to regenerate)
+You have two common options. The simplest for most cases is to reuse the already generated file onnx/onnx-ml.proto3.kt included in this module. If you want to regenerate from official .proto definitions, use either protoc or the pbandk Gradle plugin.
+
+Option A: protoc + pbandk plugin (works off-repo too)
+1) Install protoc (v3.21+ recommended).
+2) Download ONNX proto: onnx/onnx.proto and its dependencies (usually in the same repo directory). The "onnx-ml.proto3" variant is often used in practice; adjust include paths accordingly.
+3) Get the pbandk codegen plugin (protoc-gen-kotlin):
+   - From pbandk releases, download protoc-gen-kotlin for your platform and put it on your PATH.
+4) Run protoc, pointing includes to the folder containing the .proto files:
+
+   protoc \
+     --plugin=protoc-gen-kotlin=$(which protoc-gen-kotlin) \
+     --kotlin_out=src/commonMain/kotlin \
+     --proto_path=path/to/onnx-protos \
+     onnx-ml.proto3
+
+   This generates Kotlin into src/commonMain/kotlin/onnx/.... Replace paths as needed.
+
+Option B: pbandk Gradle plugin (integrated build)
+- Add the pbandk Gradle plugin and configure a pbandk { protoc { ... } } block to generate sources at build time. See pbandk documentation for up-to-date configuration. Point proto sourceSet to ONNX .proto files and kotlinOutputDir to src/commonMain/kotlin.
+
+Gradle setup notes
+- Dependencies (already present in this module):
+  - implementation(libs.pbandk.runtime)
+  - implementation(libs.kotlinx.io.core)
+- Toolchain: This module targets Kotlin Multiplatform and aligns with JVM toolchain 21. Adjust to your project if you extract the code.
+
+Reading models on different targets
+- JVM/Android: Use java.io or kotlinx-io to open a Source. Example with java.nio on JVM:
+
+   import kotlinx.io.asSource
+   import java.nio.file.Files
+   import java.nio.file.Path
+
+   val loader = OnnxLoader.fromModelSource {
+       Files.newInputStream(Path.of("model.onnx")).asSource()
+   }
+
+- Native (iOS/macOS/Linux): Prefer kotlinx-io files Path(...).source().
+- JS/Wasm: Provide a Source backed by fetched ArrayBuffer/Uint8Array and convert to ByteArray before decode, or feed a Source that reads from it.
+
+Troubleshooting and tips
+- Large models: pbandk decodes into Kotlin objects; for very large .onnx files, ensure sufficient heap/memory and consider streaming only the fields you need.
+- Proto compatibility: The onnx-ml.proto3 schema is widely used. Ensure the generated Kotlin matches the opset/schema version your models use. If you see Unknown field warnings, your decoder might be older than the model schema, which is typically OK — unknown fields are skipped.
+- Byte order: .onnx is a standard protobuf message (ModelProto). No special framing is required — decode raw bytes directly.
+- Multiplatform: Keep all generated Kotlin under commonMain so it is shared across targets; avoid JVM-only protobuf runtimes.
+
+FAQ
+Q: Do I need Google’s protobuf Java runtime?  
+A: No. pbandk is a pure Kotlin runtime. This module depends only on pbandk-runtime.
+
+Q: Where are the Kotlin types for ONNX defined?  
+A: In this repository, see: skainet-io/skainet-io-onnx/src/commonMain/kotlin/onnx/onnx-ml.proto3.kt (generated by pbandk from ONNX proto).
+
+Q: Can I decode other ONNX-related protos?  
+A: Yes. Generate Kotlin for any .proto you need with pbandk and plug its Message.decodeFromByteArray into OnnxLoader.fromSource.
+
+License
+- This module follows the repository license (see LICENCE). ONNX proto files are covered by the ONNX project’s license; check their repository when regenerating.

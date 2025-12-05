@@ -11,6 +11,8 @@ plugins {
 }
 
 kotlin {
+    explicitApi()
+
     targets.configureEach {
         compilations.configureEach {
             compileTaskProvider.get().compilerOptions {
