@@ -91,7 +91,7 @@ private class Yolo8Module(
         get() = graph.modules()
 
     override fun forward(input: Tensor<FP32, Float>, ctx: ExecutionContext): Tensor<FP32, Float> =
-        graph.forward(input, ctx).large
+        graph.forward(input, ctx).large.cls
 
     fun forwardHeads(input: Tensor<FP32, Float>, ctx: ExecutionContext): HeadOutputs =
         graph.forward(input, ctx)

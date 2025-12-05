@@ -45,42 +45,53 @@ internal object YoloDecoder {
     }
 
     private fun decodeHead(
-        head: Tensor<FP32, Float>,
+        head: HeadTensor,
         stride: Int,
         config: YoloConfig,
         inputMeta: YoloInput
     ): List<Detection> {
-        val (batch, channels, h, w) = head.shape.dimensions
-        require(batch == 1) { "Only batch size 1 is supported for decode, got $batch" }
+        val (batch, regChannels, h, w) = head.reg.shape.dimensions
         val classes = config.numClasses
-        require(channels == classes + 5) {
-            "Head channels ($channels) must equal classes+5 (${classes + 5})"
+        require(batch == 1) { "Only batch size 1 is supported for decode, got $batch" }
+        require(regChannels == config.regMax * 4) {
+            "Reg branch has $regChannels channels, expected ${config.regMax * 4}"
         }
+        val clsShape = head.cls.shape.dimensions
+        require(clsShape[1] == classes) { "Cls branch has ${clsShape[1]} channels, expected $classes" }
+
         val out = mutableListOf<Detection>()
-        var y = 0
-        while (y < h) {
-            var x = 0
-            while (x < w) {
-                val base = floatArrayOf(
-                    head.data.get(0, 0, y, x),
-                    head.data.get(0, 1, y, x),
-                    head.data.get(0, 2, y, x),
-                    head.data.get(0, 3, y, x),
-                    head.data.get(0, 4, y, x)
-                )
-                val obj = sigmoid(base[4])
-                if (obj >= config.confThreshold) {
-                    val clsScore = argMaxClass(head, y, x, classes)
-                    val score = obj * clsScore.score
-                    if (score >= config.confThreshold) {
-                        val box = decodeBox(base, x, y, stride, inputMeta)
-                        val label = config.classNames.getOrNull(clsScore.classId)
-                        out += Detection(box, score, clsScore.classId, label)
+        val bins = FloatArray(config.regMax) { it.toFloat() }
+        var yIdx = 0
+        while (yIdx < h) {
+            var xIdx = 0
+            while (xIdx < w) {
+                val dist = FloatArray(4)
+                var c = 0
+                while (c < 4) {
+                    val start = c * config.regMax
+                    val logits = FloatArray(config.regMax) { k ->
+                        head.reg.data.get(0, start + k, yIdx, xIdx)
                     }
+                    val probs = softmax(logits)
+                    var exp = 0f
+                    var k = 0
+                    while (k < config.regMax) {
+                        exp += probs[k] * bins[k]
+                        k++
+                    }
+                    dist[c] = exp * stride
+                    c++
                 }
-                x++
+
+                val clsScore = argMaxClass(head.cls, yIdx, xIdx, classes)
+                if (clsScore.score >= config.confThreshold) {
+                    val box = decodeBoxFromDistances(dist, xIdx, yIdx, stride, inputMeta)
+                    val label = config.classNames.getOrNull(clsScore.classId)
+                    out += Detection(box, clsScore.score, clsScore.classId, label)
+                }
+                xIdx++
             }
-            y++
+            yIdx++
         }
         return out
     }
@@ -88,7 +99,7 @@ internal object YoloDecoder {
     private data class ClassScore(val classId: Int, val score: Float)
 
     private fun argMaxClass(
-        head: Tensor<FP32, Float>,
+        cls: Tensor<FP32, Float>,
         y: Int,
         x: Int,
         classes: Int
@@ -97,7 +108,7 @@ internal object YoloDecoder {
         var bestId = -1
         var c = 0
         while (c < classes) {
-            val v = head.data.get(0, 5 + c, y, x)
+            val v = cls.data.get(0, c, y, x)
             if (v > bestScore) {
                 bestScore = v
                 bestId = c
@@ -107,38 +118,52 @@ internal object YoloDecoder {
         return ClassScore(bestId, sigmoid(bestScore))
     }
 
-    private fun decodeBox(
-        raw: FloatArray,
+    private fun decodeBoxFromDistances(
+        dist: FloatArray,
         gridX: Int,
         gridY: Int,
         stride: Int,
         meta: YoloInput
     ): Box {
-        val x = (sigmoid(raw[0]) * 2f - 0.5f + gridX) * stride
-        val y = (sigmoid(raw[1]) * 2f - 0.5f + gridY) * stride
-        val w = (sigmoid(raw[2]) * 2f).let { it * it } * stride
-        val h = (sigmoid(raw[3]) * 2f).let { it * it } * stride
-        val halfW = w / 2f
-        val halfH = h / 2f
-        val lx = x - halfW
-        val ty = y - halfH
-        val rx = x + halfW
-        val by = y + halfH
+        val centerX = (gridX + 0.5f) * stride
+        val centerY = (gridY + 0.5f) * stride
+        val x1 = centerX - dist[0]
+        val y1 = centerY - dist[1]
+        val x2 = centerX + dist[2]
+        val y2 = centerY + dist[3]
 
-        // Remove letterbox padding and rescale to original dimensions
         val scale = meta.letterboxScale
         val padW = meta.padW
         val padH = meta.padH
-        val mappedX1 = (lx - padW) / scale
-        val mappedY1 = (ty - padH) / scale
-        val mappedX2 = (rx - padW) / scale
-        val mappedY2 = (by - padH) / scale
+        val mappedX1 = (x1 - padW) / scale
+        val mappedY1 = (y1 - padH) / scale
+        val mappedX2 = (x2 - padW) / scale
+        val mappedY2 = (y2 - padH) / scale
 
-        val x1 = mappedX1.coerceIn(0f, meta.originalWidth.toFloat())
-        val y1 = mappedY1.coerceIn(0f, meta.originalHeight.toFloat())
-        val x2 = mappedX2.coerceIn(0f, meta.originalWidth.toFloat())
-        val y2 = mappedY2.coerceIn(0f, meta.originalHeight.toFloat())
-        return Box(x1, y1, x2, y2)
+        val x1c = mappedX1.coerceIn(0f, meta.originalWidth.toFloat())
+        val y1c = mappedY1.coerceIn(0f, meta.originalHeight.toFloat())
+        val x2c = mappedX2.coerceIn(0f, meta.originalWidth.toFloat())
+        val y2c = mappedY2.coerceIn(0f, meta.originalHeight.toFloat())
+        return Box(x1c, y1c, x2c, y2c)
+    }
+
+    private fun softmax(logits: FloatArray): FloatArray {
+        var max = logits.maxOrNull() ?: 0f
+        var sum = 0f
+        val exp = FloatArray(logits.size)
+        var i = 0
+        while (i < logits.size) {
+            val e = kotlin.math.exp(logits[i] - max)
+            exp[i] = e
+            sum += e
+            i++
+        }
+        var j = 0
+        while (j < exp.size) {
+            exp[j] /= sum
+            j++
+        }
+        return exp
     }
 
     private fun sigmoid(x: Float): Float = (1f / (1f + exp(-x)))

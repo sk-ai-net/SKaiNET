@@ -8,6 +8,7 @@ import sk.ainet.lang.ops.TensorOp
 import sk.ainet.lang.ops.InProgress
 import sk.ainet.lang.tensor.data.TensorDataFactory
 import sk.ainet.lang.tensor.ops.UpsampleMode
+import kotlin.math.sqrt
 
 @InProgress("cpu", owner = "team:cpu", issue = "task-ops.md#defaultcpuops")
 public open class DefaultCpuOpsBase(protected val dataFactory: TensorDataFactory) : TensorOps {
@@ -1464,7 +1465,17 @@ public open class DefaultCpuOpsBase(protected val dataFactory: TensorDataFactory
     @TensorOp()
     @InProgress("cpu", owner = "team:cpu", issue = "task-ops.md#op-sqrt")
     override fun <T : DType, V> sqrt(tensor: Tensor<T, V>): Tensor<T, V> {
-        TODO("Not yet implemented")
+        require(
+            tensor.dtype == sk.ainet.lang.types.FP32::class ||
+                tensor.dtype == sk.ainet.lang.types.FP16::class
+        ) { "sqrt supports only FP16/FP32, got ${tensor.dtype}" }
+
+        val outData = dataFactory.init<T, V>(tensor.shape, tensor.dtype) { idx ->
+            val v = tensor.data.get(*idx) as Float
+            @Suppress("UNCHECKED_CAST")
+            sqrt(v) as V
+        }
+        return CpuTensor(outData, this, tensor.dtype)
     }
 
     @TensorOp()
