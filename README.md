@@ -3,7 +3,7 @@
 
 # SKaiNET
 
-**SKaiNET** is an open-source deep learning framework written in Kotlin Mutliplatform, designed with developers in mind to enable the creation modern AI powered applications with ease.
+**SKaiNET** is an open-source deep learning framework written in Kotlin Multiplatform, designed with developers in mind to enable the creation modern AI powered applications with ease.
 
 ## Use it
 
@@ -11,7 +11,7 @@
 - In Kotlin Notebooks for quick exploration
 - With sample projects to learn patterns
 
-See also CHANGELOG for what’s new in 0.2.0.
+See also CHANGELOG for what’s new in 0.5.0.
 
 ## Quick start
 
@@ -26,15 +26,15 @@ dependencyResolutionManagement {
 
 dependencies {
     // minimal dependency with simple CPU backend
-    implementation("sk.ainet.core:skainet-lang-core:0.2.0")
-    implementation("sk.ainet.core:skainet-backend-cpu:0.2.0")
+    implementation("sk.ainet.core:skainet-lang-core:0.5.0")
+    implementation("sk.ainet.core:skainet-backend-cpu:0.5.0")
     
     // simple model zoo
-    implementation("sk.ainet.core:skainet-lang-models:0.2.0")
+    implementation("sk.ainet.core:skainet-lang-models:0.5.0")
     
     // Optional I/O (e.g., GGUF loader, JSON)
-    implementation("sk.ainet.core:skainet-io-core:0.2.0")
-    implementation("sk.ainet.core:skainet-io-gguf:0.2.0")
+    implementation("sk.ainet.core:skainet-io-core:0.5.0")
+    implementation("sk.ainet.core:skainet-io-gguf:0.5.0")
 }
 ```
 
@@ -44,7 +44,7 @@ Maven:
 <dependency>
   <groupId>sk.ainet.core</groupId>
   <artifactId>skainet-lang-core</artifactId>
-  <version>0.2.0</version>
+  <version>0.5.0</version>
 </dependency>
 ```
 
@@ -55,9 +55,21 @@ Maven:
 
 ## Architecture
 
-![Screenshot of a comment on a GitHub issue showing an image, added in the Markdown, of an Octocat smiling and raising a tentacle.](docs//SKaiNET-compiler.svg)
+![Architecture diagram of SKaiNET compiler](docs//SKaiNET-compiler.svg)
 
-## 0.2.0 highlights (with tiny snippets)
+## 0.5.0 highlights (with tiny snippets)
+
+- Kolmogorov–Arnold Networks (KAN/AKN) preview in the NN DSL
+
+```kotlin
+val model = nn {
+    input(64)
+    dense(out = 64)
+    // KAN layer (preview) with residual when dims match
+    kanLayer(outputDim = 64, gridSize = 16, useResidual = true)
+    dense(out = 10)
+}
+```
 
 - Training/Eval phases made easy
 
@@ -134,4 +146,4 @@ See source for details:
 
 ## License
 
-MIT — see LICENSE.
+MIT — see LICENCE.

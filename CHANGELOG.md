@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.5.0] - 2025-12-06
+
+### Added
+- ONNX import module (`skainet-io-onnx`) with pbandk-generated proto surface, loader utilities, and importer that maps ONNX graphs into SKaiNET compute graphs, plus doc and tests.
+- CLI tooling: `skainet-onnx-tools` to export ONNX initializers to JSON and `skainet-onnx-detect` CLI to run YOLO detections from ONNX weights.
+- YOLOv8 model upgrades: depth/width scaling, decoupled heads with DFL projection, class-name parsing, and detection helpers to align with ONNX exports.
+- Image IO module now published with explicit API surface for bitmap <-> tensor conversions across platforms.
+
+### Changed
+- BatchNorm now reshapes stats for broadcasting and exercises JVM/native tests; CPU backend implements `sqrt` to support it.
+
+### Dependencies
+- Added pbandk runtime 0.16.0 for ONNX protobuf decoding.
+
+## [0.4.0] - 2025-12-03
+
+### Added
+- Recording/tracing pipeline for tensor ops (RecordingExecution/TracingTensorOps) and compute-graph DAG under `sk.ainet.lang.graph`, including tape-to-graph conversion and GraphViz export helpers/tests.
+- JSON export proof of concept via new `skainet-compile-json` module with serialization models, `exportJson` CLI, and tiny graph golden fixtures.
+- Multiplatform image IO module to convert platform bitmaps <-> tensors and RGB byte arrays; includes macOS implementation fixes.
+- Dedicated YOLOv8 model module (`skainet-models:skainet-model-yolo`) with graph assembly, config/pre/post-processing, and missing upsample/concat ops required by the model.
+- NN DSL additions: multi-input `Functional` wrapper, new `Upsample2d`/Softmax helpers, scalar DSL builder plus tensor/number operator overloads, and extra tensor view/pprint utilities.
+
+### Changed
+- Graph DSL relocated into the lang namespace with refreshed default execution tape/graph context wiring; removed unused integration module scaffolding.
+- Removed committed MNIST training assets; rely on download at runtime.
+- Added scalar arithmetic support across backends and void ops to match new operator overloads.
+
+### Fixed
+- Corrected unsqueeze view handling and data DSL dtype reuse; stabilized tracing/JSON/tape tests.
+- Fixed macOS image conversion path and cleaned duplicate files in the new IO/image pipeline.
+
+### Dependencies
+- io.ktor client 3.3.3 (from 3.3.2).
+- logback-classic 1.5.21 (from 1.5.20).
+
 ## [0.3.0] - 2025-11-27
 
 ### Added
@@ -72,4 +108,3 @@
 
 ## [0.1.0] - 2025-10-31
 - Initial public release of SKaiNET 0.1.0.
-
