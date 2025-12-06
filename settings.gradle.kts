@@ -53,7 +53,7 @@ include("skainet-io:skainet-io-onnx")
 include("skainet-models:skainet-model-yolo")
 
 // ====== Integrations
-include("skainet-integrations:skainet-simple-cpu")
+//include("skainet-integrations:skainet-simple-cpu")
 
 
 // ====== APPS
