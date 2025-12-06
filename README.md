@@ -55,7 +55,7 @@ Maven:
 
 ## Architecture
 
-![Screenshot of a comment on a GitHub issue showing an image, added in the Markdown, of an Octocat smiling and raising a tentacle.](docs//SKaiNET-compiler.svg)
+![Architecture diagram of SKaiNET compiler](docs//SKaiNET-compiler.svg)
 
 ## 0.5.0 highlights (with tiny snippets)
 

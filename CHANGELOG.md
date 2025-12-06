@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.0] - 2025-12-06
+
+### Added
+- ONNX import module (`skainet-io-onnx`) with pbandk-generated proto surface, loader utilities, and importer that maps ONNX graphs into SKaiNET compute graphs, plus doc and tests.
+- CLI tooling: `skainet-onnx-tools` to export ONNX initializers to JSON and `skainet-onnx-detect` CLI to run YOLO detections from ONNX weights.
+- YOLOv8 model upgrades: depth/width scaling, decoupled heads with DFL projection, class-name parsing, and detection helpers to align with ONNX exports.
+- Image IO module now published with explicit API surface for bitmap <-> tensor conversions across platforms.
+
+### Changed
+- BatchNorm now reshapes stats for broadcasting and exercises JVM/native tests; CPU backend implements `sqrt` to support it.
+
+### Dependencies
+- Added pbandk runtime 0.16.0 for ONNX protobuf decoding.
+
 ## [0.4.0] - 2025-12-03
 
 ### Added
