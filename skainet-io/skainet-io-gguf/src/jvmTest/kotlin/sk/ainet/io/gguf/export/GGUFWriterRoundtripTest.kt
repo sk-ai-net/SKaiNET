@@ -74,12 +74,45 @@ class GGUFWriterRoundtripTest {
 
     @Test
     fun writes_additionalDtypes() {
+        val request = buildSimpleDtypeRequest()
+        val buffer = Buffer()
+        GGUFWriter.writeToSink(request, buffer)
+        val reader = GGUFReader(buffer.readByteArray().inputStream().asSource().buffered(), loadTensorData = true)
+
+        assertEquals(2, reader.tensors.size)
+        assertEquals(GGMLQuantizationType.BF16, reader.tensors[0].tensorType)
+        assertEquals(GGMLQuantizationType.I16, reader.tensors[1].tensorType)
+        assertEquals(2, reader.tensors[0].data.size)
+        assertEquals(2, reader.tensors[1].data.size)
+        val bfValues = reader.tensors[0].data.map { (it as Number).toFloat() }
+        val i16Values = reader.tensors[1].data.map { (it as Number).toInt() }
+        assertEquals(1.0f, bfValues[0])
+        assertEquals(-2.0f, bfValues[1])
+        assertEquals(7, i16Values[0])
+    }
+
+    @Test
+    fun writes_additionalDtypes_rawToggle() {
+        val request = buildSimpleDtypeRequest()
+        val (_, bytes) = GGUFWriter.writeToByteArray(request)
+        val reader = GGUFReader(
+            bytes.inputStream().asSource().buffered(),
+            loadTensorData = true,
+            decodeBF16ToFloat = false
+        )
+        val bfData = reader.tensors.first { it.name == "bf" }.data
+        assertTrue(bfData.all { it is UShort })
+        val words = bfData.map { (it as UShort).toInt() }
+        assertEquals(listOf(0x3f80, 0xc000), words) // 1.0f and -2.0f BF16 words
+    }
+
+    private fun buildSimpleDtypeRequest(): GgufWriteRequest {
         val dataFactory = DenseTensorDataFactory()
         val bfData = dataFactory.fromFloatArray(Shape(2), floatArrayOf(1.0f, -2.0f), FP32)
         val bfTensor = VoidOpsTensor(bfData, FP32::class)
         val intData = dataFactory.full(Shape(2), 7, Int32)
         val i16Tensor = VoidOpsTensor(intData as TensorData<Int32, *>, Int32::class)
-        val request = GgufWriteRequest(
+        return GgufWriteRequest(
             metadata = mapOf(
                 "model.name" to "types",
                 "skainet.graph.nodes" to "[]",
@@ -94,16 +127,6 @@ class GGUFWriterRoundtripTest {
             ),
             tensorMap = mapOf("bf" to "bf", "i16" to "i16")
         )
-
-        val buffer = Buffer()
-        GGUFWriter.writeToSink(request, buffer)
-        val reader = GGUFReader(buffer.readByteArray().inputStream().asSource().buffered(), loadTensorData = true)
-
-        assertEquals(2, reader.tensors.size)
-        assertEquals(GGMLQuantizationType.BF16, reader.tensors[0].tensorType)
-        assertEquals(GGMLQuantizationType.I16, reader.tensors[1].tensorType)
-        assertEquals(2, reader.tensors[0].data.size)
-        assertEquals(2, reader.tensors[1].data.size)
     }
 
     private fun buildSimpleRequest(): GgufWriteRequest {
