@@ -115,8 +115,9 @@ class GGUFReader(source: Source, private val loadTensorData: Boolean = true) {
         nBytes: Int
     ): List<Any> {
         return when (ggmlType) {
-            // Return raw bytes for F16 to avoid platform float16 issues
-            GGMLQuantizationType.F16 -> data.readDataByType<UByte>(dataOffs, nElems * 2)
+            // Return raw 16-bit payloads for half/bfloat rather than decoding platform half
+            GGMLQuantizationType.F16 -> data.readDataByType<UShort>(dataOffs, nElems)
+            GGMLQuantizationType.BF16 -> data.readDataByType<UShort>(dataOffs, nElems)
             GGMLQuantizationType.F32 -> data.readDataByType<Float>(dataOffs, nElems)
             GGMLQuantizationType.F64 -> data.readDataByType<Double>(dataOffs, nElems)
             GGMLQuantizationType.I8 -> data.readDataByType<Byte>(dataOffs, nElems)
@@ -205,6 +206,17 @@ class GGUFReader(source: Source, private val loadTensorData: Boolean = true) {
             fields[field.name] = field
         }
         return if (skipSum) 0 else field.parts.sumOf { it.numberOfBytes() }
+    }
+
+    private inline fun <reified T> ReaderField.partAs(index: Int): List<T> {
+        val part = parts.getOrNull(index)
+            ?: throw IllegalArgumentException("Expected part at index $index for field '$name'")
+        return part.mapIndexed { idx, value ->
+            require(value is T) {
+                "Unexpected type in field '$name' part $index at element $idx: ${value::class}, expected ${T::class}"
+            }
+            value
+        }
     }
 
     private fun getStr(offset: Int): Pair<List<ULong>, List<UByte>> {
@@ -364,12 +376,12 @@ class GGUFReader(source: Source, private val loadTensorData: Boolean = true) {
         val tensorNames = mutableSetOf<String>() // keep track of names to prevent duplicate tensors
 
         for (field in fields) {
-            val _nameLen = field.parts[0] as List<ULong>
-            val nameData = field.parts[1] as List<UByte>
-            val _nDims = field.parts[2] as List<UInt>
-            val dims = field.parts[3] as List<ULong>
-            val rawDtype = field.parts[4] as List<UInt>
-            val offsetTensor = field.parts[5] as List<ULong>
+            val _nameLen = field.partAs<ULong>(0)
+            val nameData = field.partAs<UByte>(1)
+            val _nDims = field.partAs<UInt>(2)
+            val dims = field.partAs<ULong>(3)
+            val rawDtype = field.partAs<UInt>(4)
+            val offsetTensor = field.partAs<ULong>(5)
 
             val tensorName: String = nameData.toUByteArray().toByteArray().decodeToString()
             if (tensorNames.contains(tensorName)) {

@@ -2,6 +2,7 @@ package sk.ainet.io.gguf.export
 
 import sk.ainet.io.gguf.GGMLQuantizationType
 import sk.ainet.lang.graph.ComputeGraph
+import sk.ainet.io.gguf.GGUF_DEFAULT_ALIGNMENT
 import sk.ainet.lang.graph.DefaultComputeGraph
 import sk.ainet.lang.graph.DefaultExecutionTape
 import sk.ainet.lang.graph.GraphEdge
@@ -18,6 +19,7 @@ import sk.ainet.lang.nn.Module
 import sk.ainet.lang.nn.topology.ModuleParameters
 import sk.ainet.lang.tensor.ops.TensorOps
 import sk.ainet.lang.tensor.ops.VoidTensorOps
+import sk.ainet.lang.tensor.ops.ValidationResult
 import sk.ainet.tape.ExecutionTape
 
 /**
@@ -28,7 +30,10 @@ import sk.ainet.tape.ExecutionTape
  */
 public data class GgufExportOptions(
     val metadataOnly: Boolean = false,
-    val graphFormatVersion: Int = 1
+    val graphFormatVersion: Int = 1,
+    val defaultDtype: String? = "FP32",
+    val generalMetadata: Map<String, Any> = emptyMap(),
+    val provenance: Map<String, Any> = emptyMap()
 )
 
 /** Tensor entry to be consumed by a future GGUF writer implementation. */
@@ -56,6 +61,8 @@ public fun exportGraphToGguf(
     label: String = "graph",
     options: GgufExportOptions = GgufExportOptions()
 ): GgufWriteRequest {
+    validateGraph(graph)
+    validateWeights(weights)
     val tensorMap: Map<String, String> = weights.keys.sorted().associateWith { it }
     val entries: List<GgufTensorEntry> = if (options.metadataOnly) {
         emptyList()
@@ -74,7 +81,7 @@ public fun exportGraphToGguf(
             }
     }
 
-    val metadata = buildGraphMetadata(graph, label, tensorMap, options.graphFormatVersion)
+    val metadata = buildGraphMetadata(graph, label, tensorMap, options)
 
     return GgufWriteRequest(
         metadata = metadata,
@@ -169,8 +176,7 @@ private fun inferQuantization(tensor: Tensor<*, *>): GGMLQuantizationType {
     val dtype = tensor.dtype
     return when (dtype) {
         FP32::class -> GGMLQuantizationType.F32
-        // Map FP16 to F32 for writing until half-precision encoding is added.
-        FP16::class -> GGMLQuantizationType.F32
+        FP16::class -> GGMLQuantizationType.F16
         Int8::class -> GGMLQuantizationType.I8
         Int32::class -> GGMLQuantizationType.I32
         else -> GGMLQuantizationType.F32
@@ -181,20 +187,28 @@ private fun buildGraphMetadata(
     graph: ComputeGraph,
     label: String,
     tensorMap: Map<String, String>,
-    graphFormatVersion: Int
+    options: GgufExportOptions
 ): Map<String, Any> {
     val nodesJson = encodeNodes(graph.nodes)
     val edgesJson = encodeEdges(graph.edges)
     val tensorMapJson = encodeTensorMap(tensorMap)
-
-    return linkedMapOf(
+    val out = linkedMapOf<String, Any>(
         "model.name" to label,
-        "skainet.graph.format_version" to graphFormatVersion,
+        "general.alignment" to GGUF_DEFAULT_ALIGNMENT,
+        "skainet.graph.format_version" to options.graphFormatVersion,
         "skainet.graph.nodes" to nodesJson,
         "skainet.graph.edges" to edgesJson,
         "skainet.tensor.map" to tensorMapJson,
         "skainet.tensor.count" to tensorMap.size
     )
+    options.defaultDtype?.let { out["skainet.dtype.default"] = it }
+    options.generalMetadata.entries.sortedBy { it.key }.forEach { (k, v) ->
+        out[k] = v
+    }
+    options.provenance.entries.sortedBy { it.key }.forEach { (k, v) ->
+        out[k] = v
+    }
+    return out
 }
 
 private fun encodeNodes(nodes: List<GraphNode>): String {
@@ -334,6 +348,24 @@ private fun String.escapeJson(): String = buildString(length) {
             '\r' -> append("\\r")
             '\t' -> append("\\t")
             else -> append(ch)
+        }
+    }
+}
+
+private fun validateGraph(graph: ComputeGraph) {
+    when (val result = graph.validate()) {
+        ValidationResult.Valid -> Unit
+        is ValidationResult.Invalid -> error("Graph validation failed: ${result.errors.joinToString("; ")}")
+    }
+}
+
+private fun validateWeights(weights: Map<String, Tensor<*, *>>) {
+    val duplicateKeys = weights.keys.groupingBy { it }.eachCount().filterValues { it > 1 }.keys
+    require(duplicateKeys.isEmpty()) { "Duplicate weight keys: $duplicateKeys" }
+    weights.forEach { (name, tensor) ->
+        val dims = tensor.shape.dimensions
+        require(dims.all { it > 0 }) {
+            "Tensor $name has non-positive dimensions ${dims.toList()}"
         }
     }
 }
